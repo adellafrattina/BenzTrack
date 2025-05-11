@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "888938174189",
+    "project_id": "benztrackdb",
+    "storage_bucket": "benztrackdb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:888938174189:android:121b3cfb10fc80480e5ee4",
+        "android_client_info": {
+          "package_name": "it.uninsubria.benztrack"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5bOQ4PUfamySSF2m8QazhRVvH4SaK3z8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
