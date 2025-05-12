@@ -8,7 +8,6 @@ import androidx.appcompat.app.AppCompatActivity
 class ProfileActivity : AppCompatActivity() {
 
     private lateinit var usernameTextView: TextView
-    private lateinit var passwordTextView: TextView
     private lateinit var nameTextView: TextView
     private lateinit var surnameTextView: TextView
     private lateinit var emailTextView: TextView
@@ -26,7 +25,6 @@ class ProfileActivity : AppCompatActivity() {
 
         // Initialize views
         usernameTextView = findViewById(R.id.text_username)
-        passwordTextView = findViewById(R.id.text_password)
         nameTextView = findViewById(R.id.text_name)
         surnameTextView = findViewById(R.id.text_surname)
         emailTextView = findViewById(R.id.text_email)
@@ -44,8 +42,6 @@ class ProfileActivity : AppCompatActivity() {
 
         // Set data to views
         usernameTextView.text = username
-
-        passwordTextView.text = password
 
         // Check if additional fields are available (from registration)
         nameTextView.text = name
