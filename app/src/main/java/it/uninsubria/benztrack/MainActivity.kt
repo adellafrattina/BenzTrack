@@ -1,68 +1,38 @@
 package it.uninsubria.benztrack
 
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.firestore.DocumentReference
+
+val database = Database()
+var loggedUser: User? = null
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var loginButton: Button
+    private lateinit var registerButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val car = Car()
-        car.name = "Macchina di mia mamma"
-        car.plate = "EG575AB"
-        car.maintenancedate = null
-        car.insurancedate = null
-        car.taxdate = null
+        loginButton = findViewById(R.id.button_login)
+        registerButton = findViewById(R.id.button_register)
 
-        val button: Button = findViewById(R.id.button_greeting)
-        button.setOnClickListener {
+        loginButton.setOnClickListener {
 
-            db
-                .searchCarModelByName("opel")
-                .addOnSuccessListener { models ->
+            val intent = Intent(this, LoginActivity::class.java)
+            startActivity(intent)
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+        }
 
-                    if (models.isNotEmpty()) {
+        registerButton.setOnClickListener {
 
-                        db.getCarModelDocumentReference(models[0])
-                            .addOnSuccessListener { document ->
-
-                                car.model = document
-
-                                db.deleteCar("admin", "123456")
-                                    .addOnSuccessListener {
-
-                                        ToastManager.show(this, "Car deleted successfully", Toast.LENGTH_SHORT)
-                                    }
-                                    .addOnFailureListener { e ->
-
-                                        ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
-
-                                        e as CarException
-                                        if (e.plate.isNotEmpty())
-                                            Log.e("test", e.plate)
-                                        if (e.name.isNotEmpty())
-                                            Log.e("test", e.name)
-                                    }
-                            }
-                            .addOnFailureListener { e ->
-
-                                ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
-                            }
-                    }
-                }
-                .addOnFailureListener { e ->
-
-                    ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
-                }
+            val intent = Intent(this, RegistrationActivity::class.java)
+            startActivity(intent)
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         }
     }
-
-    private val db = Database()
 }
