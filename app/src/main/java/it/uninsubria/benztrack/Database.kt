@@ -3,13 +3,10 @@ package it.uninsubria.benztrack
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.firebase.Firebase
-import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import java.security.MessageDigest
 import java.time.LocalDate
-import java.util.Date
-import java.util.Locale
 
 /**
  * The database class
@@ -71,11 +68,15 @@ public class Database {
                 if (document.exists()) {
 
                     val storedPassword = document.getString(PASSWORD_FIELD)
-                    if (storedPassword == password.hashCode().toString()) {
+                    if (storedPassword == sha256(password)) {
 
                         val user = document.toObject(User::class.java)
-                        if (user != null)
+                        if (user != null) {
+
+                            user.password = password
                             taskSource.setResult(user)
+                        }
+
                         else
                             taskSource.setException(LoginException("User object is null"))
                     }
@@ -164,7 +165,7 @@ public class Database {
                         if (errorMap.isEmpty()) {
 
                             // Hash the password before storing it into the database
-                            user.password = user.password.hashCode().toString()
+                            user.password = sha256(user.password)
 
                             dbRef
                                 .collection(USERS_COLLECTION)
