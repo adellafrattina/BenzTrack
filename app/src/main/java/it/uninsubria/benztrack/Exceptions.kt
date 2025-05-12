@@ -10,8 +10,21 @@ public class LoginException(
     /**
      * Generic message
      */
-    message: String
-) : Exception(message)
+    message: String,
+
+    /**
+     * Error with the username. If empty, then there are no errors
+     */
+    val username: String,
+
+    /**
+     * Error with the password. If empty, then there are no errors
+     */
+    val password: String
+) : Exception(message) {
+
+    constructor(message: String): this(message, "", "")
+}
 
 /**
  * When the registration procedure fails

@@ -67,40 +67,59 @@ public class Database {
     public fun login(username: String, password: String): Task<User> {
 
         val taskSource = TaskCompletionSource<User>()
+        var usernameErrorMsg = ""
+        var passwordErrorMsg = ""
 
-        dbRef
-            .collection(USERS_COLLECTION)
-            .document(username)
-            .get()
-            .addOnSuccessListener { document ->
+        // Check username
+        if (username.isEmpty())
+            usernameErrorMsg = "This field must not be empty"
 
-                if (document.exists()) {
+        // Check password
+        if (password.isEmpty())
+            passwordErrorMsg = "This field must not be empty"
 
-                    val storedPassword = document.getString(PASSWORD_FIELD)
-                    if (storedPassword == sha256(password)) {
+        if (username.isEmpty() || password.isEmpty())
+            taskSource.setException(LoginException(
+                "Login failed",
+                usernameErrorMsg,
+                passwordErrorMsg))
 
-                        val user = document.toObject(User::class.java)
-                        if (user != null) {
+        else {
 
-                            user.password = password
-                            taskSource.setResult(user)
+            dbRef
+                .collection(USERS_COLLECTION)
+                .document(username)
+                .get()
+                .addOnSuccessListener { document ->
+
+                    if (document.exists()) {
+
+                        val storedPassword = document.getString(PASSWORD_FIELD)
+                        if (storedPassword == sha256(password)) {
+
+                            val user = document.toObject(User::class.java)
+                            if (user != null) {
+
+                                user.password = password
+                                taskSource.setResult(user)
+                            }
+
+                            else
+                                taskSource.setException(LoginException("User object is null"))
                         }
 
                         else
-                            taskSource.setException(LoginException("User object is null"))
+                            taskSource.setException(LoginException("Username or password are incorrect"))
                     }
 
                     else
                         taskSource.setException(LoginException("Username or password are incorrect"))
                 }
+                .addOnFailureListener { e ->
 
-                else
-                    taskSource.setException(LoginException("Username or password are incorrect"))
-            }
-            .addOnFailureListener { e ->
-
-                taskSource.setException(e as LoginException)
-            }
+                    taskSource.setException(e as LoginException)
+                }
+        }
 
         return taskSource.task
     }
