@@ -35,8 +35,10 @@ public class Database {
         public const val FUEL_FIELD = "fuel"
         public const val CO2_FACTOR_FIELD = "co2factor"
         public const val WEIGHT_FIELD = "weight"
+        public const val WIDTH_FIELD = "width"
         public const val LENGTH_FIELD = "length"
         public const val HEIGHT_FIELD = "height"
+        public const val SEARCH_TERMS_FIELD = "searchterms"
 
         public const val PLATE_FIELD = "plate"
         public const val MODEL_FIELD = "model"
@@ -232,6 +234,10 @@ public class Database {
         if (model.weight < 50) // Lightest possible car (From what I've researched)
             errorMap[WEIGHT_FIELD] = "The weight must be valid"
 
+        // Check weight
+        if (model.width < 1) // Smallest possible car (From what I've researched)
+            errorMap[WIDTH_FIELD] = "The width must be valid"
+
         // Check length
         if (model.length < 2) // Shortest possible car (From what I've researched)
             errorMap[LENGTH_FIELD] = "The length must be valid"
@@ -256,6 +262,11 @@ public class Database {
                     }
 
                     else {
+
+                        // Add search terms
+                        val terms = model.name.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
+                        for (term in terms)
+                            model.searchterms.add(term.uppercase())
 
                         dbRef
                             .collection(MODELS_COLLECTION)
@@ -288,6 +299,7 @@ public class Database {
                 if (errorMap[FUEL_FIELD] != null)       errorMap[FUEL_FIELD]!! else "",
                 if (errorMap[CO2_FACTOR_FIELD] != null) errorMap[CO2_FACTOR_FIELD]!! else "",
                 if (errorMap[WEIGHT_FIELD] != null)     errorMap[WEIGHT_FIELD]!! else "",
+                if (errorMap[WIDTH_FIELD] != null)      errorMap[WIDTH_FIELD]!! else "",
                 if (errorMap[LENGTH_FIELD] != null)     errorMap[LENGTH_FIELD]!! else "",
                 if (errorMap[HEIGHT_FIELD] != null)     errorMap[HEIGHT_FIELD]!! else ""))
         }
@@ -295,6 +307,86 @@ public class Database {
         return taskSource.task
     }
 
+    /**
+     * Searches the car model by name
+     *
+     * @param name The string the user typed. It will be used to search all the matching car model's name
+     */
+    public fun searchCarModelByName(name: String): Task<ArrayList<CarModel>> {
+
+        val taskSource = TaskCompletionSource<ArrayList<CarModel>>()
+        val models = ArrayList<CarModel>()
+
+        if (name.trim().isEmpty()) {
+
+            taskSource.setException(Exception("Cannot find the specified model"))
+
+            return taskSource.task
+        }
+
+        val terms = name.trim().uppercase().split("\\s+".toRegex()).filter { it.isNotBlank() }
+
+        // Search by searchterms array
+        dbRef
+            .collection(MODELS_COLLECTION)
+            .whereArrayContainsAny(SEARCH_TERMS_FIELD, terms)
+            .get()
+            .addOnSuccessListener { primaryQuery ->
+
+                if (!primaryQuery.isEmpty) {
+
+                    for (document in primaryQuery) {
+
+                        val model = document.toObject(CarModel::class.java)
+                        models.add(model)
+                    }
+
+                    taskSource.setResult(models)
+                }
+
+                else {
+
+                    // Alternative type of search if the searchterms array was null
+                    dbRef
+                        .collection(MODELS_COLLECTION)
+                        .whereGreaterThanOrEqualTo(NAME_FIELD, name.trim().uppercase())
+                        .whereLessThan(NAME_FIELD, name + '\uf8ff')
+                        .get()
+                        .addOnSuccessListener { secondaryQuery ->
+
+                            if (!secondaryQuery.isEmpty) {
+
+                                for (document in secondaryQuery) {
+
+                                    val model = document.toObject(CarModel::class.java)
+                                    models.add(model)
+                                }
+
+                                taskSource.setResult(models)
+                            }
+
+                            else {
+
+                                taskSource.setException(Exception("Cannot find the specified model"))
+                            }
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e)
+                        }
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e)
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Hashes a string with Secure Hashing Algorithm with 256 characters
+     */
     private fun sha256(input: String): String {
 
         val bytes = input.toByteArray()

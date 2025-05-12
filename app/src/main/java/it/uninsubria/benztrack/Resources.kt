@@ -43,16 +43,18 @@ public data class CarModel(
     var fuel: FuelType,
     var co2factor: Float,
     var weight: Float,
+    var width: Float,
     var length: Float,
-    var height: Float
+    var height: Float,
+    var searchterms: ArrayList<String>
 ) {
 
-    constructor(): this("", 1970, 0, FuelType.Petrol, 0.0f, 0.0f, 0.0f, 0.0f)
+    constructor(): this("", Int.MAX_VALUE, Int.MAX_VALUE, FuelType.Petrol, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, ArrayList<String>())
 
     @Override
     public override fun toString(): String {
 
-        return "$name\n$year\n$capacity\n$fuel\n$co2factor\n$weight\n$length\n$height"
+        return "$name\n$year\n$capacity\n$fuel\n$co2factor\n$weight$width\n$length\n$height"
     }
 }
 
@@ -60,17 +62,23 @@ public data class Car(
 
     var plate: String,
     var name: String,
-    var model: DocumentReference,
-    var maintenancedate: Timestamp,
-    var insurancedate: Timestamp,
-    var taxdate: Timestamp
-)
+    var model: DocumentReference?,
+    var maintenancedate: Timestamp?,
+    var insurancedate: Timestamp?,
+    var taxdate: Timestamp?
+) {
+
+    constructor(): this("", "", null, null, null, null)
+}
 
 public data class Refill(
 
-    var date: Timestamp,
+    var date: Timestamp?,
     var position: String,
     var ppl: Float,
-    var km: Float,
+    var mileage: Float,
     var amount: Float
-)
+) {
+
+    constructor(): this(null, "", Float.NaN, Float.NaN, Float.NaN)
+}

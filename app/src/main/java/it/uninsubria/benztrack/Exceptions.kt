@@ -27,9 +27,10 @@ public class CarModelException(
     val fuel: String,
     val co2factor: String,
     val weight: String,
+    val width: String,
     val length: String,
     val height: String
 ) : Exception(message) {
 
-    constructor(message: String): this(message, "", "", "", "", "", "", "", "")
+    constructor(message: String): this(message, "", "", "", "", "", "", "", "", "")
 }
