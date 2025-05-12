@@ -16,6 +16,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var registerLink: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
@@ -30,19 +31,23 @@ class LoginActivity : AppCompatActivity() {
             val username = usernameEditText.text.toString().trim()
             val password = passwordEditText.text.toString().trim()
 
-            // Validate input fields
-            if (username.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
+            database.login(username, password)
+                .addOnSuccessListener {
 
-            // Create intent to open ProfileActivity
-            val intent = Intent(this, ProfileActivity::class.java).apply {
-                putExtra("USERNAME", username)
-                putExtra("PASSWORD", password)
-            }
-            startActivity(intent)
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+                    ToastManager.show(this, "Login successful! :3", Toast.LENGTH_SHORT)
+
+                    val intent = Intent(this, ProfileActivity::class.java).apply {
+                        putExtra("USERNAME", username)
+                        putExtra("PASSWORD", password)
+                    }
+                    startActivity(intent)
+                    overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+                }
+
+                .addOnFailureListener { e ->
+
+                    ToastManager.show(this, e.message, Toast.LENGTH_LONG)
+                }
         }
 
         // Set up register link click listener
