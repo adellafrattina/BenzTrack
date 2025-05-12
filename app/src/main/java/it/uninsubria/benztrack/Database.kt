@@ -454,79 +454,47 @@ public class Database {
         val taskSource = TaskCompletionSource<Boolean>()
         lateinit var errorMap: HashMap<String, String>
 
-        dbRef
-            .collection(USERS_COLLECTION)
-            .document(username)
-            .get()
-            .addOnSuccessListener { userDocument ->
+        isCarPresent(username, car.plate)
+            .addOnSuccessListener { carPresent ->
 
-                if (userDocument.exists()) {
+                if (carPresent) {
 
-                    // Check car parameters
-                    errorMap = checkNewCarParameters(car)
-
-                    dbRef
-                        .collection(USERS_COLLECTION)
-                        .document(username)
-                        .collection(CARS_COLLECTION)
-                        .document(car.plate)
-                        .get()
-                        .addOnSuccessListener { carDocument ->
-
-                            if (carDocument.exists()) {
-
-                                taskSource.setException(CarException(
-                                    "A car with the same plate is already present",
-                                    if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
-                                    if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
-                                    if (errorMap[MAINTENANCE_DATE_FILED] != null) errorMap[MAINTENANCE_DATE_FILED]!! else "",
-                                    if (errorMap[INSURANCE_DATE_FILED] != null)   errorMap[INSURANCE_DATE_FILED]!! else "",
-                                    if (errorMap[TAX_DATE_FILED] != null)         errorMap[TAX_DATE_FILED]!! else ""
-                                ))
-                            }
-
-                            else {
-
-                                if (errorMap.isEmpty()) {
-
-                                    dbRef
-                                        .collection(USERS_COLLECTION)
-                                        .document(username)
-                                        .collection(CARS_COLLECTION)
-                                        .document(car.plate)
-                                        .set(car)
-                                        .addOnSuccessListener {
-
-                                            taskSource.setResult(true)
-                                        }
-                                        .addOnFailureListener { e ->
-
-                                            taskSource.setException(e as CarException)
-                                        }
-                                }
-
-                                else {
-
-                                    taskSource.setException(CarException(
-                                        "Car creation has failed",
-                                        if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
-                                        if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
-                                        if (errorMap[MAINTENANCE_DATE_FILED] != null) errorMap[MAINTENANCE_DATE_FILED]!! else "",
-                                        if (errorMap[INSURANCE_DATE_FILED] != null)   errorMap[INSURANCE_DATE_FILED]!! else "",
-                                        if (errorMap[TAX_DATE_FILED] != null)         errorMap[TAX_DATE_FILED]!! else ""
-                                    ))
-                                }
-                            }
-                        }
-                        .addOnFailureListener { e ->
-
-                            taskSource.setException(e as CarException)
-                        }
+                    taskSource.setException(CarException("A car with the same plate is already present"))
                 }
 
                 else {
 
-                    taskSource.setException(CarException("The specified user does not exist"))
+                    errorMap = checkNewCarParameters(car)
+
+                    if (errorMap.isEmpty()) {
+
+                        dbRef
+                            .collection(USERS_COLLECTION)
+                            .document(username)
+                            .collection(CARS_COLLECTION)
+                            .document(car.plate)
+                            .set(car)
+                            .addOnSuccessListener {
+
+                                taskSource.setResult(true)
+                            }
+                            .addOnFailureListener { e ->
+
+                                taskSource.setException(e as CarException)
+                            }
+                    }
+
+                    else {
+
+                        taskSource.setException(CarException(
+                            "Car creation has failed",
+                            if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
+                            if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
+                            if (errorMap[MAINTENANCE_DATE_FILED] != null) errorMap[MAINTENANCE_DATE_FILED]!! else "",
+                            if (errorMap[INSURANCE_DATE_FILED] != null)   errorMap[INSURANCE_DATE_FILED]!! else "",
+                            if (errorMap[TAX_DATE_FILED] != null)         errorMap[TAX_DATE_FILED]!! else ""
+                        ))
+                    }
                 }
             }
             .addOnFailureListener { e ->
@@ -547,103 +515,87 @@ public class Database {
 
         val taskSource = TaskCompletionSource<Boolean>()
 
-        isUserPresent(username)
-            .addOnSuccessListener { userPresent ->
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
 
-                if (userPresent) {
+                if (carPresent) {
 
-                    isCarPresent(username, plate)
-                        .addOnSuccessListener { carPresent ->
+                    // Delete refills collection
+                    val refillsPath = dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(REFILLS_COLLECTION)
 
-                            if (carPresent) {
+                    deleteSubcollection(refillsPath)
+                        .addOnFailureListener { e ->
 
-                                // Delete refills collection
-                                val refillsPath = dbRef
-                                    .collection(USERS_COLLECTION)
-                                    .document(username)
-                                    .collection(CARS_COLLECTION)
-                                    .document(plate)
-                                    .collection(REFILLS_COLLECTION)
+                            taskSource.setException(e as CarException)
+                        }
 
-                                deleteSubcollection(refillsPath)
-                                    .addOnFailureListener { e ->
+                    // Delete maintenance collection
+                    val maintenancePath = dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(MAINTENANCE_COLLECTION)
 
-                                        taskSource.setException(e as CarException)
-                                    }
+                    deleteSubcollection(maintenancePath)
+                        .addOnFailureListener { e ->
 
-                                // Delete maintenance collection
-                                val maintenancePath = dbRef
-                                    .collection(USERS_COLLECTION)
-                                    .document(username)
-                                    .collection(CARS_COLLECTION)
-                                    .document(plate)
-                                    .collection(MAINTENANCE_COLLECTION)
+                            taskSource.setException(e as CarException)
+                        }
 
-                                deleteSubcollection(maintenancePath)
-                                    .addOnFailureListener { e ->
+                    // Delete insurance collection
+                    val insurancePath = dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(INSURANCE_COLLECTION)
 
-                                        taskSource.setException(e as CarException)
-                                    }
+                    deleteSubcollection(insurancePath)
+                        .addOnFailureListener { e ->
 
-                                // Delete insurance collection
-                                val insurancePath = dbRef
-                                    .collection(USERS_COLLECTION)
-                                    .document(username)
-                                    .collection(CARS_COLLECTION)
-                                    .document(plate)
-                                    .collection(INSURANCE_COLLECTION)
+                            taskSource.setException(e as CarException)
+                        }
 
-                                deleteSubcollection(insurancePath)
-                                    .addOnFailureListener { e ->
+                    // Delete tax collection
+                    val taxPath = dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(TAX_COLLECTION)
 
-                                        taskSource.setException(e as CarException)
-                                    }
+                    deleteSubcollection(taxPath)
+                        .addOnFailureListener { e ->
 
-                                // Delete tax collection
-                                val taxPath = dbRef
-                                    .collection(USERS_COLLECTION)
-                                    .document(username)
-                                    .collection(CARS_COLLECTION)
-                                    .document(plate)
-                                    .collection(TAX_COLLECTION)
+                            taskSource.setException(e as CarException)
+                        }
 
-                                deleteSubcollection(taxPath)
-                                    .addOnFailureListener { e ->
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .delete()
+                        .addOnSuccessListener {
 
-                                        taskSource.setException(e as CarException)
-                                    }
+                            taskSource.setResult(true)
+                        }
+                        .addOnFailureListener { e ->
 
-                                dbRef
-                                    .collection(USERS_COLLECTION)
-                                    .document(username)
-                                    .collection(CARS_COLLECTION)
-                                    .document(plate)
-                                    .delete()
-                                    .addOnSuccessListener {
-
-                                        taskSource.setResult(true)
-                                    }
-                                    .addOnFailureListener { e ->
-
-                                        taskSource.setException(e as CarException)
-                                    }
-                            }
-
-                            else {
-
-                                taskSource.setException(CarException("The user does not have the specified car"))
-                            }
+                            taskSource.setException(e as CarException)
                         }
                 }
 
                 else {
 
-                    taskSource.setException(CarException("The user does not exist"))
+                    taskSource.setException(CarException("The user does not have the specified car"))
                 }
-            }
-            .addOnFailureListener { e ->
-
-                taskSource.setException(e as CarException)
             }
 
         return taskSource.task
