@@ -1,10 +1,16 @@
 package it.uninsubria.benztrack
 
+import android.util.Log
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.firebase.Firebase
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import java.security.MessageDigest
+import java.time.LocalDate
 
 /**
  * The database class
@@ -33,11 +39,16 @@ public class Database {
         public const val FUEL_FIELD = "fuel"
         public const val CO2_FACTOR_FIELD = "co2factor"
         public const val WEIGHT_FIELD = "weight"
+        public const val WIDTH_FIELD = "width"
         public const val LENGTH_FIELD = "length"
         public const val HEIGHT_FIELD = "height"
+        public const val SEARCH_TERMS_FIELD = "searchterms"
 
         public const val PLATE_FIELD = "plate"
         public const val MODEL_FIELD = "model"
+        public const val MAINTENANCE_DATE_FILED = "maintenancedate"
+        public const val INSURANCE_DATE_FILED = "insurance"
+        public const val TAX_DATE_FILED = "taxdate"
 
         public const val DATE_FIELD = "date"
         public const val POSITION_FIELD = "position"
@@ -66,11 +77,15 @@ public class Database {
                 if (document.exists()) {
 
                     val storedPassword = document.getString(PASSWORD_FIELD)
-                    if (storedPassword == password.hashCode().toString()) {
+                    if (storedPassword == sha256(password)) {
 
                         val user = document.toObject(User::class.java)
-                        if (user != null)
+                        if (user != null) {
+
+                            user.password = password
                             taskSource.setResult(user)
+                        }
+
                         else
                             taskSource.setException(LoginException("User object is null"))
                     }
@@ -159,7 +174,7 @@ public class Database {
                         if (errorMap.isEmpty()) {
 
                             // Hash the password before storing it into the database
-                            user.password = user.password.hashCode().toString()
+                            user.password = sha256(user.password)
 
                             dbRef
                                 .collection(USERS_COLLECTION)
@@ -192,6 +207,548 @@ public class Database {
                     taskSource.setException(e as RegistrationException)
                 }
         }
+
+        return taskSource.task
+    }
+
+    /**
+     * Creates a new car model. It will check if the model parameters are valid. Warning: once created, it can't be removed
+     *
+     * @param model The car model
+     */
+    public fun createCarModel(model: CarModel): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+        val errorMap = HashMap<String, String>()
+
+        // Check name
+        if (model.name.isEmpty())
+            errorMap[NAME_FIELD] = "This field must not be empty"
+
+        // Check year
+        if (model.year < 1900 || model.year > LocalDate.now().year)
+            errorMap[YEAR_FIELD] = "The year must be valid"
+
+        // Check car
+        if (model.capacity < 49) // Smallest possible car (From what I've researched)
+            errorMap[CAPACITY_FIELD] = "The capacity must be valid"
+
+        // Check CO2 factor
+        if (model.co2factor < 0)
+            errorMap[CO2_FACTOR_FIELD] = "The CO2 factor must be valid"
+
+        // Check weight
+        if (model.weight < 50) // Lightest possible car (From what I've researched)
+            errorMap[WEIGHT_FIELD] = "The weight must be valid"
+
+        // Check weight
+        if (model.width < 1) // Smallest possible car (From what I've researched)
+            errorMap[WIDTH_FIELD] = "The width must be valid"
+
+        // Check length
+        if (model.length < 2) // Shortest possible car (From what I've researched)
+            errorMap[LENGTH_FIELD] = "The length must be valid"
+
+        // Check height
+        if (model.height < 1) // Shortest possible car (From what I've researched)
+            errorMap[HEIGHT_FIELD] = "The height must be valid"
+
+        if (errorMap.isEmpty()) {
+
+            dbRef
+                .collection(MODELS_COLLECTION)
+                .document(sha256(model.toString()))
+                .get()
+                .addOnSuccessListener { document ->
+
+                    // The car model already exists
+                    if (document.exists()) {
+
+                        errorMap["message"] = "This car model already exists"
+                        taskSource.setException(CarModelException(message=errorMap["message"]!!))
+                    }
+
+                    else {
+
+                        // Add search terms
+                        val terms = model.name.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
+                        for (term in terms)
+                            model.searchterms.add(term.uppercase())
+
+                        dbRef
+                            .collection(MODELS_COLLECTION)
+                            .document(sha256(model.toString()))
+                            .set(model)
+                            .addOnSuccessListener {
+
+                                taskSource.setResult(true)
+                            }
+                            .addOnFailureListener { e ->
+
+                                taskSource.setException(e as CarModelException)
+                            }
+                    }
+                }
+                .addOnFailureListener { e ->
+
+                    taskSource.setException(e as CarModelException)
+                }
+        }
+
+        else {
+
+            errorMap["message"] = "This car model cannot exist"
+            taskSource.setException(CarModelException(
+                if (errorMap["message"] != null)        errorMap["message"]!! else "" ,
+                if (errorMap[NAME_FIELD] != null)       errorMap[NAME_FIELD]!! else "",
+                if (errorMap[YEAR_FIELD] != null)       errorMap[YEAR_FIELD]!! else "",
+                if (errorMap[CAPACITY_FIELD] != null)   errorMap[CAPACITY_FIELD]!! else "",
+                if (errorMap[FUEL_FIELD] != null)       errorMap[FUEL_FIELD]!! else "",
+                if (errorMap[CO2_FACTOR_FIELD] != null) errorMap[CO2_FACTOR_FIELD]!! else "",
+                if (errorMap[WEIGHT_FIELD] != null)     errorMap[WEIGHT_FIELD]!! else "",
+                if (errorMap[WIDTH_FIELD] != null)      errorMap[WIDTH_FIELD]!! else "",
+                if (errorMap[LENGTH_FIELD] != null)     errorMap[LENGTH_FIELD]!! else "",
+                if (errorMap[HEIGHT_FIELD] != null)     errorMap[HEIGHT_FIELD]!! else ""))
+        }
+
+        return taskSource.task
+    }
+
+    /**
+     * Searches the car model by name
+     *
+     * @param name The string the user typed. It will be used to search all the matching car model's name
+     */
+    public fun searchCarModelByName(name: String): Task<ArrayList<CarModel>> {
+
+        val taskSource = TaskCompletionSource<ArrayList<CarModel>>()
+        val models = ArrayList<CarModel>()
+
+        if (name.trim().isEmpty()) {
+
+            taskSource.setException(Exception("Cannot find the specified model"))
+
+            return taskSource.task
+        }
+
+        val terms = name.trim().uppercase().split("\\s+".toRegex()).filter { it.isNotBlank() }
+
+        // Search by searchterms array
+        dbRef
+            .collection(MODELS_COLLECTION)
+            .whereArrayContainsAny(SEARCH_TERMS_FIELD, terms)
+            .get()
+            .addOnSuccessListener { primaryQuery ->
+
+                if (!primaryQuery.isEmpty) {
+
+                    for (document in primaryQuery) {
+
+                        val model = document.toObject(CarModel::class.java)
+                        models.add(model)
+                    }
+
+                    taskSource.setResult(models)
+                }
+
+                else {
+
+                    // Alternative type of search if the searchterms array was null
+                    dbRef
+                        .collection(MODELS_COLLECTION)
+                        .whereGreaterThanOrEqualTo(NAME_FIELD, name.trim().uppercase())
+                        .whereLessThan(NAME_FIELD, name + '\uf8ff')
+                        .get()
+                        .addOnSuccessListener { secondaryQuery ->
+
+                            if (!secondaryQuery.isEmpty) {
+
+                                for (document in secondaryQuery) {
+
+                                    val model = document.toObject(CarModel::class.java)
+                                    models.add(model)
+                                }
+
+                                taskSource.setResult(models)
+                            }
+
+                            else {
+
+                                taskSource.setException(Exception("Cannot find the specified model"))
+                            }
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e)
+                        }
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e)
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Gets the document reference of a specified car model
+     *
+     * @param model The car's model
+     */
+    public fun getCarModelDocumentReference(model: CarModel): Task<DocumentReference?> {
+
+        val taskSource = TaskCompletionSource<DocumentReference?>()
+
+        dbRef
+            .collection(MODELS_COLLECTION)
+            .document(sha256(model.toString()))
+            .get()
+            .addOnSuccessListener { document ->
+
+                if (document.exists())
+                    taskSource.setResult(document.reference)
+                else
+                    taskSource.setException(Exception("Cannot find the specified model"))
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e)
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Adds a new car to the user's car collection
+     *
+     * @param username The user that desires to monitor a new car
+     * @param car The actual car. It needs to be valid
+     */
+    public fun addNewCar(username: String, car: Car): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+        lateinit var errorMap: HashMap<String, String>
+
+        dbRef
+            .collection(USERS_COLLECTION)
+            .document(username)
+            .get()
+            .addOnSuccessListener { userDocument ->
+
+                if (userDocument.exists()) {
+
+                    // Check car parameters
+                    errorMap = checkNewCarParameters(car)
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(car.plate)
+                        .get()
+                        .addOnSuccessListener { carDocument ->
+
+                            if (carDocument.exists()) {
+
+                                taskSource.setException(CarException(
+                                    "A car with the same plate is already present",
+                                    if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
+                                    if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
+                                    if (errorMap[MAINTENANCE_DATE_FILED] != null) errorMap[MAINTENANCE_DATE_FILED]!! else "",
+                                    if (errorMap[INSURANCE_DATE_FILED] != null)   errorMap[INSURANCE_DATE_FILED]!! else "",
+                                    if (errorMap[TAX_DATE_FILED] != null)         errorMap[TAX_DATE_FILED]!! else ""
+                                ))
+                            }
+
+                            else {
+
+                                if (errorMap.isEmpty()) {
+
+                                    dbRef
+                                        .collection(USERS_COLLECTION)
+                                        .document(username)
+                                        .collection(CARS_COLLECTION)
+                                        .document(car.plate)
+                                        .set(car)
+                                        .addOnSuccessListener {
+
+                                            taskSource.setResult(true)
+                                        }
+                                        .addOnFailureListener { e ->
+
+                                            taskSource.setException(e as CarException)
+                                        }
+                                }
+
+                                else {
+
+                                    taskSource.setException(CarException(
+                                        "Car creation has failed",
+                                        if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
+                                        if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
+                                        if (errorMap[MAINTENANCE_DATE_FILED] != null) errorMap[MAINTENANCE_DATE_FILED]!! else "",
+                                        if (errorMap[INSURANCE_DATE_FILED] != null)   errorMap[INSURANCE_DATE_FILED]!! else "",
+                                        if (errorMap[TAX_DATE_FILED] != null)         errorMap[TAX_DATE_FILED]!! else ""
+                                    ))
+                                }
+                            }
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as CarException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(CarException("The specified user does not exist"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as CarException)
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Deletes a car from the user's car collection
+     *
+     * @param username The car owner's id
+     * @param plate The car's plate
+     */
+    public fun deleteCar(username: String, plate: String): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        isUserPresent(username)
+            .addOnSuccessListener { userPresent ->
+
+                if (userPresent) {
+
+                    isCarPresent(username, plate)
+                        .addOnSuccessListener { carPresent ->
+
+                            if (carPresent) {
+
+                                // Delete refills collection
+                                val refillsPath = dbRef
+                                    .collection(USERS_COLLECTION)
+                                    .document(username)
+                                    .collection(CARS_COLLECTION)
+                                    .document(plate)
+                                    .collection(REFILLS_COLLECTION)
+
+                                deleteSubcollection(refillsPath)
+                                    .addOnFailureListener { e ->
+
+                                        taskSource.setException(e as CarException)
+                                    }
+
+                                // Delete maintenance collection
+                                val maintenancePath = dbRef
+                                    .collection(USERS_COLLECTION)
+                                    .document(username)
+                                    .collection(CARS_COLLECTION)
+                                    .document(plate)
+                                    .collection(MAINTENANCE_COLLECTION)
+
+                                deleteSubcollection(maintenancePath)
+                                    .addOnFailureListener { e ->
+
+                                        taskSource.setException(e as CarException)
+                                    }
+
+                                // Delete insurance collection
+                                val insurancePath = dbRef
+                                    .collection(USERS_COLLECTION)
+                                    .document(username)
+                                    .collection(CARS_COLLECTION)
+                                    .document(plate)
+                                    .collection(INSURANCE_COLLECTION)
+
+                                deleteSubcollection(insurancePath)
+                                    .addOnFailureListener { e ->
+
+                                        taskSource.setException(e as CarException)
+                                    }
+
+                                // Delete tax collection
+                                val taxPath = dbRef
+                                    .collection(USERS_COLLECTION)
+                                    .document(username)
+                                    .collection(CARS_COLLECTION)
+                                    .document(plate)
+                                    .collection(TAX_COLLECTION)
+
+                                deleteSubcollection(taxPath)
+                                    .addOnFailureListener { e ->
+
+                                        taskSource.setException(e as CarException)
+                                    }
+
+                                dbRef
+                                    .collection(USERS_COLLECTION)
+                                    .document(username)
+                                    .collection(CARS_COLLECTION)
+                                    .document(plate)
+                                    .delete()
+                                    .addOnSuccessListener {
+
+                                        taskSource.setResult(true)
+                                    }
+                                    .addOnFailureListener { e ->
+
+                                        taskSource.setException(e as CarException)
+                                    }
+                            }
+
+                            else {
+
+                                taskSource.setException(CarException("The user does not have the specified car"))
+                            }
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(CarException("The user does not exist"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as CarException)
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Hashes a string with Secure Hashing Algorithm with 256 characters
+     */
+    private fun sha256(input: String): String {
+
+        val bytes = input.toByteArray()
+        val md = MessageDigest.getInstance("SHA-256")
+        val digest = md.digest(bytes)
+
+        return digest.joinToString("") { "%02x".format(it) }
+    }
+
+    /**
+     * Checks if the user is present
+     *
+     * @param username The user's id
+     */
+    private fun isUserPresent(username: String): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        dbRef
+            .collection(USERS_COLLECTION)
+            .document(username)
+            .get()
+            .addOnSuccessListener { document ->
+
+                taskSource.setResult(document.exists())
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e)
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Checks if the car is present
+     *
+     * @param username The car owner's id
+     * @param plate The car's plate
+     */
+    private fun isCarPresent(username: String, plate: String): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        dbRef
+            .collection(USERS_COLLECTION)
+            .document(username)
+            .collection(CARS_COLLECTION)
+            .document(plate)
+            .get()
+            .addOnSuccessListener { document ->
+
+                taskSource.setResult(document.exists())
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e)
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Checks if the car parameters are valid
+     *
+     * @param car The desired car
+     */
+    private fun checkNewCarParameters(car: Car): HashMap<String, String> {
+
+        val errorMap = HashMap<String, String>()
+
+        // Check plate
+        if (car.plate.isEmpty())
+            errorMap[PLATE_FIELD] = "This field must not be empty"
+
+        // Check name
+        if (car.name.isEmpty())
+            errorMap[NAME_FIELD] = "This field must not be empty"
+
+        // Check maintenance date
+        if (car.maintenancedate != null && car.maintenancedate!! < Timestamp.now())
+            errorMap[MAINTENANCE_DATE_FILED] = "The maintenance date must be valid"
+
+        // Check insurance date
+        if (car.insurancedate != null && car.insurancedate!! < Timestamp.now())
+            errorMap[INSURANCE_DATE_FILED] = "The insurance date must be valid"
+
+        // Check tax date
+        if (car.taxdate != null && car.taxdate!! < Timestamp.now())
+            errorMap[TAX_DATE_FILED] = "The tax date must be valid"
+
+        return errorMap
+    }
+
+    /**
+     * Deletes a subcollection
+     *
+     * @param subcollection The collection reference
+     */
+    private fun deleteSubcollection(subcollection: CollectionReference): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        subcollection
+            .get()
+            .addOnSuccessListener { query ->
+
+                if (!query.isEmpty) {
+
+                    for (doc in query.documents) {
+
+                        doc.reference.delete()
+                    }
+                }
+
+                taskSource.setResult(true)
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e)
+            }
 
         return taskSource.task
     }

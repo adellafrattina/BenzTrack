@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.firestore.DocumentReference
 
 class MainActivity : AppCompatActivity() {
 
@@ -13,35 +14,50 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val u = User()
-        u.username = "admin"
-        u.password = "admin"
-        u.name = "admin"
-        u.surname = "admin"
-        u.email = "benztrackdatabase@gmail.com"
+        val car = Car()
+        car.name = "Macchina di mia mamma"
+        car.plate = "EG575AB"
+        car.maintenancedate = null
+        car.insurancedate = null
+        car.taxdate = null
 
         val button: Button = findViewById(R.id.button_greeting)
         button.setOnClickListener {
 
             db
-                .registration(u)
-                .addOnSuccessListener {
+                .searchCarModelByName("opel")
+                .addOnSuccessListener { models ->
 
-                    ToastManager.show(this, "Registration was successful", Toast.LENGTH_SHORT)
+                    if (models.isNotEmpty()) {
+
+                        db.getCarModelDocumentReference(models[0])
+                            .addOnSuccessListener { document ->
+
+                                car.model = document
+
+                                db.deleteCar("admin", "123456")
+                                    .addOnSuccessListener {
+
+                                        ToastManager.show(this, "Car deleted successfully", Toast.LENGTH_SHORT)
+                                    }
+                                    .addOnFailureListener { e ->
+
+                                        ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
+
+                                        e as CarException
+                                        if (e.plate.isNotEmpty())
+                                            Log.e("test", e.plate)
+                                        if (e.name.isNotEmpty())
+                                            Log.e("test", e.name)
+                                    }
+                            }
+                            .addOnFailureListener { e ->
+
+                                ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
+                            }
+                    }
                 }
                 .addOnFailureListener { e ->
-
-                    e as RegistrationException
-                    if (e.username.isNotBlank())
-                        Log.e("test", e.username)
-                    if (e.password.isNotBlank())
-                        Log.e("test", e.password)
-                    if (e.email.isNotBlank())
-                        Log.e("test", e.email)
-                    if (e.name.isNotBlank())
-                        Log.e("test", e.name)
-                    if (e.surname.isNotBlank())
-                        Log.e("test", e.surname)
 
                     ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
                 }
