@@ -66,32 +66,4 @@ class RegistrationActivity : AppCompatActivity() {
             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
         }
     }
-
-    private fun validateAndRegister() {
-        val username = usernameEditText.text.toString().trim()
-        val name = nameEditText.text.toString().trim()
-        val surname = surnameEditText.text.toString().trim()
-        val email = emailEditText.text.toString().trim()
-        val password = passwordEditText.text.toString().trim()
-
-        // Validate input fields
-        if (username.isEmpty() || name.isEmpty() || surname.isEmpty() ||
-            email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Simple email validation
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            Toast.makeText(this, "Please enter a valid email address", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Password length validation
-        if (password.length < 6) {
-            Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
-            return
-        }
-    }
-
 }
