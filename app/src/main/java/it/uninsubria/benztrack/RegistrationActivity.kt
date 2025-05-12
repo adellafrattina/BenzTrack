@@ -33,7 +33,35 @@ class RegistrationActivity : AppCompatActivity() {
 
         // Set up register button click listener
         registerButton.setOnClickListener {
-            validateAndRegister()
+
+            val user = User()
+
+            user.username = usernameEditText.text.toString().trim()
+            user.name = nameEditText.text.toString().trim()
+            user.surname = surnameEditText.text.toString().trim()
+            user.email = emailEditText.text.toString().trim()
+            user.password = passwordEditText.text.toString().trim()
+
+            database.registration(user)
+                .addOnSuccessListener {
+
+                    ToastManager.show(this, "Registration successful!", Toast.LENGTH_SHORT)
+
+                    val intent = Intent(this, ProfileActivity::class.java).apply {
+                        putExtra("USERNAME", user.username)
+                        putExtra("PASSWORD", user.password)
+                        putExtra("NAME", user.name)
+                        putExtra("SURNAME", user.surname)
+                        putExtra("EMAIL", user.email)
+                    }
+                    startActivity(intent)
+                    overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+                }
+
+                .addOnFailureListener { e ->
+
+                    ToastManager.show(this, e.message, Toast.LENGTH_LONG)
+                }
         }
 
         // Set up login link click listener
@@ -69,17 +97,6 @@ class RegistrationActivity : AppCompatActivity() {
             Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
             return
         }
-
-        // Registration successful, create intent to open ProfileActivity
-        val intent = Intent(this, ProfileActivity::class.java).apply {
-            putExtra("USERNAME", username)
-            putExtra("PASSWORD", password)
-            putExtra("NAME", name)
-            putExtra("SURNAME", surname)
-            putExtra("EMAIL", email)
-        }
-        startActivity(intent)
-        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
     }
 
 }
