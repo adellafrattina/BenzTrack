@@ -13,35 +13,42 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val u = User()
-        u.username = "admin"
-        u.password = "admin"
-        u.name = "admin"
-        u.surname = "admin"
-        u.email = "benztrackdatabase@gmail.com"
+        val model = CarModel()
+        model.name = "Alfa Romeo Tonale"
+        model.fuel = FuelType.Petrol
+        model.year = 2023
+        model.capacity = 1332
+        model.co2factor = 130.0f
+        model.weight = 1600.0f
+        model.length = 4.528f
+        model.height = 1.614f
 
         val button: Button = findViewById(R.id.button_greeting)
         button.setOnClickListener {
 
             db
-                .registration(u)
+                .createCarModel(model)
                 .addOnSuccessListener {
 
-                    ToastManager.show(this, "Registration was successful", Toast.LENGTH_SHORT)
+                    ToastManager.show(this, "Creation was successful", Toast.LENGTH_SHORT)
                 }
                 .addOnFailureListener { e ->
 
-                    e as RegistrationException
-                    if (e.username.isNotBlank())
-                        Log.e("test", e.username)
-                    if (e.password.isNotBlank())
-                        Log.e("test", e.password)
-                    if (e.email.isNotBlank())
-                        Log.e("test", e.email)
+                    e as CarModelException
                     if (e.name.isNotBlank())
                         Log.e("test", e.name)
-                    if (e.surname.isNotBlank())
-                        Log.e("test", e.surname)
+                    if (e.year.isNotBlank())
+                        Log.e("test", e.year)
+                    if (e.capacity.isNotBlank())
+                        Log.e("test", e.capacity)
+                    if (e.co2factor.isNotBlank())
+                        Log.e("test", e.co2factor)
+                    if (e.weight.isNotBlank())
+                        Log.e("test", e.weight)
+                    if (e.length.isNotBlank())
+                        Log.e("test", e.length)
+                    if (e.height.isNotBlank())
+                        Log.e("test", e.height)
 
                     ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
                 }

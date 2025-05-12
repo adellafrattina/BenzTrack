@@ -48,6 +48,12 @@ public data class CarModel(
 ) {
 
     constructor(): this("", 1970, 0, FuelType.Petrol, 0.0f, 0.0f, 0.0f, 0.0f)
+
+    @Override
+    public override fun toString(): String {
+
+        return "$name\n$year\n$capacity\n$fuel\n$co2factor\n$weight\n$length\n$height"
+    }
 }
 
 public data class Car(

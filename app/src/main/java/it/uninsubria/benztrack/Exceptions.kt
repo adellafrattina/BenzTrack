@@ -17,3 +17,19 @@ public class RegistrationException(
 
     constructor(message: String): this(message, "", "", "", "", "")
 }
+
+public class CarModelException(
+
+    message: String,
+    val name: String,
+    val year: String,
+    val capacity: String,
+    val fuel: String,
+    val co2factor: String,
+    val weight: String,
+    val length: String,
+    val height: String
+) : Exception(message) {
+
+    constructor(message: String): this(message, "", "", "", "", "", "", "", "")
+}

@@ -3,8 +3,13 @@ package it.uninsubria.benztrack
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.firebase.Firebase
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import java.security.MessageDigest
+import java.time.LocalDate
+import java.util.Date
+import java.util.Locale
 
 /**
  * The database class
@@ -194,6 +199,108 @@ public class Database {
         }
 
         return taskSource.task
+    }
+
+    /**
+     * Creates a new car model. It will check if the model parameters are valid. Warning: once created, it can't be removed
+     *
+     * @param model The car model
+     */
+    public fun createCarModel(model: CarModel): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+        val errorMap = HashMap<String, String>()
+
+        // Check name
+        if (model.name.isEmpty())
+            errorMap[NAME_FIELD] = "This field must not be empty"
+
+        // Check year
+        if (model.year < 1900 || model.year > LocalDate.now().year)
+            errorMap[YEAR_FIELD] = "The year must be valid"
+
+        // Check car
+        if (model.capacity < 49) // Smallest possible car (From what I've researched)
+            errorMap[CAPACITY_FIELD] = "The capacity must be valid"
+
+        // Check CO2 factor
+        if (model.co2factor < 0)
+            errorMap[CO2_FACTOR_FIELD] = "The CO2 factor must be valid"
+
+        // Check weight
+        if (model.weight < 50) // Lightest possible car (From what I've researched)
+            errorMap[WEIGHT_FIELD] = "The weight must be valid"
+
+        // Check length
+        if (model.length < 2) // Shortest possible car (From what I've researched)
+            errorMap[LENGTH_FIELD] = "The length must be valid"
+
+        // Check height
+        if (model.height < 1) // Shortest possible car (From what I've researched)
+            errorMap[HEIGHT_FIELD] = "The height must be valid"
+
+        if (errorMap.isEmpty()) {
+
+            dbRef
+                .collection(MODELS_COLLECTION)
+                .document(sha256(model.toString()))
+                .get()
+                .addOnSuccessListener { document ->
+
+                    // The car model already exists
+                    if (document.exists()) {
+
+                        errorMap["message"] = "This car model already exists"
+                        taskSource.setException(CarModelException(message=errorMap["message"]!!))
+                    }
+
+                    else {
+
+                        dbRef
+                            .collection(MODELS_COLLECTION)
+                            .document(sha256(model.toString()))
+                            .set(model)
+                            .addOnSuccessListener {
+
+                                taskSource.setResult(true)
+                            }
+                            .addOnFailureListener { e ->
+
+                                taskSource.setException(e as CarModelException)
+                            }
+                    }
+                }
+                .addOnFailureListener { e ->
+
+                    taskSource.setException(e as CarModelException)
+                }
+        }
+
+        else {
+
+            errorMap["message"] = "This car model cannot exist"
+            taskSource.setException(CarModelException(
+                if (errorMap["message"] != null)        errorMap["message"]!! else "" ,
+                if (errorMap[NAME_FIELD] != null)       errorMap[NAME_FIELD]!! else "",
+                if (errorMap[YEAR_FIELD] != null)       errorMap[YEAR_FIELD]!! else "",
+                if (errorMap[CAPACITY_FIELD] != null)   errorMap[CAPACITY_FIELD]!! else "",
+                if (errorMap[FUEL_FIELD] != null)       errorMap[FUEL_FIELD]!! else "",
+                if (errorMap[CO2_FACTOR_FIELD] != null) errorMap[CO2_FACTOR_FIELD]!! else "",
+                if (errorMap[WEIGHT_FIELD] != null)     errorMap[WEIGHT_FIELD]!! else "",
+                if (errorMap[LENGTH_FIELD] != null)     errorMap[LENGTH_FIELD]!! else "",
+                if (errorMap[HEIGHT_FIELD] != null)     errorMap[HEIGHT_FIELD]!! else ""))
+        }
+
+        return taskSource.task
+    }
+
+    private fun sha256(input: String): String {
+
+        val bytes = input.toByteArray()
+        val md = MessageDigest.getInstance("SHA-256")
+        val digest = md.digest(bytes)
+
+        return digest.joinToString("") { "%02x".format(it) }
     }
 
     /**
