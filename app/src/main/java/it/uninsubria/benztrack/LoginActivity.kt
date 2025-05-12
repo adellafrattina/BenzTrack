@@ -34,13 +34,10 @@ class LoginActivity : AppCompatActivity() {
             database.login(username, password)
                 .addOnSuccessListener { user ->
 
-                    ToastManager.show(this, "Login successful! :3", Toast.LENGTH_SHORT)
+                    ToastManager.show(this, "Login successful!", Toast.LENGTH_SHORT)
                     loggedUser = user
 
-                    val intent = Intent(this, ProfileActivity::class.java).apply {
-                        putExtra("USERNAME", username)
-                        putExtra("PASSWORD", password)
-                    }
+                    val intent = Intent(this, ProfileActivity::class.java)
                     startActivity(intent)
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
                 }
