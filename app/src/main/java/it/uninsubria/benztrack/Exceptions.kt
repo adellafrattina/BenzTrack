@@ -168,3 +168,34 @@ public class CarException(
 
     constructor(message: String): this(message, "", "" ,"", "", "")
 }
+
+public class RefillException(
+
+    /**
+     * Generic message
+     */
+    message: String,
+
+    /**
+     * Error with the position. If empty, then there are no errors
+     */
+    val position: String,
+
+    /**
+     * Error with the price per liter. If empty, then there are no errors
+     */
+    val ppl: String,
+
+    /**
+     * Error with the mileage. If empty, then there are no errors
+     */
+    val mileage: String,
+
+    /**
+     * Error with the amount. If empty, then there are no errors
+      */
+    val amount: String
+) : Exception(message) {
+
+    constructor(message: String): this(message, "", "", "", "")
+}

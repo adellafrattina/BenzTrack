@@ -648,6 +648,121 @@ public class Database {
     }
 
     /**
+     * Sets a new refill for a specific car of a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @param refill The actual refill data
+     */
+    public fun setNewRefill(username: String, plate: String, refill: Refill): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+        val errorMap = HashMap<String, String>()
+
+        isUserPresent(username)
+            .addOnSuccessListener { userPresent ->
+
+                if (userPresent) {
+
+                    isCarPresent(username, plate)
+                        .addOnSuccessListener { carPresent ->
+
+                            if (carPresent) {
+
+                                dbRef
+                                    .collection(USERS_COLLECTION)
+                                    .document(username)
+                                    .collection(CARS_COLLECTION)
+                                    .document(plate)
+                                    .collection(REFILLS_COLLECTION)
+                                    .orderBy(DATE_FIELD)
+                                    .limit(1)
+                                    .get()
+                                    .addOnSuccessListener { query ->
+
+                                        // Check that the mileage is greater than the last one (if there is one)
+                                        for (document in query.documents) {
+
+                                            val mileage = document.get(MILEAGE_FIELD) as Int
+                                            if (mileage > refill.mileage)
+                                                errorMap[MILEAGE_FIELD] = "The mileage value is not valid"
+                                        }
+
+                                        // Check position
+                                        if (refill.position.isEmpty())
+                                            errorMap[POSITION_FIELD] = "This value must not be empty"
+
+                                        // Check position
+                                        if (refill.ppl < 0)
+                                            errorMap[POSITION_FIELD] = "The price per liter cannot be negative"
+
+                                        // Check amount
+                                        if (refill.amount < 0)
+                                            errorMap[POSITION_FIELD] = "The amount cannot be negative"
+
+                                        // Check consistency
+                                        if (refill.amount != 0.0f && refill.ppl == 0.0f)
+                                            errorMap[AMOUNT_FIELD] = "The value is not consistent with the price per liter"
+
+                                        if (errorMap.isEmpty()) {
+
+                                            val timestamp = Timestamp.now()
+                                            refill.date = timestamp
+                                            dbRef
+                                                .collection(USERS_COLLECTION)
+                                                .document(username)
+                                                .collection(CARS_COLLECTION)
+                                                .document(plate)
+                                                .collection(REFILLS_COLLECTION)
+                                                .document(timestamp.toString())
+                                                .set(refill)
+                                                .addOnSuccessListener {
+
+                                                    taskSource.setResult(true)
+                                                }
+                                                .addOnFailureListener { e ->
+
+                                                    taskSource.setException(e as RefillException)
+                                                }
+                                        }
+
+                                        else {
+
+                                            taskSource.setException(RefillException(
+                                                "Failed to add new refill",
+                                                if (errorMap[POSITION_FIELD] != null)        errorMap[POSITION_FIELD]!! else "",
+                                                if (errorMap[PRICE_PER_LITER_FIELD] != null) errorMap[PRICE_PER_LITER_FIELD]!! else "",
+                                                if (errorMap[MILEAGE_FIELD] != null)         errorMap[MILEAGE_FIELD]!! else "",
+                                                if (errorMap[AMOUNT_FIELD] != null)          errorMap[AMOUNT_FIELD]!! else ""))
+                                        }
+                                    }
+                                    .addOnFailureListener { e ->
+
+                                        taskSource.setException(e as RefillException)
+                                    }
+                            }
+
+                            else {
+
+                                taskSource.setException(RefillException("The user does not have the specified car"))
+                            }
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(RefillException("The user does not exist"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as RefillException)
+            }
+
+        return taskSource.task
+    }
+
+    /**
      * Hashes a string with Secure Hashing Algorithm with 256 characters
      */
     private fun sha256(input: String): String {
