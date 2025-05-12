@@ -36,34 +36,22 @@ class ProfileActivity : AppCompatActivity() {
         emailLabelTextView = findViewById(R.id.label_email)
         backButton = findViewById(R.id.button_back)
 
-        // Get data from intent
-        val username = intent.getStringExtra("USERNAME") ?: ""
-        val password = intent.getStringExtra("PASSWORD") ?: ""
-        val name = intent.getStringExtra("NAME")
-        val surname = intent.getStringExtra("SURNAME")
-        val email = intent.getStringExtra("EMAIL")
+        // Get data from logged user
+        val username = loggedUser?.username
+        val password = loggedUser?.password
+        val name = loggedUser?.name
+        val surname = loggedUser?.surname
+        val email = loggedUser?.email
 
         // Set data to views
         usernameTextView.text = username
 
-        // Mask the password for security
-        val maskedPassword = "*".repeat(password.length)
-        passwordTextView.text = maskedPassword
+        passwordTextView.text = password
 
         // Check if additional fields are available (from registration)
-        if (name != null && surname != null && email != null) {
-            nameTextView.text = name
-            surnameTextView.text = surname
-            emailTextView.text = email
-        } else {
-            // Hide fields that aren't available
-            nameTextView.visibility = View.GONE
-            surnameTextView.visibility = View.GONE
-            emailTextView.visibility = View.GONE
-            nameLabelTextView.visibility = View.GONE
-            surnameLabelTextView.visibility = View.GONE
-            emailLabelTextView.visibility = View.GONE
-        }
+        nameTextView.text = name
+        surnameTextView.text = surname
+        emailTextView.text = email
 
         // Set up back button click listener
         backButton.setOnClickListener {

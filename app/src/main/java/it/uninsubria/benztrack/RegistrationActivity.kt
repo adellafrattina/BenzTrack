@@ -46,14 +46,9 @@ class RegistrationActivity : AppCompatActivity() {
                 .addOnSuccessListener {
 
                     ToastManager.show(this, "Registration successful!", Toast.LENGTH_SHORT)
+                    loggedUser = user
 
-                    val intent = Intent(this, ProfileActivity::class.java).apply {
-                        putExtra("USERNAME", user.username)
-                        putExtra("PASSWORD", user.password)
-                        putExtra("NAME", user.name)
-                        putExtra("SURNAME", user.surname)
-                        putExtra("EMAIL", user.email)
-                    }
+                    val intent = Intent(this, ProfileActivity::class.java)
                     startActivity(intent)
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
                 }

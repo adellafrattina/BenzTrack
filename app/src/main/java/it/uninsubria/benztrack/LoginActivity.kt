@@ -32,9 +32,10 @@ class LoginActivity : AppCompatActivity() {
             val password = passwordEditText.text.toString().trim()
 
             database.login(username, password)
-                .addOnSuccessListener {
+                .addOnSuccessListener { user ->
 
                     ToastManager.show(this, "Login successful! :3", Toast.LENGTH_SHORT)
+                    loggedUser = user
 
                     val intent = Intent(this, ProfileActivity::class.java).apply {
                         putExtra("USERNAME", username)

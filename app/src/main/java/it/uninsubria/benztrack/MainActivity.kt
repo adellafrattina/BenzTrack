@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.firestore.DocumentReference
 
 val database = Database()
-val loggedUser: User? = null
+var loggedUser: User? = null
 
 class MainActivity : AppCompatActivity() {
 
