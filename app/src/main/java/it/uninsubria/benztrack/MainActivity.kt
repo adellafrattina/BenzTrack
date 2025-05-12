@@ -10,16 +10,29 @@ var loggedUser: User? = null
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var loginButton: Button
+    private lateinit var registerButton: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val button: Button = findViewById(R.id.button_login)
-        button.setOnClickListener {
+        loginButton = findViewById(R.id.button_login)
+        registerButton = findViewById(R.id.button_register)
+
+        loginButton.setOnClickListener {
 
             val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+        }
+
+        registerButton.setOnClickListener {
+
+            val intent = Intent(this, RegistrationActivity::class.java)
+            startActivity(intent)
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         }
     }
 

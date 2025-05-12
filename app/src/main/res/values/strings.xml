@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">BenzTrack</string>
 
+    <!-- Welcome screen -->
+    <string name="welcome_message">Welcome to BenzTrack. Please log in or create a new account to continue.</string>
+
     <!-- Login screen -->
     <string name="login_title">BenzTrack Login</string>
     <string name="hint_username">Username</string>
