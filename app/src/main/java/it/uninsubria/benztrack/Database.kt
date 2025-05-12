@@ -1,8 +1,12 @@
 package it.uninsubria.benztrack
 
+import android.util.Log
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.firebase.Firebase
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import java.security.MessageDigest
@@ -42,6 +46,9 @@ public class Database {
 
         public const val PLATE_FIELD = "plate"
         public const val MODEL_FIELD = "model"
+        public const val MAINTENANCE_DATE_FILED = "maintenancedate"
+        public const val INSURANCE_DATE_FILED = "insurance"
+        public const val TAX_DATE_FILED = "taxdate"
 
         public const val DATE_FIELD = "date"
         public const val POSITION_FIELD = "position"
@@ -385,6 +392,240 @@ public class Database {
     }
 
     /**
+     * Gets the document reference of a specified car model
+     *
+     * @param model The car's model
+     */
+    public fun getCarModelDocumentReference(model: CarModel): Task<DocumentReference?> {
+
+        val taskSource = TaskCompletionSource<DocumentReference?>()
+
+        dbRef
+            .collection(MODELS_COLLECTION)
+            .document(sha256(model.toString()))
+            .get()
+            .addOnSuccessListener { document ->
+
+                if (document.exists())
+                    taskSource.setResult(document.reference)
+                else
+                    taskSource.setException(Exception("Cannot find the specified model"))
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e)
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Adds a new car to the user's car collection
+     *
+     * @param username The user that desires to monitor a new car
+     * @param car The actual car. It needs to be valid
+     */
+    public fun addNewCar(username: String, car: Car): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+        lateinit var errorMap: HashMap<String, String>
+
+        dbRef
+            .collection(USERS_COLLECTION)
+            .document(username)
+            .get()
+            .addOnSuccessListener { userDocument ->
+
+                if (userDocument.exists()) {
+
+                    // Check car parameters
+                    errorMap = checkNewCarParameters(car)
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(car.plate)
+                        .get()
+                        .addOnSuccessListener { carDocument ->
+
+                            if (carDocument.exists()) {
+
+                                taskSource.setException(CarException(
+                                    "A car with the same plate is already present",
+                                    if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
+                                    if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
+                                    if (errorMap[MAINTENANCE_DATE_FILED] != null) errorMap[MAINTENANCE_DATE_FILED]!! else "",
+                                    if (errorMap[INSURANCE_DATE_FILED] != null)   errorMap[INSURANCE_DATE_FILED]!! else "",
+                                    if (errorMap[TAX_DATE_FILED] != null)         errorMap[TAX_DATE_FILED]!! else ""
+                                ))
+                            }
+
+                            else {
+
+                                if (errorMap.isEmpty()) {
+
+                                    dbRef
+                                        .collection(USERS_COLLECTION)
+                                        .document(username)
+                                        .collection(CARS_COLLECTION)
+                                        .document(car.plate)
+                                        .set(car)
+                                        .addOnSuccessListener {
+
+                                            taskSource.setResult(true)
+                                        }
+                                        .addOnFailureListener { e ->
+
+                                            taskSource.setException(e as CarException)
+                                        }
+                                }
+
+                                else {
+
+                                    taskSource.setException(CarException(
+                                        "Car creation has failed",
+                                        if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
+                                        if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
+                                        if (errorMap[MAINTENANCE_DATE_FILED] != null) errorMap[MAINTENANCE_DATE_FILED]!! else "",
+                                        if (errorMap[INSURANCE_DATE_FILED] != null)   errorMap[INSURANCE_DATE_FILED]!! else "",
+                                        if (errorMap[TAX_DATE_FILED] != null)         errorMap[TAX_DATE_FILED]!! else ""
+                                    ))
+                                }
+                            }
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as CarException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(CarException("The specified user does not exist"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as CarException)
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Deletes a car from the user's car collection
+     *
+     * @param username The car owner's id
+     * @param plate The car's plate
+     */
+    public fun deleteCar(username: String, plate: String): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        isUserPresent(username)
+            .addOnSuccessListener { userPresent ->
+
+                if (userPresent) {
+
+                    isCarPresent(username, plate)
+                        .addOnSuccessListener { carPresent ->
+
+                            if (carPresent) {
+
+                                // Delete refills collection
+                                val refillsPath = dbRef
+                                    .collection(USERS_COLLECTION)
+                                    .document(username)
+                                    .collection(CARS_COLLECTION)
+                                    .document(plate)
+                                    .collection(REFILLS_COLLECTION)
+
+                                deleteSubcollection(refillsPath)
+                                    .addOnFailureListener { e ->
+
+                                        taskSource.setException(e as CarException)
+                                    }
+
+                                // Delete maintenance collection
+                                val maintenancePath = dbRef
+                                    .collection(USERS_COLLECTION)
+                                    .document(username)
+                                    .collection(CARS_COLLECTION)
+                                    .document(plate)
+                                    .collection(MAINTENANCE_COLLECTION)
+
+                                deleteSubcollection(maintenancePath)
+                                    .addOnFailureListener { e ->
+
+                                        taskSource.setException(e as CarException)
+                                    }
+
+                                // Delete insurance collection
+                                val insurancePath = dbRef
+                                    .collection(USERS_COLLECTION)
+                                    .document(username)
+                                    .collection(CARS_COLLECTION)
+                                    .document(plate)
+                                    .collection(INSURANCE_COLLECTION)
+
+                                deleteSubcollection(insurancePath)
+                                    .addOnFailureListener { e ->
+
+                                        taskSource.setException(e as CarException)
+                                    }
+
+                                // Delete tax collection
+                                val taxPath = dbRef
+                                    .collection(USERS_COLLECTION)
+                                    .document(username)
+                                    .collection(CARS_COLLECTION)
+                                    .document(plate)
+                                    .collection(TAX_COLLECTION)
+
+                                deleteSubcollection(taxPath)
+                                    .addOnFailureListener { e ->
+
+                                        taskSource.setException(e as CarException)
+                                    }
+
+                                dbRef
+                                    .collection(USERS_COLLECTION)
+                                    .document(username)
+                                    .collection(CARS_COLLECTION)
+                                    .document(plate)
+                                    .delete()
+                                    .addOnSuccessListener {
+
+                                        taskSource.setResult(true)
+                                    }
+                                    .addOnFailureListener { e ->
+
+                                        taskSource.setException(e as CarException)
+                                    }
+                            }
+
+                            else {
+
+                                taskSource.setException(CarException("The user does not have the specified car"))
+                            }
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(CarException("The user does not exist"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as CarException)
+            }
+
+        return taskSource.task
+    }
+
+    /**
      * Hashes a string with Secure Hashing Algorithm with 256 characters
      */
     private fun sha256(input: String): String {
@@ -394,6 +635,122 @@ public class Database {
         val digest = md.digest(bytes)
 
         return digest.joinToString("") { "%02x".format(it) }
+    }
+
+    /**
+     * Checks if the user is present
+     *
+     * @param username The user's id
+     */
+    private fun isUserPresent(username: String): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        dbRef
+            .collection(USERS_COLLECTION)
+            .document(username)
+            .get()
+            .addOnSuccessListener { document ->
+
+                taskSource.setResult(document.exists())
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e)
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Checks if the car is present
+     *
+     * @param username The car owner's id
+     * @param plate The car's plate
+     */
+    private fun isCarPresent(username: String, plate: String): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        dbRef
+            .collection(USERS_COLLECTION)
+            .document(username)
+            .collection(CARS_COLLECTION)
+            .document(plate)
+            .get()
+            .addOnSuccessListener { document ->
+
+                taskSource.setResult(document.exists())
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e)
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Checks if the car parameters are valid
+     *
+     * @param car The desired car
+     */
+    private fun checkNewCarParameters(car: Car): HashMap<String, String> {
+
+        val errorMap = HashMap<String, String>()
+
+        // Check plate
+        if (car.plate.isEmpty())
+            errorMap[PLATE_FIELD] = "This field must not be empty"
+
+        // Check name
+        if (car.name.isEmpty())
+            errorMap[NAME_FIELD] = "This field must not be empty"
+
+        // Check maintenance date
+        if (car.maintenancedate != null && car.maintenancedate!! < Timestamp.now())
+            errorMap[MAINTENANCE_DATE_FILED] = "The maintenance date must be valid"
+
+        // Check insurance date
+        if (car.insurancedate != null && car.insurancedate!! < Timestamp.now())
+            errorMap[INSURANCE_DATE_FILED] = "The insurance date must be valid"
+
+        // Check tax date
+        if (car.taxdate != null && car.taxdate!! < Timestamp.now())
+            errorMap[TAX_DATE_FILED] = "The tax date must be valid"
+
+        return errorMap
+    }
+
+    /**
+     * Deletes a subcollection
+     *
+     * @param subcollection The collection reference
+     */
+    private fun deleteSubcollection(subcollection: CollectionReference): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        subcollection
+            .get()
+            .addOnSuccessListener { query ->
+
+                if (!query.isEmpty) {
+
+                    for (doc in query.documents) {
+
+                        doc.reference.delete()
+                    }
+                }
+
+                taskSource.setResult(true)
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e)
+            }
+
+        return taskSource.task
     }
 
     /**

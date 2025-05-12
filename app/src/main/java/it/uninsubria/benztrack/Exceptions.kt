@@ -114,3 +114,44 @@ public class CarModelException(
 
     constructor(message: String): this(message, "", "", "", "", "", "", "", "", "")
 }
+
+/**
+ * When the car creation procedure fails
+ *
+ * @author adellafrattina
+ */
+public class CarException(
+
+    /**
+     * Generic message
+     */
+    message: String,
+
+    /**
+     * Error with the plate. If empty, then there are no errors
+     */
+    val plate: String,
+
+    /**
+     * Error with the name. If empty, then there are no errors
+     */
+    val name: String,
+
+    /**
+     * Error with the maintenance date. If empty, then there are no errors
+     */
+    val maintenancedate: String,
+
+    /**
+     * Error with the insurance date. If empty, then there are no errors
+     */
+    val insurancedate: String,
+
+    /**
+     * Error with the tax date. If empty, then there are no errors
+     */
+    val taxdate: String
+) : Exception(message) {
+
+    constructor(message: String): this(message, "", "" ,"", "", "")
+}

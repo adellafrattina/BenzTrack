@@ -123,17 +123,17 @@ public data class CarModel(
     var weight: Float,
 
     /**
-     * The model's width (in meters)
+     * The model's width (in centimeters)
      */
     var width: Float,
 
     /**
-     * The model's length (in meters)
+     * The model's length (in centimeters)
      */
     var length: Float,
 
     /**
-     * The model's height (in meters)
+     * The model's height (in centimeters)
      */
     var height: Float,
 
@@ -148,7 +148,7 @@ public data class CarModel(
     @Override
     public override fun toString(): String {
 
-        return "$name\n$year\n$capacity\n$fuel\n$co2factor\n$weight$width\n$length\n$height"
+        return "$name\n$year\n$capacity\n$fuel\n${co2factor.toInt().toFloat()}\n${weight.toInt().toFloat()}\n${length.toInt().toFloat()}\n${height.toInt().toFloat()}"
     }
 }
 
