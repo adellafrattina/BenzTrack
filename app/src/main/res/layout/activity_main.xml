@@ -12,18 +12,12 @@
         android:orientation="vertical"
         android:layout_centerInParent="true">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Click the button"
-            android:gravity="center"/>
-
         <Button
-            android:id="@+id/button_greeting"
+            android:id="@+id/button_login"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="click me"/>
+            android:text="@string/login_button"/>
 
     </LinearLayout>
 

@@ -1,3 +1,27 @@
 <resources>
     <string name="app_name">BenzTrack</string>
+
+    <!-- Login screen -->
+    <string name="login_title">BenzTrack Login</string>
+    <string name="hint_username">Username</string>
+    <string name="hint_password">Password</string>
+    <string name="login_button">Login</string>
+    <string name="login_link">Already have an account? Login here</string>
+
+    <!-- Registration screen -->
+    <string name="registration_title">Create Account</string>
+    <string name="hint_name">First Name</string>
+    <string name="hint_surname">Last Name</string>
+    <string name="hint_email">Email Address</string>
+    <string name="register_button">Register</string>
+    <string name="register_link">Don\'t have an account? Register here</string>
+
+    <!-- Profile screen -->
+    <string name="profile_title">User Profile</string>
+    <string name="label_username">Username:</string>
+    <string name="label_password">Password:</string>
+    <string name="label_name">Name:</string>
+    <string name="label_surname">Surname:</string>
+    <string name="label_email">Email:</string>
+    <string name="back_button">Back to Login</string>
 </resources>
