@@ -10,7 +10,9 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import java.security.MessageDigest
+import java.time.Instant
 import java.time.LocalDate
+import java.util.Date
 
 /**
  * The database class
@@ -763,6 +765,97 @@ public class Database {
     }
 
     /**
+     * Gets the refill data for a specific car of a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @param from The start date (null to get the oldest date)
+     * @param to The end date (by default the current date)
+     * @throws RefillException
+     */
+    public fun getRefillData(username: String, plate: String, from: Date? = null, to: Date = Date.from(Instant.now())) : Task<ArrayList<Refill>> {
+
+        val taskSource = TaskCompletionSource<ArrayList<Refill>>()
+
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    if (from != null) {
+
+                        dbRef
+                            .collection(USERS_COLLECTION)
+                            .document(username)
+                            .collection(CARS_COLLECTION)
+                            .document(plate)
+                            .collection(REFILLS_COLLECTION)
+                            .orderBy(DATE_FIELD)
+                            .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                            .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                            .get()
+                            .addOnSuccessListener { query ->
+
+                                val list = ArrayList<Refill>()
+                                for (document in query.documents) {
+
+                                    val refill = document.toObject(Refill::class.java)
+                                    if (refill != null)
+                                        list.add(refill)
+                                }
+
+                                taskSource.setResult(list)
+                            }
+                            .addOnFailureListener { e ->
+
+                                taskSource.setException(e as RefillException)
+                            }
+                    }
+
+                    else {
+
+                        dbRef
+                            .collection(USERS_COLLECTION)
+                            .document(username)
+                            .collection(CARS_COLLECTION)
+                            .document(plate)
+                            .collection(REFILLS_COLLECTION)
+                            .orderBy(DATE_FIELD)
+                            .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                            .get()
+                            .addOnSuccessListener { query ->
+
+                                val list = ArrayList<Refill>()
+                                for (document in query.documents) {
+
+                                    val refill = document.toObject(Refill::class.java)
+                                    if (refill != null)
+                                        list.add(refill)
+                                }
+
+                                taskSource.setResult(list)
+                            }
+                            .addOnFailureListener { e ->
+
+                                taskSource.setException(e as RefillException)
+                            }
+                    }
+                }
+
+                else {
+
+                    taskSource.setException(RefillException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as RefillException)
+            }
+
+        return taskSource.task
+    }
+
+    /**
      * Hashes a string with Secure Hashing Algorithm with 256 characters
      */
     private fun sha256(input: String): String {
@@ -809,15 +902,31 @@ public class Database {
 
         val taskSource = TaskCompletionSource<Boolean>()
 
-        dbRef
-            .collection(USERS_COLLECTION)
-            .document(username)
-            .collection(CARS_COLLECTION)
-            .document(plate)
-            .get()
-            .addOnSuccessListener { document ->
+        isUserPresent(username)
+            .addOnSuccessListener { userPresent ->
 
-                taskSource.setResult(document.exists())
+                if (userPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .get()
+                        .addOnSuccessListener { document ->
+
+                            taskSource.setResult(document.exists())
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(Exception("The user does not exist"))
+                }
             }
             .addOnFailureListener { e ->
 
