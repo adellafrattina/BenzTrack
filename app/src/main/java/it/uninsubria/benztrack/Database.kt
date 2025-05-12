@@ -193,6 +193,7 @@ public class Database {
                         if (errorMap.isEmpty()) {
 
                             // Hash the password before storing it into the database
+                            val pwd = user.password
                             user.password = sha256(user.password)
 
                             dbRef
@@ -201,6 +202,8 @@ public class Database {
                                 .set(user)
                                 .addOnSuccessListener {
 
+                                    // Reset the un-hashed password into the user structure
+                                    user.password = pwd
                                     taskSource.setResult(true)
                                 }
                                 .addOnFailureListener { e ->
