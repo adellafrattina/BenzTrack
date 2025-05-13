@@ -3,27 +3,37 @@ package it.uninsubria.benztrack
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.textfield.TextInputLayout
+import com.google.android.material.textfield.TextInputEditText
 
 class RegistrationActivity : AppCompatActivity() {
 
-    private lateinit var usernameEditText: EditText
-    private lateinit var nameEditText: EditText
-    private lateinit var surnameEditText: EditText
-    private lateinit var emailEditText: EditText
-    private lateinit var passwordEditText: EditText
+    private lateinit var usernameLayout: TextInputLayout
+    private lateinit var nameLayout: TextInputLayout
+    private lateinit var surnameLayout: TextInputLayout
+    private lateinit var emailLayout: TextInputLayout
+    private lateinit var passwordLayout: TextInputLayout
+    private lateinit var usernameEditText: TextInputEditText
+    private lateinit var nameEditText: TextInputEditText
+    private lateinit var surnameEditText: TextInputEditText
+    private lateinit var emailEditText: TextInputEditText
+    private lateinit var passwordEditText: TextInputEditText
     private lateinit var registerButton: Button
     private lateinit var loginLink: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registration)
 
         // Initialize views
+        usernameLayout = findViewById(R.id.username_layout)
+        nameLayout = findViewById(R.id.name_layout)
+        surnameLayout = findViewById(R.id.surname_layout)
+        emailLayout = findViewById(R.id.email_layout)
+        passwordLayout = findViewById(R.id.password_layout)
         usernameEditText = findViewById(R.id.edit_reg_username)
         nameEditText = findViewById(R.id.edit_name)
         surnameEditText = findViewById(R.id.edit_surname)
@@ -34,9 +44,10 @@ class RegistrationActivity : AppCompatActivity() {
 
         // Set up register button click listener
         registerButton.setOnClickListener {
+            // Clear previous errors
+            clearErrors()
 
             val user = User()
-
             user.username = usernameEditText.text.toString().trim()
             user.name = nameEditText.text.toString().trim()
             user.surname = surnameEditText.text.toString().trim()
@@ -54,13 +65,34 @@ class RegistrationActivity : AppCompatActivity() {
                     finish() // Finish registration activity after successful registration
                 }
                 .addOnFailureListener { e ->
-                    ToastManager.show(this, e.message, Toast.LENGTH_LONG)
+                    when (e) {
+                        is RegistrationException -> {
+                            if (e.username.isNotEmpty()) {
+                                usernameLayout.error = e.username
+                            }
+                            if (e.name.isNotEmpty()) {
+                                nameLayout.error = e.name
+                            }
+                            if (e.surname.isNotEmpty()) {
+                                surnameLayout.error = e.surname
+                            }
+                            if (e.email.isNotEmpty()) {
+                                emailLayout.error = e.email
+                            }
+                            if (e.password.isNotEmpty()) {
+                                passwordLayout.error = e.password
+                            }
+                            ToastManager.show(this, "Registration unsuccessful", Toast.LENGTH_SHORT)
+                        }
+                        else -> ToastManager.show(this, "An unexpected error occurred", Toast.LENGTH_LONG)
+                    }
                 }
         }
 
         // Set up login link click listener
         loginLink.setOnClickListener {
             clearFields()
+            clearErrors()
             val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
             finish()
@@ -69,7 +101,6 @@ class RegistrationActivity : AppCompatActivity() {
     }
 
     private fun clearFields() {
-
         usernameEditText.text?.clear()
         nameEditText.text?.clear()
         surnameEditText.text?.clear()
@@ -77,9 +108,17 @@ class RegistrationActivity : AppCompatActivity() {
         passwordEditText.text?.clear()
     }
 
-    override fun onBackPressed() {
+    private fun clearErrors() {
+        usernameLayout.error = null
+        nameLayout.error = null
+        surnameLayout.error = null
+        emailLayout.error = null
+        passwordLayout.error = null
+    }
 
+    override fun onBackPressed() {
         clearFields()
+        clearErrors()
         super.onBackPressed()
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }
