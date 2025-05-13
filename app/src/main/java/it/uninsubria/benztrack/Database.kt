@@ -602,6 +602,56 @@ public class Database {
     }
 
     /**
+     * Gets all the cars owned by a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @throws CarException
+     */
+    public fun getUserCars(username: String, plate: String): Task<ArrayList<Car>> {
+
+        val taskSource = TaskCompletionSource<ArrayList<Car>>()
+
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .get()
+                        .addOnSuccessListener { query ->
+
+                            val list = ArrayList<Car>()
+                            for (document in query.documents) {
+
+                                val car = document.toObject(Car::class.java)
+                                if (car != null)
+                                    list.add(car)
+                            }
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as CarException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(CarException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as CarException)
+            }
+
+        return taskSource.task
+    }
+
+    /**
      * Sets a new refill for a specific car of a specific user
      *
      * @param username The user's id
