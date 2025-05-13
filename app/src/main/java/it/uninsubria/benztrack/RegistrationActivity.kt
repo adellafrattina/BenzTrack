@@ -19,6 +19,7 @@ class RegistrationActivity : AppCompatActivity() {
     private lateinit var loginLink: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registration)
 
@@ -44,26 +45,40 @@ class RegistrationActivity : AppCompatActivity() {
 
             database.registration(user)
                 .addOnSuccessListener {
-
                     ToastManager.show(this, "Registration successful!", Toast.LENGTH_SHORT)
                     loggedUser = user
 
                     val intent = Intent(this, ProfileActivity::class.java)
                     startActivity(intent)
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+                    finish() // Finish registration activity after successful registration
                 }
-
                 .addOnFailureListener { e ->
-
                     ToastManager.show(this, e.message, Toast.LENGTH_LONG)
                 }
         }
 
         // Set up login link click listener
         loginLink.setOnClickListener {
-            // Navigate back to login screen
+            clearFields()
             finish()
             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
         }
+    }
+
+    private fun clearFields() {
+
+        usernameEditText.text?.clear()
+        nameEditText.text?.clear()
+        surnameEditText.text?.clear()
+        emailEditText.text?.clear()
+        passwordEditText.text?.clear()
+    }
+
+    override fun onBackPressed() {
+
+        clearFields()
+        super.onBackPressed()
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }
 }
