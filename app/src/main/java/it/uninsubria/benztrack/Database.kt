@@ -10,7 +10,9 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import java.security.MessageDigest
+import java.time.Instant
 import java.time.LocalDate
+import java.util.Date
 
 /**
  * The database class
@@ -67,40 +69,59 @@ public class Database {
     public fun login(username: String, password: String): Task<User> {
 
         val taskSource = TaskCompletionSource<User>()
+        var usernameErrorMsg = ""
+        var passwordErrorMsg = ""
 
-        dbRef
-            .collection(USERS_COLLECTION)
-            .document(username)
-            .get()
-            .addOnSuccessListener { document ->
+        // Check username
+        if (username.isEmpty())
+            usernameErrorMsg = "This field must not be empty"
 
-                if (document.exists()) {
+        // Check password
+        if (password.isEmpty())
+            passwordErrorMsg = "This field must not be empty"
 
-                    val storedPassword = document.getString(PASSWORD_FIELD)
-                    if (storedPassword == sha256(password)) {
+        if (username.isEmpty() || password.isEmpty())
+            taskSource.setException(LoginException(
+                "Login failed",
+                usernameErrorMsg,
+                passwordErrorMsg))
 
-                        val user = document.toObject(User::class.java)
-                        if (user != null) {
+        else {
 
-                            user.password = password
-                            taskSource.setResult(user)
+            dbRef
+                .collection(USERS_COLLECTION)
+                .document(username)
+                .get()
+                .addOnSuccessListener { document ->
+
+                    if (document.exists()) {
+
+                        val storedPassword = document.getString(PASSWORD_FIELD)
+                        if (storedPassword == sha256(password)) {
+
+                            val user = document.toObject(User::class.java)
+                            if (user != null) {
+
+                                user.password = password
+                                taskSource.setResult(user)
+                            }
+
+                            else
+                                taskSource.setException(LoginException("User object is null"))
                         }
 
                         else
-                            taskSource.setException(LoginException("User object is null"))
+                            taskSource.setException(LoginException("Username or password are incorrect"))
                     }
 
                     else
                         taskSource.setException(LoginException("Username or password are incorrect"))
                 }
+                .addOnFailureListener { e ->
 
-                else
-                    taskSource.setException(LoginException("Username or password are incorrect"))
-            }
-            .addOnFailureListener { e ->
-
-                taskSource.setException(e as LoginException)
-            }
+                    taskSource.setException(e as LoginException)
+                }
+        }
 
         return taskSource.task
     }
@@ -174,6 +195,7 @@ public class Database {
                         if (errorMap.isEmpty()) {
 
                             // Hash the password before storing it into the database
+                            val pwd = user.password
                             user.password = sha256(user.password)
 
                             dbRef
@@ -182,6 +204,8 @@ public class Database {
                                 .set(user)
                                 .addOnSuccessListener {
 
+                                    // Reset the un-hashed password into the user structure
+                                    user.password = pwd
                                     taskSource.setResult(true)
                                 }
                                 .addOnFailureListener { e ->
@@ -430,79 +454,47 @@ public class Database {
         val taskSource = TaskCompletionSource<Boolean>()
         lateinit var errorMap: HashMap<String, String>
 
-        dbRef
-            .collection(USERS_COLLECTION)
-            .document(username)
-            .get()
-            .addOnSuccessListener { userDocument ->
+        isCarPresent(username, car.plate)
+            .addOnSuccessListener { carPresent ->
 
-                if (userDocument.exists()) {
+                if (carPresent) {
 
-                    // Check car parameters
-                    errorMap = checkNewCarParameters(car)
-
-                    dbRef
-                        .collection(USERS_COLLECTION)
-                        .document(username)
-                        .collection(CARS_COLLECTION)
-                        .document(car.plate)
-                        .get()
-                        .addOnSuccessListener { carDocument ->
-
-                            if (carDocument.exists()) {
-
-                                taskSource.setException(CarException(
-                                    "A car with the same plate is already present",
-                                    if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
-                                    if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
-                                    if (errorMap[MAINTENANCE_DATE_FILED] != null) errorMap[MAINTENANCE_DATE_FILED]!! else "",
-                                    if (errorMap[INSURANCE_DATE_FILED] != null)   errorMap[INSURANCE_DATE_FILED]!! else "",
-                                    if (errorMap[TAX_DATE_FILED] != null)         errorMap[TAX_DATE_FILED]!! else ""
-                                ))
-                            }
-
-                            else {
-
-                                if (errorMap.isEmpty()) {
-
-                                    dbRef
-                                        .collection(USERS_COLLECTION)
-                                        .document(username)
-                                        .collection(CARS_COLLECTION)
-                                        .document(car.plate)
-                                        .set(car)
-                                        .addOnSuccessListener {
-
-                                            taskSource.setResult(true)
-                                        }
-                                        .addOnFailureListener { e ->
-
-                                            taskSource.setException(e as CarException)
-                                        }
-                                }
-
-                                else {
-
-                                    taskSource.setException(CarException(
-                                        "Car creation has failed",
-                                        if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
-                                        if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
-                                        if (errorMap[MAINTENANCE_DATE_FILED] != null) errorMap[MAINTENANCE_DATE_FILED]!! else "",
-                                        if (errorMap[INSURANCE_DATE_FILED] != null)   errorMap[INSURANCE_DATE_FILED]!! else "",
-                                        if (errorMap[TAX_DATE_FILED] != null)         errorMap[TAX_DATE_FILED]!! else ""
-                                    ))
-                                }
-                            }
-                        }
-                        .addOnFailureListener { e ->
-
-                            taskSource.setException(e as CarException)
-                        }
+                    taskSource.setException(CarException("A car with the same plate is already present"))
                 }
 
                 else {
 
-                    taskSource.setException(CarException("The specified user does not exist"))
+                    errorMap = checkNewCarParameters(car)
+
+                    if (errorMap.isEmpty()) {
+
+                        dbRef
+                            .collection(USERS_COLLECTION)
+                            .document(username)
+                            .collection(CARS_COLLECTION)
+                            .document(car.plate)
+                            .set(car)
+                            .addOnSuccessListener {
+
+                                taskSource.setResult(true)
+                            }
+                            .addOnFailureListener { e ->
+
+                                taskSource.setException(e as CarException)
+                            }
+                    }
+
+                    else {
+
+                        taskSource.setException(CarException(
+                            "Car creation has failed",
+                            if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
+                            if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
+                            if (errorMap[MAINTENANCE_DATE_FILED] != null) errorMap[MAINTENANCE_DATE_FILED]!! else "",
+                            if (errorMap[INSURANCE_DATE_FILED] != null)   errorMap[INSURANCE_DATE_FILED]!! else "",
+                            if (errorMap[TAX_DATE_FILED] != null)         errorMap[TAX_DATE_FILED]!! else ""
+                        ))
+                    }
                 }
             }
             .addOnFailureListener { e ->
@@ -523,6 +515,104 @@ public class Database {
 
         val taskSource = TaskCompletionSource<Boolean>()
 
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    // Delete refills collection
+                    val refillsPath = dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(REFILLS_COLLECTION)
+
+                    deleteSubcollection(refillsPath)
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as CarException)
+                        }
+
+                    // Delete maintenance collection
+                    val maintenancePath = dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(MAINTENANCE_COLLECTION)
+
+                    deleteSubcollection(maintenancePath)
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as CarException)
+                        }
+
+                    // Delete insurance collection
+                    val insurancePath = dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(INSURANCE_COLLECTION)
+
+                    deleteSubcollection(insurancePath)
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as CarException)
+                        }
+
+                    // Delete tax collection
+                    val taxPath = dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(TAX_COLLECTION)
+
+                    deleteSubcollection(taxPath)
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as CarException)
+                        }
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .delete()
+                        .addOnSuccessListener {
+
+                            taskSource.setResult(true)
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as CarException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(CarException("The user does not have the specified car"))
+                }
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Sets a new refill for a specific car of a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @param refill The actual refill data
+     */
+    public fun setNewRefill(username: String, plate: String, refill: Refill): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+        val errorMap = HashMap<String, String>()
+
         isUserPresent(username)
             .addOnSuccessListener { userPresent ->
 
@@ -533,93 +623,185 @@ public class Database {
 
                             if (carPresent) {
 
-                                // Delete refills collection
-                                val refillsPath = dbRef
-                                    .collection(USERS_COLLECTION)
-                                    .document(username)
-                                    .collection(CARS_COLLECTION)
-                                    .document(plate)
-                                    .collection(REFILLS_COLLECTION)
-
-                                deleteSubcollection(refillsPath)
-                                    .addOnFailureListener { e ->
-
-                                        taskSource.setException(e as CarException)
-                                    }
-
-                                // Delete maintenance collection
-                                val maintenancePath = dbRef
-                                    .collection(USERS_COLLECTION)
-                                    .document(username)
-                                    .collection(CARS_COLLECTION)
-                                    .document(plate)
-                                    .collection(MAINTENANCE_COLLECTION)
-
-                                deleteSubcollection(maintenancePath)
-                                    .addOnFailureListener { e ->
-
-                                        taskSource.setException(e as CarException)
-                                    }
-
-                                // Delete insurance collection
-                                val insurancePath = dbRef
-                                    .collection(USERS_COLLECTION)
-                                    .document(username)
-                                    .collection(CARS_COLLECTION)
-                                    .document(plate)
-                                    .collection(INSURANCE_COLLECTION)
-
-                                deleteSubcollection(insurancePath)
-                                    .addOnFailureListener { e ->
-
-                                        taskSource.setException(e as CarException)
-                                    }
-
-                                // Delete tax collection
-                                val taxPath = dbRef
-                                    .collection(USERS_COLLECTION)
-                                    .document(username)
-                                    .collection(CARS_COLLECTION)
-                                    .document(plate)
-                                    .collection(TAX_COLLECTION)
-
-                                deleteSubcollection(taxPath)
-                                    .addOnFailureListener { e ->
-
-                                        taskSource.setException(e as CarException)
-                                    }
-
                                 dbRef
                                     .collection(USERS_COLLECTION)
                                     .document(username)
                                     .collection(CARS_COLLECTION)
                                     .document(plate)
-                                    .delete()
-                                    .addOnSuccessListener {
+                                    .collection(REFILLS_COLLECTION)
+                                    .orderBy(DATE_FIELD)
+                                    .limit(1)
+                                    .get()
+                                    .addOnSuccessListener { query ->
 
-                                        taskSource.setResult(true)
+                                        // Check that the mileage is greater than the last one (if there is one)
+                                        for (document in query.documents) {
+
+                                            val mileage = document.get(MILEAGE_FIELD) as Int
+                                            if (mileage > refill.mileage)
+                                                errorMap[MILEAGE_FIELD] = "The mileage value is not valid"
+                                        }
+
+                                        // Check position
+                                        if (refill.position.isEmpty())
+                                            errorMap[POSITION_FIELD] = "This value must not be empty"
+
+                                        // Check position
+                                        if (refill.ppl < 0)
+                                            errorMap[POSITION_FIELD] = "The price per liter cannot be negative"
+
+                                        // Check amount
+                                        if (refill.amount < 0)
+                                            errorMap[POSITION_FIELD] = "The amount cannot be negative"
+
+                                        // Check consistency
+                                        if (refill.amount != 0.0f && refill.ppl == 0.0f)
+                                            errorMap[AMOUNT_FIELD] = "The value is not consistent with the price per liter"
+
+                                        if (errorMap.isEmpty()) {
+
+                                            val timestamp = Timestamp.now()
+                                            refill.date = timestamp
+                                            dbRef
+                                                .collection(USERS_COLLECTION)
+                                                .document(username)
+                                                .collection(CARS_COLLECTION)
+                                                .document(plate)
+                                                .collection(REFILLS_COLLECTION)
+                                                .document(timestamp.toString())
+                                                .set(refill)
+                                                .addOnSuccessListener {
+
+                                                    taskSource.setResult(true)
+                                                }
+                                                .addOnFailureListener { e ->
+
+                                                    taskSource.setException(e as RefillException)
+                                                }
+                                        }
+
+                                        else {
+
+                                            taskSource.setException(RefillException(
+                                                "Failed to add new refill",
+                                                if (errorMap[POSITION_FIELD] != null)        errorMap[POSITION_FIELD]!! else "",
+                                                if (errorMap[PRICE_PER_LITER_FIELD] != null) errorMap[PRICE_PER_LITER_FIELD]!! else "",
+                                                if (errorMap[MILEAGE_FIELD] != null)         errorMap[MILEAGE_FIELD]!! else "",
+                                                if (errorMap[AMOUNT_FIELD] != null)          errorMap[AMOUNT_FIELD]!! else ""))
+                                        }
                                     }
                                     .addOnFailureListener { e ->
 
-                                        taskSource.setException(e as CarException)
+                                        taskSource.setException(e as RefillException)
                                     }
                             }
 
                             else {
 
-                                taskSource.setException(CarException("The user does not have the specified car"))
+                                taskSource.setException(RefillException("The user does not have the specified car"))
                             }
                         }
                 }
 
                 else {
 
-                    taskSource.setException(CarException("The user does not exist"))
+                    taskSource.setException(RefillException("The user does not exist"))
                 }
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e as CarException)
+                taskSource.setException(e as RefillException)
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Gets the refill data for a specific car of a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @param from The start date (null to get the oldest date)
+     * @param to The end date (by default the current date)
+     * @throws RefillException
+     */
+    public fun getRefillData(username: String, plate: String, from: Date? = null, to: Date = Date.from(Instant.now())) : Task<ArrayList<Refill>> {
+
+        val taskSource = TaskCompletionSource<ArrayList<Refill>>()
+
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    if (from != null) {
+
+                        dbRef
+                            .collection(USERS_COLLECTION)
+                            .document(username)
+                            .collection(CARS_COLLECTION)
+                            .document(plate)
+                            .collection(REFILLS_COLLECTION)
+                            .orderBy(DATE_FIELD)
+                            .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                            .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                            .get()
+                            .addOnSuccessListener { query ->
+
+                                val list = ArrayList<Refill>()
+                                for (document in query.documents) {
+
+                                    val refill = document.toObject(Refill::class.java)
+                                    if (refill != null)
+                                        list.add(refill)
+                                }
+
+                                taskSource.setResult(list)
+                            }
+                            .addOnFailureListener { e ->
+
+                                taskSource.setException(e as RefillException)
+                            }
+                    }
+
+                    else {
+
+                        dbRef
+                            .collection(USERS_COLLECTION)
+                            .document(username)
+                            .collection(CARS_COLLECTION)
+                            .document(plate)
+                            .collection(REFILLS_COLLECTION)
+                            .orderBy(DATE_FIELD)
+                            .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                            .get()
+                            .addOnSuccessListener { query ->
+
+                                val list = ArrayList<Refill>()
+                                for (document in query.documents) {
+
+                                    val refill = document.toObject(Refill::class.java)
+                                    if (refill != null)
+                                        list.add(refill)
+                                }
+
+                                taskSource.setResult(list)
+                            }
+                            .addOnFailureListener { e ->
+
+                                taskSource.setException(e as RefillException)
+                            }
+                    }
+                }
+
+                else {
+
+                    taskSource.setException(RefillException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as RefillException)
             }
 
         return taskSource.task
@@ -672,15 +854,31 @@ public class Database {
 
         val taskSource = TaskCompletionSource<Boolean>()
 
-        dbRef
-            .collection(USERS_COLLECTION)
-            .document(username)
-            .collection(CARS_COLLECTION)
-            .document(plate)
-            .get()
-            .addOnSuccessListener { document ->
+        isUserPresent(username)
+            .addOnSuccessListener { userPresent ->
 
-                taskSource.setResult(document.exists())
+                if (userPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .get()
+                        .addOnSuccessListener { document ->
+
+                            taskSource.setResult(document.exists())
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(Exception("The user does not exist"))
+                }
             }
             .addOnFailureListener { e ->
 

@@ -10,8 +10,21 @@ public class LoginException(
     /**
      * Generic message
      */
-    message: String
-) : Exception(message)
+    message: String,
+
+    /**
+     * Error with the username. If empty, then there are no errors
+     */
+    val username: String,
+
+    /**
+     * Error with the password. If empty, then there are no errors
+     */
+    val password: String
+) : Exception(message) {
+
+    constructor(message: String): this(message, "", "")
+}
 
 /**
  * When the registration procedure fails
@@ -154,4 +167,35 @@ public class CarException(
 ) : Exception(message) {
 
     constructor(message: String): this(message, "", "" ,"", "", "")
+}
+
+public class RefillException(
+
+    /**
+     * Generic message
+     */
+    message: String,
+
+    /**
+     * Error with the position. If empty, then there are no errors
+     */
+    val position: String,
+
+    /**
+     * Error with the price per liter. If empty, then there are no errors
+     */
+    val ppl: String,
+
+    /**
+     * Error with the mileage. If empty, then there are no errors
+     */
+    val mileage: String,
+
+    /**
+     * Error with the amount. If empty, then there are no errors
+      */
+    val amount: String
+) : Exception(message) {
+
+    constructor(message: String): this(message, "", "", "", "")
 }
