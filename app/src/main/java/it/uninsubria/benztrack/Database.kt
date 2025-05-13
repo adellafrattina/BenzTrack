@@ -449,7 +449,7 @@ public class Database {
      * @param username The user that desires to monitor a new car
      * @param car The actual car. It needs to be valid
      */
-    public fun addNewCar(username: String, car: Car): Task<Boolean> {
+    public fun addNewUserCar(username: String, car: Car): Task<Boolean> {
 
         val taskSource = TaskCompletionSource<Boolean>()
         lateinit var errorMap: HashMap<String, String>
@@ -511,7 +511,7 @@ public class Database {
      * @param username The car owner's id
      * @param plate The car's plate
      */
-    public fun deleteCar(username: String, plate: String): Task<Boolean> {
+    public fun deleteUserCar(username: String, plate: String): Task<Boolean> {
 
         val taskSource = TaskCompletionSource<Boolean>()
 
@@ -596,6 +596,56 @@ public class Database {
 
                     taskSource.setException(CarException("The user does not have the specified car"))
                 }
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Gets all the cars owned by a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @throws CarException
+     */
+    public fun getUserCars(username: String, plate: String): Task<ArrayList<Car>> {
+
+        val taskSource = TaskCompletionSource<ArrayList<Car>>()
+
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .get()
+                        .addOnSuccessListener { query ->
+
+                            val list = ArrayList<Car>()
+                            for (document in query.documents) {
+
+                                val car = document.toObject(Car::class.java)
+                                if (car != null)
+                                    list.add(car)
+                            }
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as CarException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(CarException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as CarException)
             }
 
         return taskSource.task
@@ -803,6 +853,206 @@ public class Database {
 
                 taskSource.setException(e as RefillException)
             }
+
+        return taskSource.task
+    }
+
+    /**
+     * Sets a new date for the car maintenance for a specific car of a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @throws MaintenanceException
+     */
+    public fun setNewMaintenanceDate(username: String, plate: String): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        taskSource.setException(MaintenanceException("Unimplemented method"))
+
+        return taskSource.task
+    }
+
+    /**
+     * Checks the car maintenance date. It needs to be called periodically to warn the user on time
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @throws MaintenanceException
+     */
+    public fun checkMaintenanceDate(username: String, plate: String): Task<Date> {
+
+        val taskSource = TaskCompletionSource<Date>()
+
+        taskSource.setException(MaintenanceException("Unimplemented method"))
+
+        return taskSource.task
+    }
+
+    /**
+     * Sets a new date for the car maintenance for a specific car of a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @param maintenance The actual maintenance data
+     * @throws MaintenanceException
+     */
+    public fun payMaintenance(username: String, plate: String, maintenance: Maintenance): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        taskSource.setException(MaintenanceException("Unimplemented method"))
+
+        return taskSource.task
+    }
+
+    /**
+     * Gets the maintenance data for a specific car of a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @param from The start date (null to get the oldest date)
+     * @param to The end date (by default the current date)
+     * @throws MaintenanceException
+     */
+    public fun getMaintenanceData(username: String, plate: String, from: Date? = null, to: Date = Date.from(Instant.now())) : Task<ArrayList<Maintenance>> {
+
+        val taskSource = TaskCompletionSource<ArrayList<Maintenance>>()
+
+        taskSource.setException(MaintenanceException("Unimplemented method"))
+
+        return taskSource.task
+    }
+
+    /**
+     * Sets a new date for the car insurance for a specific car of a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @throws InsuranceException
+     */
+    public fun setNewInsuranceDate(username: String, plate: String): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        taskSource.setException(InsuranceException("Unimplemented method"))
+
+        return taskSource.task
+    }
+
+    /**
+     * Checks the car insurance date. It needs to be called periodically to warn the user on time
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @throws InsuranceException
+     */
+    public fun checkInsuranceDate(username: String, plate: String): Task<Date> {
+
+        val taskSource = TaskCompletionSource<Date>()
+
+        taskSource.setException(InsuranceException("Unimplemented method"))
+
+        return taskSource.task
+    }
+
+    /**
+     * Sets a new date for the car insurance for a specific car of a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @param insurance The actual insurance data
+     * @throws InsuranceException
+     */
+    public fun payInsurance(username: String, plate: String, insurance: Insurance): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        taskSource.setException(InsuranceException("Unimplemented method"))
+
+        return taskSource.task
+    }
+
+    /**
+     * Gets the insurance data for a specific car of a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @param from The start date (null to get the oldest date)
+     * @param to The end date (by default the current date)
+     * @throws InsuranceException
+     */
+    public fun getInsuranceData(username: String, plate: String, from: Date? = null, to: Date = Date.from(Instant.now())) : Task<ArrayList<Insurance>> {
+
+        val taskSource = TaskCompletionSource<ArrayList<Insurance>>()
+
+        taskSource.setException(InsuranceException("Unimplemented method"))
+
+        return taskSource.task
+    }
+
+    /**
+     * Sets a new date for the car tax for a specific car of a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     */
+    public fun setNewTaxDate(username: String, plate: String): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        taskSource.setException(TaxException("Unimplemented method"))
+
+        return taskSource.task
+    }
+
+    /**
+     * Checks the car tax date. It needs to be called periodically to warn the user on time
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @throws TaxException
+     */
+    public fun checkTaxDate(username: String, plate: String): Task<Date> {
+
+        val taskSource = TaskCompletionSource<Date>()
+
+        taskSource.setException(TaxException("Unimplemented method"))
+
+        return taskSource.task
+    }
+
+    /**
+     * Sets a new date for the car tax for a specific car of a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @param tax The actual insurance data
+     * @throws TaxException
+     */
+    public fun payTax(username: String, plate: String, tax: Tax): Task<Boolean> {
+
+        val taskSource = TaskCompletionSource<Boolean>()
+
+        taskSource.setException(TaxException("Unimplemented method"))
+
+        return taskSource.task
+    }
+
+    /**
+     * Gets the tax data for a specific car of a specific user
+     *
+     * @param username The user's id
+     * @param plate The user's car plate
+     * @param from The start date (null to get the oldest date)
+     * @param to The end date (by default the current date)
+     * @throws TaxException
+     */
+    public fun getTaxData(username: String, plate: String, from: Date? = null, to: Date = Date.from(Instant.now())) : Task<ArrayList<Tax>> {
+
+        val taskSource = TaskCompletionSource<ArrayList<Tax>>()
+
+        taskSource.setException(TaxException("Unimplemented method"))
 
         return taskSource.task
     }

@@ -195,13 +195,15 @@ public data class Car(
 
 /**
  * Refill data wrapper
+ *
+ * @author adellafrattina
  */
 public data class Refill(
 
     /**
      * The refill's date
      */
-    var date: Timestamp?,
+    var date: Timestamp,
 
     /**
      * The refill's fuel dispenser position (should be expressed in coordinates)
@@ -224,5 +226,68 @@ public data class Refill(
     var amount: Float
 ) {
 
-    constructor(): this(null, "", Float.NaN, Float.NaN, Float.NaN)
+    constructor(): this(Timestamp.now(), "", Float.NaN, Float.NaN, Float.NaN)
+}
+
+/**
+ * Maintenance data wrapper
+ *
+ * @author adellafrattina
+ */
+public data class Maintenance(
+
+    /**
+     * The maintenance date
+     */
+    var date: Timestamp,
+
+    /**
+     * The maintenance amount
+     */
+    var amount: Float
+) {
+
+    constructor(): this(Timestamp.now(), Float.NaN)
+}
+
+/**
+ * Insurance data wrapper
+ *
+ * @adellafrattina
+ */
+public data class Insurance(
+
+    /**
+     * The insurance date
+     */
+    var date: Timestamp,
+
+    /**
+     * The insurance amount
+     */
+    var amount: Float
+) {
+
+    constructor(): this(Timestamp.now(), Float.NaN)
+}
+
+/**
+ * Tax data wrapper
+ *
+ * @adellafrattina
+ */
+public data class Tax(
+
+    /**
+     * The tax date
+     */
+    var date: Timestamp,
+
+    /**
+     * The tax amount
+     */
+    var amount: Float
+) {
+
+    constructor(): this(Timestamp.now(), Float.NaN)
 }
