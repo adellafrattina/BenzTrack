@@ -5,6 +5,9 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
+/**
+ * Activity responsible for displaying user profile information.
+ */
 class ProfileActivity : AppCompatActivity() {
 
     private lateinit var usernameTextView: TextView
@@ -16,6 +19,9 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var emailLabelTextView: TextView
     private lateinit var backButton: Button
 
+    /**
+     * Initializes the activity and sets up the UI components.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
@@ -55,12 +61,22 @@ class ProfileActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Handles the back button press.
+     * Provides a smooth transition animation when navigating back.
+     */
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         super.onBackPressed()
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }
 
+    /**
+     * Handles action bar item selection.
+     * 
+     * @param item The selected menu item
+     * @return true if the item was handled, false otherwise
+     */
     override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
             finish()

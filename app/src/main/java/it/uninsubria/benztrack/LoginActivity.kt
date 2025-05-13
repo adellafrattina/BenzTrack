@@ -9,6 +9,9 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.textfield.TextInputEditText
 
+/**
+ * Activity responsible for handling user authentication.
+ */
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var usernameLayout: TextInputLayout
@@ -18,6 +21,9 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var loginButton: Button
     private lateinit var registerLink: TextView
 
+    /**
+     * Initializes the activity and sets up the UI components and their listeners.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
@@ -41,7 +47,6 @@ class LoginActivity : AppCompatActivity() {
 
             database.login(username, password)
                 .addOnSuccessListener { user ->
-
                     ToastManager.show(this, "Login successful!", Toast.LENGTH_SHORT)
                     loggedUser = user
 
@@ -50,11 +55,8 @@ class LoginActivity : AppCompatActivity() {
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
                 }
                 .addOnFailureListener { e ->
-
                     when (e) {
-
                         is LoginException -> {
-
                             if (e.username.isNotEmpty())
                                 usernameLayout.error = e.username
 
@@ -63,11 +65,9 @@ class LoginActivity : AppCompatActivity() {
 
                             if (e.username.isEmpty() and e.password.isEmpty())
                                 ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
-
                             else
                                 ToastManager.show(this, "Login failed", Toast.LENGTH_SHORT)
                         }
-
                         else -> ToastManager.show(this, "An unexpected error occurred", Toast.LENGTH_LONG)
                     }
                 }
@@ -75,7 +75,6 @@ class LoginActivity : AppCompatActivity() {
 
         // Set up register link click listener
         registerLink.setOnClickListener {
-
             // Clear text fields
             usernameEditText.text?.clear()
             passwordEditText.text?.clear()
