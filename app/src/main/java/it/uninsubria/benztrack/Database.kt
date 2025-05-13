@@ -160,7 +160,7 @@ public class Database {
 
             errorMap[USERNAME_FIELD] = "This field must not be empty"
             taskSource.setException(RegistrationException(
-                "Registration has failed",
+                "Registration failed",
                 if (errorMap[USERNAME_FIELD] != null) errorMap[USERNAME_FIELD]!! else "",
                 if (errorMap[PASSWORD_FIELD] != null) errorMap[PASSWORD_FIELD]!! else "",
                 if (errorMap[EMAIL_FIELD] != null)    errorMap[EMAIL_FIELD]!! else "",
@@ -181,7 +181,7 @@ public class Database {
 
                         errorMap[USERNAME_FIELD] = "Username already taken"
                         taskSource.setException(RegistrationException(
-                            "Registration has failed",
+                            "Registration failed",
                             if (errorMap[USERNAME_FIELD] != null) errorMap[USERNAME_FIELD]!! else "",
                             if (errorMap[PASSWORD_FIELD] != null) errorMap[PASSWORD_FIELD]!! else "",
                             if (errorMap[EMAIL_FIELD] != null)    errorMap[EMAIL_FIELD]!! else "",
@@ -240,9 +240,9 @@ public class Database {
      *
      * @param model The car model
      */
-    public fun createCarModel(model: CarModel): Task<Boolean> {
+    public fun createCarModel(model: CarModel): Task<DocumentReference> {
 
-        val taskSource = TaskCompletionSource<Boolean>()
+        val taskSource = TaskCompletionSource<DocumentReference>()
         val errorMap = HashMap<String, String>()
 
         // Check name
@@ -299,13 +299,26 @@ public class Database {
                         for (term in terms)
                             model.searchterms.add(term.uppercase())
 
+                        val hash = sha256(model.toString())
                         dbRef
                             .collection(MODELS_COLLECTION)
-                            .document(sha256(model.toString()))
+                            .document(hash)
                             .set(model)
                             .addOnSuccessListener {
 
-                                taskSource.setResult(true)
+                                // Return the document reference
+                                dbRef
+                                    .collection(MODELS_COLLECTION)
+                                    .document(hash)
+                                    .get()
+                                    .addOnSuccessListener { query ->
+
+                                        taskSource.setResult(query.reference)
+                                    }
+                                    .addOnFailureListener { e ->
+
+                                        taskSource.setException(e as CarModelException)
+                                    }
                             }
                             .addOnFailureListener { e ->
 
@@ -343,10 +356,9 @@ public class Database {
      *
      * @param name The string the user typed. It will be used to search all the matching car model's name
      */
-    public fun searchCarModelByName(name: String): Task<ArrayList<CarModel>> {
+    public fun searchCarModelByName(name: String): Task<ArrayList<DocumentReference>> {
 
-        val taskSource = TaskCompletionSource<ArrayList<CarModel>>()
-        val models = ArrayList<CarModel>()
+        val taskSource = TaskCompletionSource<ArrayList<DocumentReference>>()
 
         if (name.trim().isEmpty()) {
 
@@ -366,10 +378,10 @@ public class Database {
 
                 if (!primaryQuery.isEmpty) {
 
+                    val models = ArrayList<DocumentReference>()
                     for (document in primaryQuery) {
 
-                        val model = document.toObject(CarModel::class.java)
-                        models.add(model)
+                        models.add(document.reference)
                     }
 
                     taskSource.setResult(models)
@@ -387,10 +399,10 @@ public class Database {
 
                             if (!secondaryQuery.isEmpty) {
 
+                                val models = ArrayList<DocumentReference>()
                                 for (document in secondaryQuery) {
 
-                                    val model = document.toObject(CarModel::class.java)
-                                    models.add(model)
+                                    models.add(document.reference)
                                 }
 
                                 taskSource.setResult(models)
