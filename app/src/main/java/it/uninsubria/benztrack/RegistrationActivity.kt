@@ -61,6 +61,8 @@ class RegistrationActivity : AppCompatActivity() {
         // Set up login link click listener
         loginLink.setOnClickListener {
             clearFields()
+            val intent = Intent(this, LoginActivity::class.java)
+            startActivity(intent)
             finish()
             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
         }
