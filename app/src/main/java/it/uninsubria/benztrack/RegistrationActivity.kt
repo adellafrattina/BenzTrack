@@ -68,19 +68,19 @@ class RegistrationActivity : AppCompatActivity() {
                     when (e) {
                         is RegistrationException -> {
                             if (e.username.isNotEmpty()) {
-                                usernameLayout.error = e.username
+                                showError(usernameLayout, e.username)
                             }
                             if (e.name.isNotEmpty()) {
-                                nameLayout.error = e.name
+                                showError(nameLayout, e.name)
                             }
                             if (e.surname.isNotEmpty()) {
-                                surnameLayout.error = e.surname
+                                showError(surnameLayout, e.surname)
                             }
                             if (e.email.isNotEmpty()) {
-                                emailLayout.error = e.email
+                                showError(emailLayout, e.email)
                             }
                             if (e.password.isNotEmpty()) {
-                                passwordLayout.error = e.password
+                                showError(passwordLayout, e.password)
                             }
                             ToastManager.show(this, "Registration unsuccessful", Toast.LENGTH_SHORT)
                         }
@@ -109,11 +109,16 @@ class RegistrationActivity : AppCompatActivity() {
     }
 
     private fun clearErrors() {
-        usernameLayout.error = null
-        nameLayout.error = null
-        surnameLayout.error = null
-        emailLayout.error = null
-        passwordLayout.error = null
+        usernameLayout.isErrorEnabled = false
+        nameLayout.isErrorEnabled = false
+        surnameLayout.isErrorEnabled = false
+        emailLayout.isErrorEnabled = false
+        passwordLayout.isErrorEnabled = false
+    }
+
+    private fun showError(layout: TextInputLayout, message: String) {
+        layout.error = message
+        layout.isErrorEnabled = true
     }
 
     override fun onBackPressed() {
