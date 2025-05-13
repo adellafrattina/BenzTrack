@@ -75,6 +75,13 @@ class LoginActivity : AppCompatActivity() {
 
         // Set up register link click listener
         registerLink.setOnClickListener {
+
+            // Clear text fields
+            usernameEditText.text?.clear()
+            passwordEditText.text?.clear()
+            usernameLayout.error = null
+            passwordLayout.error = null
+
             val intent = Intent(this, RegistrationActivity::class.java)
             startActivity(intent)
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
