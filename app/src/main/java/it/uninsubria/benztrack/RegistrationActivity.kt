@@ -9,6 +9,9 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.textfield.TextInputEditText
 
+/**
+ * Activity responsible for handling user registration.
+ */
 class RegistrationActivity : AppCompatActivity() {
 
     private lateinit var usernameLayout: TextInputLayout
@@ -24,6 +27,9 @@ class RegistrationActivity : AppCompatActivity() {
     private lateinit var registerButton: Button
     private lateinit var loginLink: TextView
 
+    /**
+     * Initializes the activity and sets up the UI components and their listeners.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registration)
@@ -100,6 +106,9 @@ class RegistrationActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Clears all input fields in the registration form.
+     */
     private fun clearFields() {
         usernameEditText.text?.clear()
         nameEditText.text?.clear()
@@ -108,6 +117,10 @@ class RegistrationActivity : AppCompatActivity() {
         passwordEditText.text?.clear()
     }
 
+    /**
+     * Clears all error states from the TextInputLayout components.
+     * This removes error messages and collapses the error space.
+     */
     private fun clearErrors() {
         usernameLayout.isErrorEnabled = false
         nameLayout.isErrorEnabled = false
@@ -116,11 +129,21 @@ class RegistrationActivity : AppCompatActivity() {
         passwordLayout.isErrorEnabled = false
     }
 
+    /**
+     * Displays an error message in the specified TextInputLayout.
+     * 
+     * @param layout The TextInputLayout to show the error in
+     * @param message The error message to display
+     */
     private fun showError(layout: TextInputLayout, message: String) {
         layout.error = message
         layout.isErrorEnabled = true
     }
 
+    /**
+     * Handles the back button press.
+     * Clears all fields and errors before navigating back.
+     */
     override fun onBackPressed() {
         clearFields()
         clearErrors()
