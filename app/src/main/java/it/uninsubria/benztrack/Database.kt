@@ -449,7 +449,7 @@ public class Database {
      * @param username The user that desires to monitor a new car
      * @param car The actual car. It needs to be valid
      */
-    public fun addNewCar(username: String, car: Car): Task<Boolean> {
+    public fun addNewUserCar(username: String, car: Car): Task<Boolean> {
 
         val taskSource = TaskCompletionSource<Boolean>()
         lateinit var errorMap: HashMap<String, String>
@@ -511,7 +511,7 @@ public class Database {
      * @param username The car owner's id
      * @param plate The car's plate
      */
-    public fun deleteCar(username: String, plate: String): Task<Boolean> {
+    public fun deleteUserCar(username: String, plate: String): Task<Boolean> {
 
         val taskSource = TaskCompletionSource<Boolean>()
 
