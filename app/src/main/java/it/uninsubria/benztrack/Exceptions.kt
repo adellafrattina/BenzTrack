@@ -169,6 +169,11 @@ public class CarException(
     constructor(message: String): this(message, "", "" ,"", "", "")
 }
 
+/**
+ * When the car creation procedure fails
+ *
+ * @author adellafrattina
+ */
 public class RefillException(
 
     /**
@@ -198,4 +203,70 @@ public class RefillException(
 ) : Exception(message) {
 
     constructor(message: String): this(message, "", "", "", "")
+}
+
+/**
+ * When the car maintenance procedure fails
+ *
+ * @author adellafrattina
+ */
+public class MaintenanceException(
+
+    /**
+     * Generic message
+     */
+    message: String,
+
+    /**
+     * Error with the amount. If empty, then there are no errors
+     */
+    val amount: String
+
+) : Exception(message) {
+
+    constructor(message: String): this(message, "")
+}
+
+/**
+ * When the car insurance procedure fails
+ *
+ * @author adellafrattina
+ */
+public class InsuranceException(
+
+    /**
+     * Generic message
+     */
+    message: String,
+
+    /**
+     * Error with the amount. If empty, then there are no errors
+     */
+    val amount: String
+
+) : Exception(message) {
+
+    constructor(message: String): this(message, "")
+}
+
+/**
+ * When the car tax procedure fails
+ *
+ * @author adellafrattina
+ */
+public class TaxException(
+
+    /**
+     * Generic message
+     */
+    message: String,
+
+    /**
+     * Error with the amount. If empty, then there are no errors
+     */
+    val amount: String
+
+) : Exception(message) {
+
+    constructor(message: String): this(message, "")
 }
