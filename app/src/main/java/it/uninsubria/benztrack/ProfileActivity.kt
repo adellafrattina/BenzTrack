@@ -3,6 +3,7 @@ package it.uninsubria.benztrack
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 /**
@@ -41,7 +42,6 @@ class ProfileActivity : AppCompatActivity() {
 
         // Get data from logged user
         val username = loggedUser?.username
-        val password = loggedUser?.password
         val name = loggedUser?.name
         val surname = loggedUser?.surname
         val email = loggedUser?.email
