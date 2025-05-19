@@ -10,18 +10,13 @@ import android.view.Menu
 import android.view.MenuItem
 
 /**
- * Activity responsible for displaying user profile information.
+ * Activity responsible for displaying user profile information and car management.
  */
 class ProfileActivity : AppCompatActivity() {
 
-    private lateinit var usernameTextView: TextView
-    private lateinit var nameTextView: TextView
-    private lateinit var surnameTextView: TextView
-    private lateinit var emailTextView: TextView
-    private lateinit var nameLabelTextView: TextView
-    private lateinit var surnameLabelTextView: TextView
-    private lateinit var emailLabelTextView: TextView
-    private lateinit var backButton: Button
+    private lateinit var noCarsTextView: TextView
+    private lateinit var addCarButton: Button
+    private lateinit var graphsButton: Button
 
     /**
      * Initializes the activity and sets up the UI components.
@@ -34,33 +29,19 @@ class ProfileActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         // Initialize views
-        usernameTextView = findViewById(R.id.text_username)
-        nameTextView = findViewById(R.id.text_name)
-        surnameTextView = findViewById(R.id.text_surname)
-        emailTextView = findViewById(R.id.text_email)
-        nameLabelTextView = findViewById(R.id.label_name)
-        surnameLabelTextView = findViewById(R.id.label_surname)
-        emailLabelTextView = findViewById(R.id.label_email)
-        backButton = findViewById(R.id.button_back)
+        noCarsTextView = findViewById(R.id.text_no_cars)
+        addCarButton = findViewById(R.id.button_add_car)
+        graphsButton = findViewById(R.id.button_graphs)
 
-        // Get data from logged user
-        val username = loggedUser?.username
-        val name = loggedUser?.name
-        val surname = loggedUser?.surname
-        val email = loggedUser?.email
+        // Set up button click listeners
+        addCarButton.setOnClickListener {
+            // TODO: Implement add car functionality
+            Toast.makeText(this, "Add car functionality coming soon", Toast.LENGTH_SHORT).show()
+        }
 
-        // Set data to views
-        usernameTextView.text = username
-
-        // Check if additional fields are available (from registration)
-        nameTextView.text = name
-        surnameTextView.text = surname
-        emailTextView.text = email
-
-        // Set up back button click listener
-        backButton.setOnClickListener {
-            finish() // Close this activity and return to previous one
-            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+        graphsButton.setOnClickListener {
+            // TODO: Implement graphs functionality
+            Toast.makeText(this, "Graphs functionality coming soon", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -86,12 +67,6 @@ class ProfileActivity : AppCompatActivity() {
             android.R.id.home -> {
                 finish()
                 overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                true
-            }
-            R.id.action_view_info -> {
-                val intent = Intent(this, UserInfoActivity::class.java)
-                startActivity(intent)
-                finish()
                 true
             }
             R.id.action_logout -> {
