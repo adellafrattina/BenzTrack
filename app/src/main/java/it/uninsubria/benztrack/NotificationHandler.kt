@@ -12,6 +12,7 @@ object NotificationHandler {
 
     public const val DATE_CHANNEL = "date_channel"
     public const val CO2_CHANNEL = "co2_channel"
+    public const val BACKGROUND_CHANNEL = "background_channel"
 
     public fun init(context: Context) {
 
@@ -20,27 +21,43 @@ object NotificationHandler {
 
         manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        createChannel(DATE_CHANNEL)
-        createChannel(CO2_CHANNEL)
+        manager.deleteNotificationChannel(DATE_CHANNEL)
+        manager.deleteNotificationChannel(CO2_CHANNEL)
+        manager.deleteNotificationChannel(BACKGROUND_CHANNEL)
+        createChannel(DATE_CHANNEL, importance = NotificationManager.IMPORTANCE_HIGH)
+        createChannel(CO2_CHANNEL, importance = NotificationManager.IMPORTANCE_HIGH)
+        createChannel(BACKGROUND_CHANNEL, importance = NotificationManager.IMPORTANCE_MIN)
     }
 
-    public fun notify(context: Context, channel: String, title: String, text: String) {
+    public fun notify(context: Context, channel: String, title: String, text: String, priority: Int = NotificationCompat.PRIORITY_DEFAULT) {
 
-        val notification: Notification= NotificationCompat.Builder(context, channel)
+        val notification: Notification = createNotification(context, channel)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(text)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(priority)
             .build()
 
         manager.notify((System.currentTimeMillis() % Int.MAX_VALUE).toInt(), notification)
     }
 
-    private fun createChannel(channel: String, name: String = channel, desc: String = "", importance: Int = NotificationManager.IMPORTANCE_HIGH) {
+    public fun notify(context: Context, notification: Notification) {
+
+        manager.notify((System.currentTimeMillis() % Int.MAX_VALUE).toInt(), notification)
+    }
+
+    public fun createNotification(context: Context, channel: String): NotificationCompat.Builder {
+
+        return NotificationCompat.Builder(context, channel)
+    }
+
+    public fun createChannel(channel: String, name: String = channel, desc: String = "", importance: Int = NotificationManager.IMPORTANCE_DEFAULT) {
 
         val c = NotificationChannel(channel, name, importance)
         c.description = desc
         manager.createNotificationChannel(c)
+        if (importance >= NotificationManager.IMPORTANCE_DEFAULT)
+            c.enableVibration(true)
     }
 
     private lateinit var manager: NotificationManager
