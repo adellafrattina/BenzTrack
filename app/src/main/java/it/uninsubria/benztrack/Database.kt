@@ -10,6 +10,7 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import java.security.MessageDigest
+import java.sql.Time
 import java.time.Instant
 import java.time.LocalDate
 import java.util.Date
@@ -675,15 +676,47 @@ public class Database {
         val taskSource = TaskCompletionSource<Boolean>()
         val errorMap = HashMap<String, String>()
 
-        isUserPresent(username)
-            .addOnSuccessListener { userPresent ->
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
 
-                if (userPresent) {
+                if (carPresent) {
 
-                    isCarPresent(username, plate)
-                        .addOnSuccessListener { carPresent ->
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(REFILLS_COLLECTION)
+                        .orderBy(DATE_FIELD)
+                        .limit(1)
+                        .get()
+                        .addOnSuccessListener { query ->
 
-                            if (carPresent) {
+                            // Check that the mileage is greater than the last one (if there is one)
+                            for (document in query.documents) {
+
+                                val mileage = document.get(MILEAGE_FIELD) as Int
+                                if (mileage > refill.mileage)
+                                    errorMap[MILEAGE_FIELD] = "The mileage value is not valid"
+                            }
+
+                            // Check position
+                            if (refill.position.isEmpty())
+                                errorMap[POSITION_FIELD] = "This value must not be empty"
+
+                            // Check position
+                            if (refill.ppl < 0)
+                                errorMap[POSITION_FIELD] = "The price per liter cannot be negative"
+
+                            // Check amount
+                            if (refill.amount < 0)
+                                errorMap[POSITION_FIELD] = "The amount cannot be negative"
+
+                            // Check consistency
+                            if (refill.amount != 0.0f && refill.ppl == 0.0f)
+                                errorMap[AMOUNT_FIELD] = "The value is not consistent with the price per liter"
+
+                            if (errorMap.isEmpty()) {
 
                                 dbRef
                                     .collection(USERS_COLLECTION)
@@ -691,66 +724,11 @@ public class Database {
                                     .collection(CARS_COLLECTION)
                                     .document(plate)
                                     .collection(REFILLS_COLLECTION)
-                                    .orderBy(DATE_FIELD)
-                                    .limit(1)
-                                    .get()
-                                    .addOnSuccessListener { query ->
+                                    .document(refill.date.toString())
+                                    .set(refill)
+                                    .addOnSuccessListener {
 
-                                        // Check that the mileage is greater than the last one (if there is one)
-                                        for (document in query.documents) {
-
-                                            val mileage = document.get(MILEAGE_FIELD) as Int
-                                            if (mileage > refill.mileage)
-                                                errorMap[MILEAGE_FIELD] = "The mileage value is not valid"
-                                        }
-
-                                        // Check position
-                                        if (refill.position.isEmpty())
-                                            errorMap[POSITION_FIELD] = "This value must not be empty"
-
-                                        // Check position
-                                        if (refill.ppl < 0)
-                                            errorMap[POSITION_FIELD] = "The price per liter cannot be negative"
-
-                                        // Check amount
-                                        if (refill.amount < 0)
-                                            errorMap[POSITION_FIELD] = "The amount cannot be negative"
-
-                                        // Check consistency
-                                        if (refill.amount != 0.0f && refill.ppl == 0.0f)
-                                            errorMap[AMOUNT_FIELD] = "The value is not consistent with the price per liter"
-
-                                        if (errorMap.isEmpty()) {
-
-                                            val timestamp = Timestamp.now()
-                                            refill.date = timestamp
-                                            dbRef
-                                                .collection(USERS_COLLECTION)
-                                                .document(username)
-                                                .collection(CARS_COLLECTION)
-                                                .document(plate)
-                                                .collection(REFILLS_COLLECTION)
-                                                .document(timestamp.toString())
-                                                .set(refill)
-                                                .addOnSuccessListener {
-
-                                                    taskSource.setResult(true)
-                                                }
-                                                .addOnFailureListener { e ->
-
-                                                    taskSource.setException(e as RefillException)
-                                                }
-                                        }
-
-                                        else {
-
-                                            taskSource.setException(RefillException(
-                                                "Failed to add new refill",
-                                                if (errorMap[POSITION_FIELD] != null)        errorMap[POSITION_FIELD]!! else "",
-                                                if (errorMap[PRICE_PER_LITER_FIELD] != null) errorMap[PRICE_PER_LITER_FIELD]!! else "",
-                                                if (errorMap[MILEAGE_FIELD] != null)         errorMap[MILEAGE_FIELD]!! else "",
-                                                if (errorMap[AMOUNT_FIELD] != null)          errorMap[AMOUNT_FIELD]!! else ""))
-                                        }
+                                        taskSource.setResult(true)
                                     }
                                     .addOnFailureListener { e ->
 
@@ -760,19 +738,24 @@ public class Database {
 
                             else {
 
-                                taskSource.setException(RefillException("The user does not have the specified car"))
+                                taskSource.setException(RefillException(
+                                    "Failed to add new refill",
+                                    if (errorMap[POSITION_FIELD] != null)        errorMap[POSITION_FIELD]!! else "",
+                                    if (errorMap[PRICE_PER_LITER_FIELD] != null) errorMap[PRICE_PER_LITER_FIELD]!! else "",
+                                    if (errorMap[MILEAGE_FIELD] != null)         errorMap[MILEAGE_FIELD]!! else "",
+                                    if (errorMap[AMOUNT_FIELD] != null)          errorMap[AMOUNT_FIELD]!! else ""))
                             }
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as RefillException)
                         }
                 }
 
                 else {
 
-                    taskSource.setException(RefillException("The user does not exist"))
+                    taskSource.setException(RefillException("The user does not have the specified car"))
                 }
-            }
-            .addOnFailureListener { e ->
-
-                taskSource.setException(e as RefillException)
             }
 
         return taskSource.task
@@ -783,11 +766,11 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
-     * @param from The start date (null to get the oldest date)
+     * @param from The start date (Date.from(Instant.MIN) to get the oldest date)
      * @param to The end date (by default the current date)
      * @throws RefillException
      */
-    public fun getRefillData(username: String, plate: String, from: Date? = null, to: Date = Date.from(Instant.now())) : Task<ArrayList<Refill>> {
+    public fun getRefillData(username: String, plate: String, from: Date = Date.from(Instant.MIN), to: Date = Date.from(Instant.now())) : Task<ArrayList<Refill>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Refill>>()
 
@@ -796,64 +779,32 @@ public class Database {
 
                 if (carPresent) {
 
-                    if (from != null) {
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(REFILLS_COLLECTION)
+                        .orderBy(DATE_FIELD)
+                        .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                        .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                        .get()
+                        .addOnSuccessListener { query ->
 
-                        dbRef
-                            .collection(USERS_COLLECTION)
-                            .document(username)
-                            .collection(CARS_COLLECTION)
-                            .document(plate)
-                            .collection(REFILLS_COLLECTION)
-                            .orderBy(DATE_FIELD)
-                            .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
-                            .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
-                            .get()
-                            .addOnSuccessListener { query ->
+                            val list = ArrayList<Refill>()
+                            for (document in query.documents) {
 
-                                val list = ArrayList<Refill>()
-                                for (document in query.documents) {
-
-                                    val refill = document.toObject(Refill::class.java)
-                                    if (refill != null)
-                                        list.add(refill)
-                                }
-
-                                taskSource.setResult(list)
+                                val refill = document.toObject(Refill::class.java)
+                                if (refill != null)
+                                    list.add(refill)
                             }
-                            .addOnFailureListener { e ->
 
-                                taskSource.setException(e as RefillException)
-                            }
-                    }
+                            taskSource.setResult(list)
+                        }
+                        .addOnFailureListener { e ->
 
-                    else {
-
-                        dbRef
-                            .collection(USERS_COLLECTION)
-                            .document(username)
-                            .collection(CARS_COLLECTION)
-                            .document(plate)
-                            .collection(REFILLS_COLLECTION)
-                            .orderBy(DATE_FIELD)
-                            .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
-                            .get()
-                            .addOnSuccessListener { query ->
-
-                                val list = ArrayList<Refill>()
-                                for (document in query.documents) {
-
-                                    val refill = document.toObject(Refill::class.java)
-                                    if (refill != null)
-                                        list.add(refill)
-                                }
-
-                                taskSource.setResult(list)
-                            }
-                            .addOnFailureListener { e ->
-
-                                taskSource.setException(e as RefillException)
-                            }
-                    }
+                            taskSource.setException(e as RefillException)
+                        }
                 }
 
                 else {
@@ -874,13 +825,43 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
+     * @param date The maintenance date (null to remove it)
      * @throws MaintenanceException
      */
-    public fun setNewMaintenanceDate(username: String, plate: String): Task<Boolean> {
+    public fun setNewMaintenanceDate(username: String, plate: String, date: Timestamp? = Timestamp.now()): Task<Boolean> {
 
         val taskSource = TaskCompletionSource<Boolean>()
 
-        taskSource.setException(MaintenanceException("Unimplemented method"))
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .update(MAINTENANCE_DATE_FILED, date)
+                        .addOnSuccessListener {
+
+                            taskSource.setResult(true)
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as MaintenanceException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(MaintenanceException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as MaintenanceException)
+            }
 
         return taskSource.task
     }
@@ -892,11 +873,44 @@ public class Database {
      * @param plate The user's car plate
      * @throws MaintenanceException
      */
-    public fun checkMaintenanceDate(username: String, plate: String): Task<Date> {
+    public fun checkMaintenanceDate(username: String, plate: String): Task<Date?> {
 
-        val taskSource = TaskCompletionSource<Date>()
+        val taskSource = TaskCompletionSource<Date?>()
 
-        taskSource.setException(MaintenanceException("Unimplemented method"))
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .get()
+                        .addOnSuccessListener { document ->
+
+                            val car = document.toObject(Car::class.java)
+                            if (car != null)
+                                taskSource.setResult(if (car.maintenancedate != null) car.maintenancedate!!.toDate() else null)
+                            else
+                                taskSource.setResult(null)
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as MaintenanceException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(MaintenanceException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as MaintenanceException)
+            }
 
         return taskSource.task
     }
@@ -913,7 +927,38 @@ public class Database {
 
         val taskSource = TaskCompletionSource<Boolean>()
 
-        taskSource.setException(MaintenanceException("Unimplemented method"))
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(MAINTENANCE_COLLECTION)
+                        .document(maintenance.date.toString())
+                        .set(maintenance)
+                        .addOnSuccessListener {
+
+                            taskSource.setResult(true)
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as MaintenanceException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(MaintenanceException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as MaintenanceException)
+            }
 
         return taskSource.task
     }
@@ -923,15 +968,56 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
-     * @param from The start date (null to get the oldest date)
+     * @param from The start date (Date.from(Instant.MIN) to get the oldest date)
      * @param to The end date (by default the current date)
      * @throws MaintenanceException
      */
-    public fun getMaintenanceData(username: String, plate: String, from: Date? = null, to: Date = Date.from(Instant.now())) : Task<ArrayList<Maintenance>> {
+    public fun getMaintenanceData(username: String, plate: String, from: Date = Date.from(Instant.MIN), to: Date = Date.from(Instant.now())) : Task<ArrayList<Maintenance>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Maintenance>>()
 
-        taskSource.setException(MaintenanceException("Unimplemented method"))
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(MAINTENANCE_COLLECTION)
+                        .orderBy(DATE_FIELD)
+                        .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                        .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                        .get()
+                        .addOnSuccessListener { query ->
+
+                            val list = ArrayList<Maintenance>()
+                            for (document in query.documents) {
+
+                                val maintenance = document.toObject(Maintenance::class.java)
+                                if (maintenance != null)
+                                    list.add(maintenance)
+                            }
+
+                            taskSource.setResult(list)
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as MaintenanceException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(MaintenanceException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as MaintenanceException)
+            }
 
         return taskSource.task
     }
@@ -941,13 +1027,43 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
+     * @param date The insurance date (null to remove it)
      * @throws InsuranceException
      */
-    public fun setNewInsuranceDate(username: String, plate: String): Task<Boolean> {
+    public fun setNewInsuranceDate(username: String, plate: String, date: Timestamp? = Timestamp.now()): Task<Boolean> {
 
         val taskSource = TaskCompletionSource<Boolean>()
 
-        taskSource.setException(InsuranceException("Unimplemented method"))
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .update(INSURANCE_DATE_FILED, date)
+                        .addOnSuccessListener {
+
+                            taskSource.setResult(true)
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as InsuranceException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(InsuranceException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as InsuranceException)
+            }
 
         return taskSource.task
     }
@@ -959,11 +1075,44 @@ public class Database {
      * @param plate The user's car plate
      * @throws InsuranceException
      */
-    public fun checkInsuranceDate(username: String, plate: String): Task<Date> {
+    public fun checkInsuranceDate(username: String, plate: String): Task<Date?> {
 
-        val taskSource = TaskCompletionSource<Date>()
+        val taskSource = TaskCompletionSource<Date?>()
 
-        taskSource.setException(InsuranceException("Unimplemented method"))
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .get()
+                        .addOnSuccessListener { document ->
+
+                            val car = document.toObject(Car::class.java)
+                            if (car != null)
+                                taskSource.setResult(if (car.insurancedate != null) car.insurancedate!!.toDate() else null)
+                            else
+                                taskSource.setResult(null)
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as InsuranceException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(InsuranceException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as InsuranceException)
+            }
 
         return taskSource.task
     }
@@ -980,7 +1129,38 @@ public class Database {
 
         val taskSource = TaskCompletionSource<Boolean>()
 
-        taskSource.setException(InsuranceException("Unimplemented method"))
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(INSURANCE_COLLECTION)
+                        .document(insurance.date.toString())
+                        .set(insurance)
+                        .addOnSuccessListener {
+
+                            taskSource.setResult(true)
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as InsuranceException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(InsuranceException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as InsuranceException)
+            }
 
         return taskSource.task
     }
@@ -990,15 +1170,56 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
-     * @param from The start date (null to get the oldest date)
+     * @param from The start date (Date.from(Instant.MIN) to get the oldest date)
      * @param to The end date (by default the current date)
      * @throws InsuranceException
      */
-    public fun getInsuranceData(username: String, plate: String, from: Date? = null, to: Date = Date.from(Instant.now())) : Task<ArrayList<Insurance>> {
+    public fun getInsuranceData(username: String, plate: String, from: Date = Date.from(Instant.MIN), to: Date = Date.from(Instant.now())) : Task<ArrayList<Insurance>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Insurance>>()
 
-        taskSource.setException(InsuranceException("Unimplemented method"))
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(INSURANCE_COLLECTION)
+                        .orderBy(DATE_FIELD)
+                        .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                        .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                        .get()
+                        .addOnSuccessListener { query ->
+
+                            val list = ArrayList<Insurance>()
+                            for (document in query.documents) {
+
+                                val insurance = document.toObject(Insurance::class.java)
+                                if (insurance != null)
+                                    list.add(insurance)
+                            }
+
+                            taskSource.setResult(list)
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as InsuranceException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(InsuranceException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as InsuranceException)
+            }
 
         return taskSource.task
     }
@@ -1008,12 +1229,43 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
+     * @param date The tax date (null to remove it)
+     * @throws TaxException
      */
-    public fun setNewTaxDate(username: String, plate: String): Task<Boolean> {
+    public fun setNewTaxDate(username: String, plate: String, date: Timestamp? = Timestamp.now()): Task<Boolean> {
 
         val taskSource = TaskCompletionSource<Boolean>()
 
-        taskSource.setException(TaxException("Unimplemented method"))
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .update(TAX_DATE_FILED, date)
+                        .addOnSuccessListener {
+
+                            taskSource.setResult(true)
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as TaxException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(TaxException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as TaxException)
+            }
 
         return taskSource.task
     }
@@ -1025,11 +1277,44 @@ public class Database {
      * @param plate The user's car plate
      * @throws TaxException
      */
-    public fun checkTaxDate(username: String, plate: String): Task<Date> {
+    public fun checkTaxDate(username: String, plate: String): Task<Date?> {
 
-        val taskSource = TaskCompletionSource<Date>()
+        val taskSource = TaskCompletionSource<Date?>()
 
-        taskSource.setException(TaxException("Unimplemented method"))
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .get()
+                        .addOnSuccessListener { document ->
+
+                            val car = document.toObject(Car::class.java)
+                            if (car != null)
+                                taskSource.setResult(if (car.taxdate != null) car.taxdate!!.toDate() else null)
+                            else
+                                taskSource.setResult(null)
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as TaxException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(TaxException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as TaxException)
+            }
 
         return taskSource.task
     }
@@ -1046,7 +1331,38 @@ public class Database {
 
         val taskSource = TaskCompletionSource<Boolean>()
 
-        taskSource.setException(TaxException("Unimplemented method"))
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(TAX_COLLECTION)
+                        .document(tax.date.toString())
+                        .set(tax)
+                        .addOnSuccessListener {
+
+                            taskSource.setResult(true)
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as TaxException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(TaxException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as TaxException)
+            }
 
         return taskSource.task
     }
@@ -1056,15 +1372,56 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
-     * @param from The start date (null to get the oldest date)
+     * @param from The start date (Date.from(Instant.MIN) to get the oldest date)
      * @param to The end date (by default the current date)
      * @throws TaxException
      */
-    public fun getTaxData(username: String, plate: String, from: Date? = null, to: Date = Date.from(Instant.now())) : Task<ArrayList<Tax>> {
+    public fun getTaxData(username: String, plate: String, from: Date = Date.from(Instant.MIN), to: Date = Date.from(Instant.now())) : Task<ArrayList<Tax>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Tax>>()
 
-        taskSource.setException(TaxException("Unimplemented method"))
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(TAX_COLLECTION)
+                        .orderBy(DATE_FIELD)
+                        .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                        .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                        .get()
+                        .addOnSuccessListener { query ->
+
+                            val list = ArrayList<Tax>()
+                            for (document in query.documents) {
+
+                                val tax = document.toObject(Tax::class.java)
+                                if (tax != null)
+                                    list.add(tax)
+                            }
+
+                            taskSource.setResult(list)
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(e as TaxException)
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(TaxException("The user does not have the specified car"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(e as TaxException)
+            }
 
         return taskSource.task
     }
