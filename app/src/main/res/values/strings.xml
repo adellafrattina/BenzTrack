@@ -33,4 +33,7 @@
     <string name="user">User</string>
     <string name="view_info">View Info</string>
     <string name="logout">Logout</string>
+    <string name="no_cars">No cars added yet</string>
+    <string name="add_cars">+</string>
+    <string name="show_graphs">📊</string>
 </resources>
