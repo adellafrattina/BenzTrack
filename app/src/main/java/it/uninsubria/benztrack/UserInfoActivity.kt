@@ -9,10 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 
-/**
- * Activity responsible for displaying user profile information.
- */
-class ProfileActivity : AppCompatActivity() {
+
+class UserInfoActivity : AppCompatActivity() {
 
     private lateinit var usernameTextView: TextView
     private lateinit var nameTextView: TextView
@@ -28,10 +26,7 @@ class ProfileActivity : AppCompatActivity() {
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_profile)
-
-        // Enable the up button in the action bar
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        setContentView(R.layout.activity_userinfo)
 
         // Initialize views
         usernameTextView = findViewById(R.id.text_username)
@@ -59,51 +54,10 @@ class ProfileActivity : AppCompatActivity() {
 
         // Set up back button click listener
         backButton.setOnClickListener {
-            finish() // Close this activity and return to previous one
+            val intent = Intent(this, ProfileActivity::class.java)
+            startActivity(intent)
+            finish() // Close this activity
             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-        }
-    }
-
-    /**
-     * Creates the options menu.
-     * 
-     * @param menu The menu to inflate
-     * @return true if the menu was created successfully
-     */
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.profile_menu, menu)
-        return true
-    }
-
-    /**
-     * Handles action bar item selection.
-     * 
-     * @param item The selected menu item
-     * @return true if the item was handled, false otherwise
-     */
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                finish()
-                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                true
-            }
-            R.id.action_view_info -> {
-                val intent = Intent(this, UserInfoActivity::class.java)
-                startActivity(intent)
-                finish()
-                true
-            }
-            R.id.action_logout -> {
-                loggedUser = null
-                ToastManager.show(this, "Logged out successfully", Toast.LENGTH_SHORT)
-                val intent = Intent(this, MainActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                finish()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
         }
     }
 
