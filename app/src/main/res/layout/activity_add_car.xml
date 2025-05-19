@@ -22,7 +22,7 @@
                 android:id="@+id/edit_car_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Car Name"
+                android:hint="@string/car_name"
                 android:inputType="text"/>
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -36,7 +36,7 @@
                 android:id="@+id/edit_plate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Plate Number"
+                android:hint="@string/plate_number"
                 android:inputType="textCapCharacters"/>
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -69,7 +69,7 @@
         android:id="@+id/button_confirm"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Add Car"
+        android:text="@string/add_car"
         android:layout_alignParentBottom="true"
         android:layout_margin="16dp"
         style="@style/AppButton"/>

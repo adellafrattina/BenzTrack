@@ -29,11 +29,16 @@
     <string name="back_button">Back to Login</string>
     <string name="go_back_button">Go Back</string>
 
-    <!-- Profile menu -->
+    <!-- Main menu (Logged in) -->
     <string name="user">User</string>
     <string name="view_info">View Info</string>
     <string name="logout">Logout</string>
     <string name="no_cars">No cars added yet</string>
     <string name="add_cars">+</string>
     <string name="show_graphs">📊</string>
+
+    <!-- Add new car -->
+    <string name="car_name">Car Name</string>
+    <string name="plate_number">Plate Number</string>
+    <string name="add_car">Add Car</string>
 </resources>
