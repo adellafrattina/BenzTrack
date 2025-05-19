@@ -28,6 +28,10 @@ class UserInfoActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_userinfo)
 
+        // Enable the back arrow in the action bar
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowHomeEnabled(true)
+
         // Initialize views
         usernameTextView = findViewById(R.id.text_username)
         nameTextView = findViewById(R.id.text_name)
@@ -69,5 +73,20 @@ class UserInfoActivity : AppCompatActivity() {
     override fun onBackPressed() {
         super.onBackPressed()
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+    }
+
+    /**
+     * Handles the action bar's back button press.
+     * Provides a smooth transition animation when navigating back.
+     */
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            val intent = Intent(this, ProfileActivity::class.java)
+            startActivity(intent)
+            finish()
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+            return true
+        }
+        return super.onOptionsItemSelected(item)
     }
 }
