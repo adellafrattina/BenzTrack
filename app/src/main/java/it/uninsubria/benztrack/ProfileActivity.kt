@@ -35,8 +35,8 @@ class ProfileActivity : AppCompatActivity() {
 
         // Set up button click listeners
         addCarButton.setOnClickListener {
-            // TODO: Implement add car functionality
-            Toast.makeText(this, "Add car functionality coming soon", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, AddCarActivity::class.java)
+            startActivity(intent)
         }
 
         graphsButton.setOnClickListener {
