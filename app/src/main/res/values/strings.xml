@@ -19,7 +19,7 @@
     <string name="register_button">Register</string>
     <string name="register_link">Don\'t have an account? Register here</string>
 
-    <!-- Profile screen -->
+    <!-- User Info screen -->
     <string name="profile_title">User Profile</string>
     <string name="label_username">Username:</string>
     <string name="label_password">Password:</string>
@@ -28,4 +28,9 @@
     <string name="label_email">Email:</string>
     <string name="back_button">Back to Login</string>
     <string name="go_back_button">Go Back</string>
+
+    <!-- Profile menu -->
+    <string name="user">User</string>
+    <string name="view_info">View Info</string>
+    <string name="logout">Logout</string>
 </resources>

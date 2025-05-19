@@ -5,15 +5,15 @@
     <item
         android:id="@+id/action_user"
         android:icon="@drawable/ic_person"
-        android:title="User"
+        android:title="@string/user"
         app:showAsAction="always">
         <menu>
             <item
                 android:id="@+id/action_view_info"
-                android:title="View Info" />
+                android:title="@string/view_info" />
             <item
                 android:id="@+id/action_logout"
-                android:title="Logout" />
+                android:title="@string/logout" />
         </menu>
     </item>
 </menu> 
