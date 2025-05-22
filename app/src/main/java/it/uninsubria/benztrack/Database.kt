@@ -357,13 +357,13 @@ public class Database {
      *
      * @param name The string the user typed. It will be used to search all the matching car model's name
      */
-    public fun searchCarModelByName(name: String): Task<ArrayList<DocumentReference>> {
+    public fun searchCarModelByName(name: String): Task<ArrayList<CarModel>> {
 
-        val taskSource = TaskCompletionSource<ArrayList<DocumentReference>>()
+        val taskSource = TaskCompletionSource<ArrayList<CarModel>>()
 
         if (name.trim().isEmpty()) {
 
-            taskSource.setException(Exception("Cannot find the specified model"))
+            taskSource.setException(CarModelException("Cannot find the specified model"))
 
             return taskSource.task
         }
@@ -379,10 +379,11 @@ public class Database {
 
                 if (!primaryQuery.isEmpty) {
 
-                    val models = ArrayList<DocumentReference>()
+                    val models = ArrayList<CarModel>()
                     for (document in primaryQuery) {
 
-                        models.add(document.reference)
+                        val model = document.toObject(CarModel::class.java)
+                        models.add(model)
                     }
 
                     taskSource.setResult(models)
@@ -393,17 +394,17 @@ public class Database {
                     // Alternative type of search if the searchterms array was null
                     dbRef
                         .collection(MODELS_COLLECTION)
-                        .whereGreaterThanOrEqualTo(NAME_FIELD, name.trim().uppercase())
-                        .whereLessThan(NAME_FIELD, name + '\uf8ff')
+                        .whereEqualTo(NAME_FIELD, name.trim())
                         .get()
                         .addOnSuccessListener { secondaryQuery ->
 
                             if (!secondaryQuery.isEmpty) {
 
-                                val models = ArrayList<DocumentReference>()
+                                val models = ArrayList<CarModel>()
                                 for (document in secondaryQuery) {
 
-                                    models.add(document.reference)
+                                    val model = document.toObject(CarModel::class.java)
+                                    models.add(model)
                                 }
 
                                 taskSource.setResult(models)
@@ -411,18 +412,18 @@ public class Database {
 
                             else {
 
-                                taskSource.setException(Exception("Cannot find the specified model"))
+                                taskSource.setException(CarModelException("Cannot find the specified model"))
                             }
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e)
+                            taskSource.setException(CarModelException(e.message?:""))
                         }
                 }
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e)
+                taskSource.setException(CarModelException(e.message?:""))
             }
 
         return taskSource.task
@@ -618,17 +619,16 @@ public class Database {
      * Gets all the cars owned by a specific user
      *
      * @param username The user's id
-     * @param plate The user's car plate
      * @throws CarException
      */
-    public fun getUserCars(username: String, plate: String): Task<ArrayList<Car>> {
+    public fun getUserCars(username: String): Task<ArrayList<Car>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Car>>()
 
-        isCarPresent(username, plate)
-            .addOnSuccessListener { carPresent ->
+        isUserPresent(username)
+            .addOnSuccessListener { userPresent ->
 
-                if (carPresent) {
+                if (userPresent) {
 
                     dbRef
                         .collection(USERS_COLLECTION)
@@ -653,7 +653,7 @@ public class Database {
 
                 else {
 
-                    taskSource.setException(CarException("The user does not have the specified car"))
+                    taskSource.setException(CarException("The user does not exist"))
                 }
             }
             .addOnFailureListener { e ->
