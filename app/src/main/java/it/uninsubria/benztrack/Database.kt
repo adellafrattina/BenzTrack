@@ -618,17 +618,16 @@ public class Database {
      * Gets all the cars owned by a specific user
      *
      * @param username The user's id
-     * @param plate The user's car plate
      * @throws CarException
      */
-    public fun getUserCars(username: String, plate: String): Task<ArrayList<Car>> {
+    public fun getUserCars(username: String): Task<ArrayList<Car>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Car>>()
 
-        isCarPresent(username, plate)
-            .addOnSuccessListener { carPresent ->
+        isUserPresent(username)
+            .addOnSuccessListener { userPresent ->
 
-                if (carPresent) {
+                if (userPresent) {
 
                     dbRef
                         .collection(USERS_COLLECTION)
@@ -653,7 +652,7 @@ public class Database {
 
                 else {
 
-                    taskSource.setException(CarException("The user does not have the specified car"))
+                    taskSource.setException(CarException("The user does not exist"))
                 }
             }
             .addOnFailureListener { e ->
