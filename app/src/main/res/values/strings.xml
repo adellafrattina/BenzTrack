@@ -55,4 +55,9 @@
     <string name="model_name">Model Name</string>
     <string name="width_cm">Width (cm)</string>
     <string name="add_model">Add Model</string>
+
+    <!-- User's cars (cards) -->
+    <string name="car_name_card">Car Name</string>
+    <string name="car_model_card">Model</string>
+    <string name="car_plate_card">Plate</string>
 </resources>
