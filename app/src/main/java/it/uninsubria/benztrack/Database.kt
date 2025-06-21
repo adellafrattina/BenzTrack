@@ -644,6 +644,8 @@ public class Database {
                                 if (car != null)
                                     list.add(car)
                             }
+
+                            taskSource.setResult(list)
                         }
                         .addOnFailureListener { e ->
 
