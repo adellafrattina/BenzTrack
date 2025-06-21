@@ -1,5 +1,6 @@
 package it.uninsubria.benztrack
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -11,7 +12,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
-import com.google.firebase.firestore.DocumentReference
 
 class AddCarActivity : AppCompatActivity() {
 
@@ -20,8 +20,9 @@ class AddCarActivity : AppCompatActivity() {
     private lateinit var modelEdit: TextInputEditText
     private lateinit var modelsRecyclerView: RecyclerView
     private lateinit var confirmButton: Button
+    private lateinit var addModelButton: Button
     private lateinit var database: Database
-    private var selectedModelRef: DocumentReference? = null
+    private var selectedModel: CarModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,23 +37,15 @@ class AddCarActivity : AppCompatActivity() {
         modelEdit = findViewById(R.id.edit_model)
         modelsRecyclerView = findViewById(R.id.recycler_models)
         confirmButton = findViewById(R.id.button_confirm)
+        addModelButton = findViewById(R.id.button_add_model)
         database = Database()
 
         // Set up RecyclerView
         modelsRecyclerView.layoutManager = LinearLayoutManager(this)
-        val adapter = CarModelAdapter { modelRef ->
-            selectedModelRef = modelRef
-            // Get the actual model data
-            modelRef.get()
-                .addOnSuccessListener { document ->
-                    val model = document.toObject(CarModel::class.java)
-                    if (model != null) {
-                        modelEdit.setText(model.name)
-                    }
-                }
-                .addOnFailureListener { e ->
-                    Toast.makeText(this, "Error loading model: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
+        val adapter = CarModelAdapter { model ->
+
+            selectedModel = model
+            modelEdit.setText(model.name)
             modelsRecyclerView.visibility = View.GONE
         }
         modelsRecyclerView.adapter = adapter
@@ -76,7 +69,7 @@ class AddCarActivity : AppCompatActivity() {
                         }
                     }
                     .addOnFailureListener { e ->
-                        Toast.makeText(this@AddCarActivity, "Error searching models: ${e.message}", Toast.LENGTH_SHORT).show()
+                        ToastManager.show(this@AddCarActivity, "Error searching models: ${e.message}", Toast.LENGTH_SHORT)
                         modelsRecyclerView.visibility = View.GONE
                     }
             }
@@ -87,24 +80,43 @@ class AddCarActivity : AppCompatActivity() {
             val carName = carNameEdit.text.toString()
             val plate = plateEdit.text.toString()
             
-            if (carName.isBlank() || plate.isBlank() || selectedModelRef == null) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
+            if (carName.isBlank() || plate.isBlank() || selectedModel == null) {
+
+                ToastManager.show(this, "Please fill all fields", Toast.LENGTH_SHORT)
                 return@setOnClickListener
             }
 
             val car = Car()
             car.name = carName
             car.plate = plate
-            car.model = selectedModelRef
+            //car.model =
+
+            database.getCarModelDocumentReference(selectedModel!!)
+                .addOnSuccessListener { model ->
+
+                    car.model = model
+                }
+                .addOnFailureListener { e ->
+
+                    ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
+                }
 
             database.addNewUserCar(loggedUser!!.username, car)
                 .addOnSuccessListener {
-                    Toast.makeText(this, "Car added successfully", Toast.LENGTH_SHORT).show()
+
+                    ToastManager.show(this, "Car added successfully", Toast.LENGTH_SHORT)
                     finish()
                 }
+
                 .addOnFailureListener { e ->
-                    Toast.makeText(this, "Error adding car: ${e.message}", Toast.LENGTH_SHORT).show()
+
+                    ToastManager.show(this, "Error adding car: ${e.message}", Toast.LENGTH_SHORT)
                 }
+        }
+
+        addModelButton.setOnClickListener {
+            val intent = Intent(this, AddCarModelActivity::class.java)
+            startActivity(intent)
         }
     }
 
@@ -114,12 +126,12 @@ class AddCarActivity : AppCompatActivity() {
     }
 }
 
-class CarModelAdapter(private val onModelSelected: (DocumentReference) -> Unit) : 
+class CarModelAdapter(private val onModelSelected: (CarModel) -> Unit) :
     RecyclerView.Adapter<CarModelAdapter.ViewHolder>() {
 
-    private var models: List<DocumentReference> = emptyList()
+    private var models: ArrayList<CarModel> = arrayListOf()
 
-    fun submitList(newModels: List<DocumentReference>) {
+    fun submitList(newModels: ArrayList<CarModel>) {
         models = newModels
         notifyDataSetChanged()
     }
@@ -140,19 +152,13 @@ class CarModelAdapter(private val onModelSelected: (DocumentReference) -> Unit) 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val modelNameText: TextView = itemView.findViewById(R.id.text_model_name)
 
-        fun bind(model: DocumentReference) {
-            // Get the actual model data
-            model.get()
-                .addOnSuccessListener { document ->
-                    val carModel = document.toObject(CarModel::class.java)
-                    if (carModel != null) {
-                        modelNameText.text = carModel.name
-                    }
-                }
-                .addOnFailureListener {
-                    modelNameText.text = "Error loading model"
-                }
-            itemView.setOnClickListener { onModelSelected(model) }
+        fun bind(model: CarModel) {
+
+            modelNameText.text = model.name
+            itemView.setOnClickListener {
+
+                onModelSelected(model)
+            }
         }
     }
 } 
