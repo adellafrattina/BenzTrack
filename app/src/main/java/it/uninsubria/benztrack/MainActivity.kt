@@ -34,7 +34,16 @@ class MainActivity : AppCompatActivity() {
         loginButton = findViewById(R.id.button_login)
         registerButton = findViewById(R.id.button_register)
 
+        NotificationHandler.init(this)
+
+        if (!BackgroundService.isRunning) {
+
+            val intent = Intent(this, BackgroundService::class.java)
+            startService(intent)
+        }
+
         loginButton.setOnClickListener {
+
             val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)

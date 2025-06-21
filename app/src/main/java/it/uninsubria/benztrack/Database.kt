@@ -1,6 +1,5 @@
 package it.uninsubria.benztrack
 
-import android.util.Log
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.firebase.Firebase
@@ -10,7 +9,6 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import java.security.MessageDigest
-import java.sql.Time
 import java.time.Instant
 import java.time.LocalDate
 import java.util.Date
@@ -49,9 +47,9 @@ public class Database {
 
         public const val PLATE_FIELD = "plate"
         public const val MODEL_FIELD = "model"
-        public const val MAINTENANCE_DATE_FILED = "maintenancedate"
-        public const val INSURANCE_DATE_FILED = "insurance"
-        public const val TAX_DATE_FILED = "taxdate"
+        public const val MAINTENANCE_DATE_FIELD = "maintenancedate"
+        public const val INSURANCE_DATE_FIELD = "insurance"
+        public const val TAX_DATE_FIELD = "taxdate"
 
         public const val DATE_FIELD = "date"
         public const val POSITION_FIELD = "position"
@@ -120,7 +118,7 @@ public class Database {
                 }
                 .addOnFailureListener { e ->
 
-                    taskSource.setException(e as LoginException)
+                    taskSource.setException(LoginException(e.message?:""))
                 }
         }
 
@@ -211,7 +209,7 @@ public class Database {
                                 }
                                 .addOnFailureListener { e ->
 
-                                    taskSource.setException(e as RegistrationException)
+                                    taskSource.setException(RegistrationException(e.message?:""))
                                 }
                         }
 
@@ -229,7 +227,7 @@ public class Database {
                 }
                 .addOnFailureListener { e ->
 
-                    taskSource.setException(e as RegistrationException)
+                    taskSource.setException(RegistrationException(e.message?:""))
                 }
         }
 
@@ -318,18 +316,18 @@ public class Database {
                                     }
                                     .addOnFailureListener { e ->
 
-                                        taskSource.setException(e as CarModelException)
+                                        taskSource.setException(CarModelException(e.message?:""))
                                     }
                             }
                             .addOnFailureListener { e ->
 
-                                taskSource.setException(e as CarModelException)
+                                taskSource.setException(CarModelException(e.message?:""))
                             }
                     }
                 }
                 .addOnFailureListener { e ->
 
-                    taskSource.setException(e as CarModelException)
+                    taskSource.setException(CarModelException(e.message?:""))
                 }
         }
 
@@ -357,13 +355,13 @@ public class Database {
      *
      * @param name The string the user typed. It will be used to search all the matching car model's name
      */
-    public fun searchCarModelByName(name: String): Task<ArrayList<DocumentReference>> {
+    public fun searchCarModelByName(name: String): Task<ArrayList<CarModel>> {
 
-        val taskSource = TaskCompletionSource<ArrayList<DocumentReference>>()
+        val taskSource = TaskCompletionSource<ArrayList<CarModel>>()
 
         if (name.trim().isEmpty()) {
 
-            taskSource.setException(Exception("Cannot find the specified model"))
+            taskSource.setException(CarModelException("Cannot find the specified model"))
 
             return taskSource.task
         }
@@ -379,10 +377,11 @@ public class Database {
 
                 if (!primaryQuery.isEmpty) {
 
-                    val models = ArrayList<DocumentReference>()
+                    val models = ArrayList<CarModel>()
                     for (document in primaryQuery) {
 
-                        models.add(document.reference)
+                        val model = document.toObject(CarModel::class.java)
+                        models.add(model)
                     }
 
                     taskSource.setResult(models)
@@ -393,17 +392,17 @@ public class Database {
                     // Alternative type of search if the searchterms array was null
                     dbRef
                         .collection(MODELS_COLLECTION)
-                        .whereGreaterThanOrEqualTo(NAME_FIELD, name.trim().uppercase())
-                        .whereLessThan(NAME_FIELD, name + '\uf8ff')
+                        .whereEqualTo(NAME_FIELD, name.trim())
                         .get()
                         .addOnSuccessListener { secondaryQuery ->
 
                             if (!secondaryQuery.isEmpty) {
 
-                                val models = ArrayList<DocumentReference>()
+                                val models = ArrayList<CarModel>()
                                 for (document in secondaryQuery) {
 
-                                    models.add(document.reference)
+                                    val model = document.toObject(CarModel::class.java)
+                                    models.add(model)
                                 }
 
                                 taskSource.setResult(models)
@@ -411,18 +410,18 @@ public class Database {
 
                             else {
 
-                                taskSource.setException(Exception("Cannot find the specified model"))
+                                taskSource.setException(CarModelException("Cannot find the specified model"))
                             }
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e)
+                            taskSource.setException(CarModelException(e.message?:""))
                         }
                 }
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e)
+                taskSource.setException(CarModelException(e.message?:""))
             }
 
         return taskSource.task
@@ -446,11 +445,11 @@ public class Database {
                 if (document.exists())
                     taskSource.setResult(document.reference)
                 else
-                    taskSource.setException(Exception("Cannot find the specified model"))
+                    taskSource.setException(CarModelException("Cannot find the specified model"))
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e)
+                taskSource.setException(CarModelException(e.message?:""))
             }
 
         return taskSource.task
@@ -493,7 +492,7 @@ public class Database {
                             }
                             .addOnFailureListener { e ->
 
-                                taskSource.setException(e as CarException)
+                                taskSource.setException(CarException(e.message?:""))
                             }
                     }
 
@@ -503,16 +502,16 @@ public class Database {
                             "Car creation has failed",
                             if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
                             if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
-                            if (errorMap[MAINTENANCE_DATE_FILED] != null) errorMap[MAINTENANCE_DATE_FILED]!! else "",
-                            if (errorMap[INSURANCE_DATE_FILED] != null)   errorMap[INSURANCE_DATE_FILED]!! else "",
-                            if (errorMap[TAX_DATE_FILED] != null)         errorMap[TAX_DATE_FILED]!! else ""
+                            if (errorMap[MAINTENANCE_DATE_FIELD] != null) errorMap[MAINTENANCE_DATE_FIELD]!! else "",
+                            if (errorMap[INSURANCE_DATE_FIELD] != null)   errorMap[INSURANCE_DATE_FIELD]!! else "",
+                            if (errorMap[TAX_DATE_FIELD] != null)         errorMap[TAX_DATE_FIELD]!! else ""
                         ))
                     }
                 }
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e as CarException)
+                taskSource.setException(CarException(e.message?:""))
             }
 
         return taskSource.task
@@ -544,7 +543,7 @@ public class Database {
                     deleteSubcollection(refillsPath)
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as CarException)
+                            taskSource.setException(CarException(e.message?:""))
                         }
 
                     // Delete maintenance collection
@@ -558,7 +557,7 @@ public class Database {
                     deleteSubcollection(maintenancePath)
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as CarException)
+                            taskSource.setException(CarException(e.message?:""))
                         }
 
                     // Delete insurance collection
@@ -572,7 +571,7 @@ public class Database {
                     deleteSubcollection(insurancePath)
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as CarException)
+                            taskSource.setException(CarException(e.message?:""))
                         }
 
                     // Delete tax collection
@@ -586,7 +585,7 @@ public class Database {
                     deleteSubcollection(taxPath)
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as CarException)
+                            taskSource.setException(CarException(e.message?:""))
                         }
 
                     dbRef
@@ -601,7 +600,7 @@ public class Database {
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as CarException)
+                            taskSource.setException(CarException(e.message?:""))
                         }
                 }
 
@@ -618,17 +617,16 @@ public class Database {
      * Gets all the cars owned by a specific user
      *
      * @param username The user's id
-     * @param plate The user's car plate
      * @throws CarException
      */
-    public fun getUserCars(username: String, plate: String): Task<ArrayList<Car>> {
+    public fun getUserCars(username: String): Task<ArrayList<Car>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Car>>()
 
-        isCarPresent(username, plate)
-            .addOnSuccessListener { carPresent ->
+        isUserPresent(username)
+            .addOnSuccessListener { userPresent ->
 
-                if (carPresent) {
+                if (userPresent) {
 
                     dbRef
                         .collection(USERS_COLLECTION)
@@ -644,21 +642,23 @@ public class Database {
                                 if (car != null)
                                     list.add(car)
                             }
+
+                            taskSource.setResult(list)
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as CarException)
+                            taskSource.setException(CarException(e.message?:""))
                         }
                 }
 
                 else {
 
-                    taskSource.setException(CarException("The user does not have the specified car"))
+                    taskSource.setException(CarException("The user does not exist"))
                 }
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e as CarException)
+                taskSource.setException(CarException(e.message?:""))
             }
 
         return taskSource.task
@@ -732,7 +732,7 @@ public class Database {
                                     }
                                     .addOnFailureListener { e ->
 
-                                        taskSource.setException(e as RefillException)
+                                        taskSource.setException(RefillException(e.message?:""))
                                     }
                             }
 
@@ -748,7 +748,7 @@ public class Database {
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as RefillException)
+                            taskSource.setException(RefillException(e.message?:""))
                         }
                 }
 
@@ -803,7 +803,7 @@ public class Database {
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as RefillException)
+                            taskSource.setException(RefillException(e.message?:""))
                         }
                 }
 
@@ -814,7 +814,7 @@ public class Database {
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e as RefillException)
+                taskSource.setException(RefillException(e.message?:""))
             }
 
         return taskSource.task
@@ -842,14 +842,14 @@ public class Database {
                         .document(username)
                         .collection(CARS_COLLECTION)
                         .document(plate)
-                        .update(MAINTENANCE_DATE_FILED, date)
+                        .update(MAINTENANCE_DATE_FIELD, date)
                         .addOnSuccessListener {
 
                             taskSource.setResult(true)
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as MaintenanceException)
+                            taskSource.setException(MaintenanceException(e.message?:""))
                         }
                 }
 
@@ -860,63 +860,14 @@ public class Database {
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e as MaintenanceException)
+                taskSource.setException(MaintenanceException(e.message?:""))
             }
 
         return taskSource.task
     }
 
     /**
-     * Checks the car maintenance date. It needs to be called periodically to warn the user on time
-     *
-     * @param username The user's id
-     * @param plate The user's car plate
-     * @throws MaintenanceException
-     */
-    public fun checkMaintenanceDate(username: String, plate: String): Task<Date?> {
-
-        val taskSource = TaskCompletionSource<Date?>()
-
-        isCarPresent(username, plate)
-            .addOnSuccessListener { carPresent ->
-
-                if (carPresent) {
-
-                    dbRef
-                        .collection(USERS_COLLECTION)
-                        .document(username)
-                        .collection(CARS_COLLECTION)
-                        .document(plate)
-                        .get()
-                        .addOnSuccessListener { document ->
-
-                            val car = document.toObject(Car::class.java)
-                            if (car != null)
-                                taskSource.setResult(if (car.maintenancedate != null) car.maintenancedate!!.toDate() else null)
-                            else
-                                taskSource.setResult(null)
-                        }
-                        .addOnFailureListener { e ->
-
-                            taskSource.setException(e as MaintenanceException)
-                        }
-                }
-
-                else {
-
-                    taskSource.setException(MaintenanceException("The user does not have the specified car"))
-                }
-            }
-            .addOnFailureListener { e ->
-
-                taskSource.setException(e as MaintenanceException)
-            }
-
-        return taskSource.task
-    }
-
-    /**
-     * Sets a new date for the car maintenance for a specific car of a specific user
+     * To pay for the car maintenance for a specific car of a specific user
      *
      * @param username The user's id
      * @param plate The user's car plate
@@ -942,11 +893,24 @@ public class Database {
                         .set(maintenance)
                         .addOnSuccessListener {
 
-                            taskSource.setResult(true)
+                            dbRef
+                                .collection(USERS_COLLECTION)
+                                .document(username)
+                                .collection(CARS_COLLECTION)
+                                .document(plate)
+                                .update(MAINTENANCE_DATE_FIELD, null)
+                                .addOnSuccessListener {
+
+                                    taskSource.setResult(true)
+                                }
+                                .addOnFailureListener { e ->
+
+                                    taskSource.setException(MaintenanceException(e.message?:""))
+                                }
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as MaintenanceException)
+                            taskSource.setException(MaintenanceException(e.message?:""))
                         }
                 }
 
@@ -957,7 +921,7 @@ public class Database {
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e as MaintenanceException)
+                taskSource.setException(MaintenanceException(e.message?:""))
             }
 
         return taskSource.task
@@ -1005,7 +969,7 @@ public class Database {
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as MaintenanceException)
+                            taskSource.setException(MaintenanceException(e.message?:""))
                         }
                 }
 
@@ -1016,7 +980,7 @@ public class Database {
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e as MaintenanceException)
+                taskSource.setException(MaintenanceException(e.message?:""))
             }
 
         return taskSource.task
@@ -1044,7 +1008,7 @@ public class Database {
                         .document(username)
                         .collection(CARS_COLLECTION)
                         .document(plate)
-                        .update(INSURANCE_DATE_FILED, date)
+                        .update(INSURANCE_DATE_FIELD, date)
                         .addOnSuccessListener {
 
                             taskSource.setResult(true)
@@ -1069,56 +1033,7 @@ public class Database {
     }
 
     /**
-     * Checks the car insurance date. It needs to be called periodically to warn the user on time
-     *
-     * @param username The user's id
-     * @param plate The user's car plate
-     * @throws InsuranceException
-     */
-    public fun checkInsuranceDate(username: String, plate: String): Task<Date?> {
-
-        val taskSource = TaskCompletionSource<Date?>()
-
-        isCarPresent(username, plate)
-            .addOnSuccessListener { carPresent ->
-
-                if (carPresent) {
-
-                    dbRef
-                        .collection(USERS_COLLECTION)
-                        .document(username)
-                        .collection(CARS_COLLECTION)
-                        .document(plate)
-                        .get()
-                        .addOnSuccessListener { document ->
-
-                            val car = document.toObject(Car::class.java)
-                            if (car != null)
-                                taskSource.setResult(if (car.insurancedate != null) car.insurancedate!!.toDate() else null)
-                            else
-                                taskSource.setResult(null)
-                        }
-                        .addOnFailureListener { e ->
-
-                            taskSource.setException(e as InsuranceException)
-                        }
-                }
-
-                else {
-
-                    taskSource.setException(InsuranceException("The user does not have the specified car"))
-                }
-            }
-            .addOnFailureListener { e ->
-
-                taskSource.setException(e as InsuranceException)
-            }
-
-        return taskSource.task
-    }
-
-    /**
-     * Sets a new date for the car insurance for a specific car of a specific user
+     * To pay for the car insurance for a specific car of a specific user
      *
      * @param username The user's id
      * @param plate The user's car plate
@@ -1144,11 +1059,24 @@ public class Database {
                         .set(insurance)
                         .addOnSuccessListener {
 
-                            taskSource.setResult(true)
+                            dbRef
+                                .collection(USERS_COLLECTION)
+                                .document(username)
+                                .collection(CARS_COLLECTION)
+                                .document(plate)
+                                .update(INSURANCE_DATE_FIELD, null)
+                                .addOnSuccessListener {
+
+                                    taskSource.setResult(true)
+                                }
+                                .addOnFailureListener { e ->
+
+                                    taskSource.setException(InsuranceException(e.message?:""))
+                                }
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as InsuranceException)
+                            taskSource.setException(InsuranceException(e.message?:""))
                         }
                 }
 
@@ -1159,7 +1087,7 @@ public class Database {
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e as InsuranceException)
+                taskSource.setException(InsuranceException(e.message?:""))
             }
 
         return taskSource.task
@@ -1207,7 +1135,7 @@ public class Database {
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as InsuranceException)
+                            taskSource.setException(InsuranceException(e.message?:""))
                         }
                 }
 
@@ -1218,7 +1146,7 @@ public class Database {
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e as InsuranceException)
+                taskSource.setException(InsuranceException(e.message?:""))
             }
 
         return taskSource.task
@@ -1246,14 +1174,14 @@ public class Database {
                         .document(username)
                         .collection(CARS_COLLECTION)
                         .document(plate)
-                        .update(TAX_DATE_FILED, date)
+                        .update(TAX_DATE_FIELD, date)
                         .addOnSuccessListener {
 
                             taskSource.setResult(true)
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as TaxException)
+                            taskSource.setException(TaxException(e.message?:""))
                         }
                 }
 
@@ -1264,63 +1192,14 @@ public class Database {
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e as TaxException)
+                taskSource.setException(TaxException(e.message?:""))
             }
 
         return taskSource.task
     }
 
     /**
-     * Checks the car tax date. It needs to be called periodically to warn the user on time
-     *
-     * @param username The user's id
-     * @param plate The user's car plate
-     * @throws TaxException
-     */
-    public fun checkTaxDate(username: String, plate: String): Task<Date?> {
-
-        val taskSource = TaskCompletionSource<Date?>()
-
-        isCarPresent(username, plate)
-            .addOnSuccessListener { carPresent ->
-
-                if (carPresent) {
-
-                    dbRef
-                        .collection(USERS_COLLECTION)
-                        .document(username)
-                        .collection(CARS_COLLECTION)
-                        .document(plate)
-                        .get()
-                        .addOnSuccessListener { document ->
-
-                            val car = document.toObject(Car::class.java)
-                            if (car != null)
-                                taskSource.setResult(if (car.taxdate != null) car.taxdate!!.toDate() else null)
-                            else
-                                taskSource.setResult(null)
-                        }
-                        .addOnFailureListener { e ->
-
-                            taskSource.setException(e as TaxException)
-                        }
-                }
-
-                else {
-
-                    taskSource.setException(TaxException("The user does not have the specified car"))
-                }
-            }
-            .addOnFailureListener { e ->
-
-                taskSource.setException(e as TaxException)
-            }
-
-        return taskSource.task
-    }
-
-    /**
-     * Sets a new date for the car tax for a specific car of a specific user
+     * To pay for the car tax for a specific car of a specific user
      *
      * @param username The user's id
      * @param plate The user's car plate
@@ -1346,11 +1225,24 @@ public class Database {
                         .set(tax)
                         .addOnSuccessListener {
 
-                            taskSource.setResult(true)
+                            dbRef
+                                .collection(USERS_COLLECTION)
+                                .document(username)
+                                .collection(CARS_COLLECTION)
+                                .document(plate)
+                                .update(TAX_DATE_FIELD, null)
+                                .addOnSuccessListener {
+
+                                    taskSource.setResult(true)
+                                }
+                                .addOnFailureListener { e ->
+
+                                    taskSource.setException(TaxException(e.message?:""))
+                                }
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as TaxException)
+                            taskSource.setException(TaxException(e.message?:""))
                         }
                 }
 
@@ -1361,7 +1253,7 @@ public class Database {
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e as TaxException)
+                taskSource.setException(TaxException(e.message?:""))
             }
 
         return taskSource.task
@@ -1409,7 +1301,7 @@ public class Database {
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as TaxException)
+                            taskSource.setException(TaxException(e.message?:""))
                         }
                 }
 
@@ -1420,7 +1312,7 @@ public class Database {
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e as TaxException)
+                taskSource.setException(TaxException(e.message?:""))
             }
 
         return taskSource.task
@@ -1526,15 +1418,15 @@ public class Database {
 
         // Check maintenance date
         if (car.maintenancedate != null && car.maintenancedate!! < Timestamp.now())
-            errorMap[MAINTENANCE_DATE_FILED] = "The maintenance date must be valid"
+            errorMap[MAINTENANCE_DATE_FIELD] = "The maintenance date must be valid"
 
         // Check insurance date
         if (car.insurancedate != null && car.insurancedate!! < Timestamp.now())
-            errorMap[INSURANCE_DATE_FILED] = "The insurance date must be valid"
+            errorMap[INSURANCE_DATE_FIELD] = "The insurance date must be valid"
 
         // Check tax date
         if (car.taxdate != null && car.taxdate!! < Timestamp.now())
-            errorMap[TAX_DATE_FILED] = "The tax date must be valid"
+            errorMap[TAX_DATE_FIELD] = "The tax date must be valid"
 
         return errorMap
     }
