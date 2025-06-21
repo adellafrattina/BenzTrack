@@ -8,6 +8,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 /**
  * Activity responsible for displaying user profile information and car management.
@@ -17,6 +20,8 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var noCarsTextView: TextView
     private lateinit var addCarButton: Button
     private lateinit var graphsButton: Button
+    private lateinit var carsRecyclerView: RecyclerView
+    private var carAdapter: CarAdapter? = null
 
     /**
      * Initializes the activity and sets up the UI components.
@@ -32,6 +37,9 @@ class ProfileActivity : AppCompatActivity() {
         noCarsTextView = findViewById(R.id.text_no_cars)
         addCarButton = findViewById(R.id.button_add_car)
         graphsButton = findViewById(R.id.button_graphs)
+        carsRecyclerView = findViewById(R.id.recycler_cars)
+        carsRecyclerView.layoutManager = LinearLayoutManager(this)
+        carsRecyclerView.visibility = View.GONE
 
         // Set up button click listeners
         addCarButton.setOnClickListener {
@@ -42,6 +50,29 @@ class ProfileActivity : AppCompatActivity() {
         graphsButton.setOnClickListener {
             // TODO: Implement graphs functionality
             Toast.makeText(this, "Graphs functionality coming soon", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Load cars for the logged user
+        if (loggedUser != null) {
+            Database().getUserCars(loggedUser!!.username)
+                .addOnSuccessListener { cars ->
+                    if (cars.isNotEmpty()) {
+                        carAdapter = CarAdapter(cars)
+                        carsRecyclerView.adapter = carAdapter
+                        carsRecyclerView.visibility = View.VISIBLE
+                        noCarsTextView.visibility = View.GONE
+                    } else {
+                        carsRecyclerView.visibility = View.GONE
+                        noCarsTextView.visibility = View.VISIBLE
+                    }
+                }
+                .addOnFailureListener {
+                    carsRecyclerView.visibility = View.GONE
+                    noCarsTextView.visibility = View.VISIBLE
+                }
         }
     }
 
