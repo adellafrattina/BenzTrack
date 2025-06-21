@@ -1,7 +1,6 @@
 package it.uninsubria.benztrack
 
 import android.app.Notification
-import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -15,10 +14,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.security.MessageDigest
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.ceil
 
 class BackgroundService : Service() {
 
@@ -63,9 +62,9 @@ class BackgroundService : Service() {
 
                             for (car in cars) {
 
-                                car.maintenancedate?.let { checkDate(car, it, currentDate, "Maintenance date") }
-                                car.insurancedate?.let { checkDate(car, it, currentDate, "Insurance date") }
-                                car.taxdate?.let { checkDate(car, it, currentDate, "Tax date") }
+                                car.maintenancedate?.let { checkDate(car, it, currentDate, "Maintenance") }
+                                car.insurancedate?.let { checkDate(car, it, currentDate, "Insurance") }
+                                car.taxdate?.let { checkDate(car, it, currentDate, "Tax") }
                             }
                         }
                         .addOnFailureListener { e ->
@@ -102,12 +101,22 @@ class BackgroundService : Service() {
 
         initRegisters(car.plate, date, title)
 
-        var showLate = notificationRegister[car.plate]!![title]!![0]
-        var showTomorrow = notificationRegister[car.plate]!![title]!![1]
-        var showThreeDays = notificationRegister[car.plate]!![title]!![2]
-        var showOneWeek = notificationRegister[car.plate]!![title]!![3]
+        val showLate = notificationRegister[car.plate]!![title]!![0]
+        val showTomorrow = notificationRegister[car.plate]!![title]!![1]
+        val showThreeDays = notificationRegister[car.plate]!![title]!![2]
+        val showOneWeek = notificationRegister[car.plate]!![title]!![3]
 
-        //val title = title + " - " + car.plate
+        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val formattedDate = sdf.format(date.toDate())
+        val timeDifferenceInDays = ceil(abs(date.seconds - currentDate.seconds).toDouble() / 86400.0)
+
+        val titleStr = title + " date" + " - " + car.plate
+        val textStr =
+            if (timeDifferenceInDays > 1.4)
+                "You have ${timeDifferenceInDays.toInt()} days left to pay your car ${title.lowercase()} (deadline is $formattedDate)"
+            else
+                "The ${title.lowercase()} payment is due tomorrow"
+
         if (showLate && currentDate > date) {
 
             notificationRegister[car.plate]!![title]!![0] = false
@@ -115,12 +124,11 @@ class BackgroundService : Service() {
             notificationRegister[car.plate]!![title]!![2] = false
             notificationRegister[car.plate]!![title]!![3] = false
 
-            //database.setNewMaintenanceDate(loggedUser!!.username, car.plate, null)
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentTitle(title)
-                .setContentText("You are late on your ${title.lowercase()}!")
+                .setContentTitle(titleStr)
+                .setContentText("You are ${timeDifferenceInDays.toInt()} days late on your car ${title.lowercase()}! (deadline was $formattedDate)")
                 .build()
 
             NotificationHandler.notify(n, hash(title))
@@ -137,8 +145,8 @@ class BackgroundService : Service() {
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentTitle(title)
-                .setContentText("The ${title.lowercase()} is due tomorrow")
+                .setContentTitle(titleStr)
+                .setContentText(textStr)
                 .build()
 
             NotificationHandler.notify(n, hash(title))
@@ -153,7 +161,7 @@ class BackgroundService : Service() {
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentTitle(title)
-                .setContentText("The ${title.lowercase()} is due in three days")
+                .setContentText(textStr)
                 .build()
 
             NotificationHandler.notify(n, hash(title))
@@ -167,7 +175,7 @@ class BackgroundService : Service() {
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentTitle(title)
-                .setContentText("The ${title.lowercase()} is due in one week")
+                .setContentText(textStr)
                 .build()
 
             NotificationHandler.notify(n, hash(title))
@@ -202,7 +210,7 @@ class BackgroundService : Service() {
 
         else {
 
-            notificationRegister[plate] = HashMap<String, BooleanArray>()
+            notificationRegister[plate] = HashMap()
             notificationRegister[plate]!![title] = BooleanArray(4)
             val array = notificationRegister[plate]!![title]!!
             array[0] = true
@@ -235,7 +243,7 @@ class BackgroundService : Service() {
 
         else {
 
-            dateRegister[plate] = HashMap<String, Timestamp>()
+            dateRegister[plate] = HashMap()
             dateRegister[plate]!![title] = date
         }
     }
