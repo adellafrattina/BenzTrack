@@ -6,12 +6,14 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 
 class AddCarActivity : AppCompatActivity() {
 
@@ -38,7 +40,7 @@ class AddCarActivity : AppCompatActivity() {
         modelsRecyclerView = findViewById(R.id.recycler_models)
         confirmButton = findViewById(R.id.button_confirm)
         addModelButton = findViewById(R.id.button_add_model)
-        val searchModelButton = findViewById<Button>(R.id.button_search_model)
+        val modelInputLayout = findViewById<TextInputLayout>(R.id.textinput_model)
         database = Database()
 
         // Set up RecyclerView
@@ -95,11 +97,11 @@ class AddCarActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        searchModelButton.setOnClickListener {
+        modelInputLayout.setEndIconOnClickListener {
             val query = modelEdit.text.toString()
             if (query.isBlank()) {
                 modelsRecyclerView.visibility = View.GONE
-                return@setOnClickListener
+                return@setEndIconOnClickListener
             }
             database.searchCarModelByName(query)
                 .addOnSuccessListener { models ->
