@@ -70,7 +70,14 @@ class BackgroundService : Service() {
                         }
                         .addOnFailureListener { e ->
 
-                            Log.e("test", e.message!!)
+                            val n = NotificationHandler.createNotification(context, NotificationHandler.BACKGROUND_CHANNEL)
+                                .setSmallIcon(R.drawable.ic_launcher_background)
+                                .setContentTitle("An exception has occurred")
+                                .setContentText(e.message?:"")
+                                .setPriority(NotificationCompat.PRIORITY_MAX)
+                                .build()
+
+                            NotificationHandler.notify(n)
                         }
                 }
 
@@ -91,16 +98,22 @@ class BackgroundService : Service() {
         job.cancel()
     }
 
-    private fun checkDate(car: Car, date: Timestamp, currentDate: Timestamp, title: String) {
+    private fun checkDate(car: Car, date: Timestamp, currentDate: Timestamp, title: String): Boolean {
 
         initRegisters(car.plate, date, title)
 
-        var showTomorrow = notificationRegister[car.plate]!![title]!![0]
-        var showThreeDays = notificationRegister[car.plate]!![title]!![1]
-        var showOneWeek = notificationRegister[car.plate]!![title]!![2]
+        var showLate = notificationRegister[car.plate]!![title]!![0]
+        var showTomorrow = notificationRegister[car.plate]!![title]!![1]
+        var showThreeDays = notificationRegister[car.plate]!![title]!![2]
+        var showOneWeek = notificationRegister[car.plate]!![title]!![3]
 
         //val title = title + " - " + car.plate
-        if (currentDate > date) {
+        if (showLate && currentDate > date) {
+
+            notificationRegister[car.plate]!![title]!![0] = false
+            notificationRegister[car.plate]!![title]!![1] = false
+            notificationRegister[car.plate]!![title]!![2] = false
+            notificationRegister[car.plate]!![title]!![3] = false
 
             //database.setNewMaintenanceDate(loggedUser!!.username, car.plate, null)
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
@@ -111,13 +124,15 @@ class BackgroundService : Service() {
                 .build()
 
             NotificationHandler.notify(n, hash(title))
+
+            return false
         }
 
         else if (showTomorrow && date.seconds - currentDate.seconds <= 86400)  { // Tomorrow
 
-            notificationRegister[car.plate]!![title]!![0] = false
             notificationRegister[car.plate]!![title]!![1] = false
             notificationRegister[car.plate]!![title]!![2] = false
+            notificationRegister[car.plate]!![title]!![3] = false
 
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -131,8 +146,8 @@ class BackgroundService : Service() {
 
         else if (showThreeDays && date.seconds - currentDate.seconds <= 259200)  { // Three days
 
-            notificationRegister[car.plate]!![title]!![1] = false
             notificationRegister[car.plate]!![title]!![2] = false
+            notificationRegister[car.plate]!![title]!![3] = false
 
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -146,7 +161,7 @@ class BackgroundService : Service() {
 
         else if (showOneWeek && date.seconds - currentDate.seconds <= 604800)  { // One week
 
-            notificationRegister[car.plate]!![title]!![2] = false
+            notificationRegister[car.plate]!![title]!![3] = false
 
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -157,6 +172,8 @@ class BackgroundService : Service() {
 
             NotificationHandler.notify(n, hash(title))
         }
+
+        return true
     }
 
     private fun hash(input: String): Int {
@@ -174,22 +191,24 @@ class BackgroundService : Service() {
 
             if (!notificationRegister[plate]!!.containsKey(title)) {
 
-                notificationRegister[plate]!![title] = BooleanArray(3)
+                notificationRegister[plate]!![title] = BooleanArray(4)
                 val array = notificationRegister[plate]!![title]!!
                 array[0] = true
                 array[1] = true
                 array[2] = true
+                array[3] = true
             }
         }
 
         else {
 
             notificationRegister[plate] = HashMap<String, BooleanArray>()
-            notificationRegister[plate]!![title] = BooleanArray(3)
+            notificationRegister[plate]!![title] = BooleanArray(4)
             val array = notificationRegister[plate]!![title]!!
             array[0] = true
             array[1] = true
             array[2] = true
+            array[3] = true
         }
 
         if (dateRegister.containsKey(plate)) {
@@ -199,11 +218,12 @@ class BackgroundService : Service() {
                 if (dateRegister[plate]!![title] != date) {
 
                     dateRegister[plate]!![title] = date
-                    notificationRegister[plate]!![title] = BooleanArray(3)
+                    notificationRegister[plate]!![title] = BooleanArray(4)
                     val array = notificationRegister[plate]!![title]!!
                     array[0] = true
                     array[1] = true
                     array[2] = true
+                    array[3] = true
                 }
             }
 
