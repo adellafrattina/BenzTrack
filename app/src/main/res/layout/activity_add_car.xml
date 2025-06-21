@@ -54,7 +54,7 @@
                 android:id="@+id/edit_model"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Car Model"
+                android:hint="@string/car_model"
                 android:inputType="text"/>
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -78,7 +78,7 @@
                 android:id="@+id/button_add_model"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Add Model"/>
+                android:text="@string/create_new_model"/>
         </LinearLayout>
 
     </LinearLayout>
