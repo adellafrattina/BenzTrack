@@ -38,6 +38,7 @@ class AddCarActivity : AppCompatActivity() {
         modelsRecyclerView = findViewById(R.id.recycler_models)
         confirmButton = findViewById(R.id.button_confirm)
         addModelButton = findViewById(R.id.button_add_model)
+        val searchModelButton = findViewById<Button>(R.id.button_search_model)
         database = Database()
 
         // Set up RecyclerView
@@ -49,31 +50,6 @@ class AddCarActivity : AppCompatActivity() {
             modelsRecyclerView.visibility = View.GONE
         }
         modelsRecyclerView.adapter = adapter
-
-        // Set up model search
-        modelEdit.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                if (s.isNullOrBlank()) {
-                    modelsRecyclerView.visibility = View.GONE
-                    return
-                }
-                database.searchCarModelByName(s.toString())
-                    .addOnSuccessListener { models ->
-                        if (models.isNotEmpty()) {
-                            adapter.submitList(models)
-                            modelsRecyclerView.visibility = View.VISIBLE
-                        } else {
-                            modelsRecyclerView.visibility = View.GONE
-                        }
-                    }
-                    .addOnFailureListener { e ->
-                        ToastManager.show(this@AddCarActivity, "Error searching models: ${e.message}", Toast.LENGTH_SHORT)
-                        modelsRecyclerView.visibility = View.GONE
-                    }
-            }
-        })
 
         // Set up confirm button
         confirmButton.setOnClickListener {
@@ -117,6 +93,27 @@ class AddCarActivity : AppCompatActivity() {
         addModelButton.setOnClickListener {
             val intent = Intent(this, AddCarModelActivity::class.java)
             startActivity(intent)
+        }
+
+        searchModelButton.setOnClickListener {
+            val query = modelEdit.text.toString()
+            if (query.isBlank()) {
+                modelsRecyclerView.visibility = View.GONE
+                return@setOnClickListener
+            }
+            database.searchCarModelByName(query)
+                .addOnSuccessListener { models ->
+                    if (models.isNotEmpty()) {
+                        adapter.submitList(models)
+                        modelsRecyclerView.visibility = View.VISIBLE
+                    } else {
+                        modelsRecyclerView.visibility = View.GONE
+                    }
+                }
+                .addOnFailureListener { e ->
+                    ToastManager.show(this@AddCarActivity, "Error searching models: ${e.message}", Toast.LENGTH_SHORT)
+                    modelsRecyclerView.visibility = View.GONE
+                }
         }
     }
 
