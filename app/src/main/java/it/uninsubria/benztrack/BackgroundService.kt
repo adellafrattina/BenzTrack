@@ -160,7 +160,7 @@ class BackgroundService : Service() {
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentTitle(title)
+                .setContentTitle(titleStr)
                 .setContentText(textStr)
                 .build()
 
@@ -174,7 +174,7 @@ class BackgroundService : Service() {
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentTitle(title)
+                .setContentTitle(titleStr)
                 .setContentText(textStr)
                 .build()
 
