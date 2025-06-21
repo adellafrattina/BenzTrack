@@ -41,4 +41,16 @@
     <string name="car_name">Car Name</string>
     <string name="plate_number">Plate Number</string>
     <string name="add_car">Add Car</string>
+
+    <!-- Add new car model -->
+    <string name="fuel_type">Fuel Type</string>
+    <string name="height_cm">Height (cm)</string>
+    <string name="length_cm">Length (cm)</string>
+    <string name="weight_kg">Weight (kg)</string>
+    <string name="co_factor_g_km">CO₂ Factor (g/km)</string>
+    <string name="capacity_cm">Capacity (cm³)</string>
+    <string name="year">Year</string>
+    <string name="model_name">Model Name</string>
+    <string name="width_cm">Width (cm)</string>
+    <string name="add_model">Add Model</string>
 </resources>
