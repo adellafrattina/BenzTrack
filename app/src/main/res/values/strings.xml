@@ -41,6 +41,8 @@
     <string name="car_name">Car Name</string>
     <string name="plate_number">Plate Number</string>
     <string name="add_car">Add Car</string>
+    <string name="create_new_model">Add Model</string>
+    <string name="car_model">Car Model</string>
 
     <!-- Add new car model -->
     <string name="fuel_type">Fuel Type</string>
