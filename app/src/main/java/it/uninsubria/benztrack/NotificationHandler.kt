@@ -41,9 +41,26 @@ object NotificationHandler {
         manager.notify((System.currentTimeMillis() % Int.MAX_VALUE).toInt(), notification)
     }
 
-    public fun notify(context: Context, notification: Notification) {
+    public fun notify(context: Context, channel: String, title: String, text: String, priority: Int = NotificationCompat.PRIORITY_DEFAULT, id: Int) {
+
+        val notification: Notification = createNotification(context, channel)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setPriority(priority)
+            .build()
+
+        manager.notify(id, notification)
+    }
+
+    public fun notify(notification: Notification) {
 
         manager.notify((System.currentTimeMillis() % Int.MAX_VALUE).toInt(), notification)
+    }
+
+    public fun notify(notification: Notification, id: Int) {
+
+        manager.notify(id, notification)
     }
 
     public fun createNotification(context: Context, channel: String): NotificationCompat.Builder {
