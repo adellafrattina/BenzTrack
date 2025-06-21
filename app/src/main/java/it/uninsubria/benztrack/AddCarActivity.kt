@@ -147,12 +147,31 @@ class CarModelAdapter(private val onModelSelected: (CarModel) -> Unit) :
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val modelNameText: TextView = itemView.findViewById(R.id.text_model_name)
+        private val modelDimensionsText: TextView = itemView.findViewById(R.id.text_model_dimensions)
+        private val modelCo2CapacityText: TextView = itemView.findViewById(R.id.text_model_co2_capacity)
 
         fun bind(model: CarModel) {
+            // First line: Model Name (Year, Fuel)
+            val fuelString = when (model.fuel) {
+                FuelType.Petrol -> "Benzina"
+                FuelType.Diesel -> "Diesel"
+                FuelType.Electric -> "Elettrica"
+            }
+            modelNameText.text = "${model.name} (${model.year}, $fuelString)"
 
-            modelNameText.text = model.name
+            // Second line: W 120 cm | L 190 cm | H 400 cm | M 400kg
+            val width = if (model.width.isNaN()) "?" else model.width.toInt().toString()
+            val length = if (model.length.isNaN()) "?" else model.length.toInt().toString()
+            val height = if (model.height.isNaN()) "?" else model.height.toInt().toString()
+            val weight = if (model.weight.isNaN()) "?" else model.weight.toInt().toString()
+            modelDimensionsText.text = "W ${width} cm | L ${length} cm | H ${height} cm | M ${weight} kg"
+
+            // Third line: CO2 10g/km | Capacity 10000cm3
+            val co2 = if (model.co2factor.isNaN()) "?" else model.co2factor.toInt().toString()
+            val capacity = if (model.capacity == Int.MAX_VALUE) "?" else model.capacity.toString()
+            modelCo2CapacityText.text = "CO2 ${co2} g/km | Capacity ${capacity} cm3"
+
             itemView.setOnClickListener {
-
                 onModelSelected(model)
             }
         }
