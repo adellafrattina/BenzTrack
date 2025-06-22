@@ -53,7 +53,11 @@ class ProfileActivity : AppCompatActivity() {
             Database().getUserCars(Handler.loggedUser!!.username)
                 .addOnSuccessListener { cars ->
                     if (cars.isNotEmpty()) {
-                        carAdapter = CarAdapter(cars)
+                        carAdapter = CarAdapter(cars) { car ->
+                            val intent = Intent(this, CarInfoActivity::class.java)
+                            intent.putExtra("car_plate", car.plate)
+                            startActivity(intent)
+                        }
                         carsRecyclerView.adapter = carAdapter
                         carsRecyclerView.visibility = View.VISIBLE
                         noCarsTextView.visibility = View.GONE
