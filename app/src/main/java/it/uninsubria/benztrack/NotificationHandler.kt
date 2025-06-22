@@ -21,12 +21,12 @@ object NotificationHandler {
 
         manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        manager.deleteNotificationChannel(DATE_CHANNEL)
-        manager.deleteNotificationChannel(CO2_CHANNEL)
-        manager.deleteNotificationChannel(BACKGROUND_CHANNEL)
-        createChannel(DATE_CHANNEL, importance = NotificationManager.IMPORTANCE_HIGH)
-        createChannel(CO2_CHANNEL, importance = NotificationManager.IMPORTANCE_HIGH)
-        createChannel(BACKGROUND_CHANNEL, importance = NotificationManager.IMPORTANCE_MIN)
+        if (manager.getNotificationChannel(DATE_CHANNEL) == null)
+            createChannel(DATE_CHANNEL, importance = NotificationManager.IMPORTANCE_HIGH)
+        if (manager.getNotificationChannel(CO2_CHANNEL) == null)
+            createChannel(CO2_CHANNEL, importance = NotificationManager.IMPORTANCE_HIGH)
+        if (manager.getNotificationChannel(BACKGROUND_CHANNEL) == null)
+            createChannel(BACKGROUND_CHANNEL, importance = NotificationManager.IMPORTANCE_MIN)
     }
 
     public fun notify(context: Context, channel: String, title: String, text: String, priority: Int = NotificationCompat.PRIORITY_DEFAULT) {
@@ -66,6 +66,11 @@ object NotificationHandler {
     public fun createNotification(context: Context, channel: String): NotificationCompat.Builder {
 
         return NotificationCompat.Builder(context, channel)
+    }
+
+    public fun cancelAllNotifications() {
+
+        manager.cancelAll()
     }
 
     public fun createChannel(channel: String, name: String = channel, desc: String = "", importance: Int = NotificationManager.IMPORTANCE_DEFAULT) {
