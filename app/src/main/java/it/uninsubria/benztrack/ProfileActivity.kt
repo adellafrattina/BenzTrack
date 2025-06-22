@@ -100,6 +100,11 @@ class ProfileActivity : AppCompatActivity() {
                 overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                 true
             }
+            R.id.action_view_info -> {
+                val intent = Intent(this, UserInfoActivity::class.java)
+                startActivity(intent)
+                true
+            }
             R.id.action_logout -> {
                 loggedUser = null
                 ToastManager.show(this, "Logged out successfully", Toast.LENGTH_SHORT)
