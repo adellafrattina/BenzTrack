@@ -68,6 +68,11 @@ object NotificationHandler {
         return NotificationCompat.Builder(context, channel)
     }
 
+    public fun cancelAllNotifications() {
+
+        manager.cancelAll()
+    }
+
     public fun createChannel(channel: String, name: String = channel, desc: String = "", importance: Int = NotificationManager.IMPORTANCE_DEFAULT) {
 
         val c = NotificationChannel(channel, name, importance)
