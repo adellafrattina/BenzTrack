@@ -45,10 +45,11 @@ class LoginActivity : AppCompatActivity() {
             usernameLayout.error = null
             passwordLayout.error = null
 
-            database.login(username, password)
+            Handler.database.login(username, password)
                 .addOnSuccessListener { user ->
                     ToastManager.show(this, "Login successful!", Toast.LENGTH_SHORT)
-                    loggedUser = user
+                    Handler.loggedUser = user
+                    Handler.save()
 
                     val intent = Intent(this, ProfileActivity::class.java)
                     startActivity(intent)

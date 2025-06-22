@@ -80,7 +80,7 @@ class AddCarActivity : AppCompatActivity() {
                     ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
                 }
 
-            database.addNewUserCar(loggedUser!!.username, car)
+            database.addNewUserCar(Handler.loggedUser!!.username, car)
                 .addOnSuccessListener {
 
                     ToastManager.show(this, "Car added successfully", Toast.LENGTH_SHORT)

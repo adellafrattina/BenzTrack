@@ -41,10 +41,10 @@ class UserInfoActivity : AppCompatActivity() {
         backButton = findViewById(R.id.button_back)
 
         // Get data from logged user
-        val username = loggedUser?.username
-        val name = loggedUser?.name
-        val surname = loggedUser?.surname
-        val email = loggedUser?.email
+        val username = Handler.loggedUser?.username
+        val name = Handler.loggedUser?.name
+        val surname = Handler.loggedUser?.surname
+        val email = Handler.loggedUser?.email
 
         // Set data to views
         usernameTextView.text = username

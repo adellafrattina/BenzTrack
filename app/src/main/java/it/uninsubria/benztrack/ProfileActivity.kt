@@ -49,8 +49,8 @@ class ProfileActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         // Load cars for the logged user
-        if (loggedUser != null) {
-            Database().getUserCars(loggedUser!!.username)
+        if (Handler.loggedUser != null) {
+            Database().getUserCars(Handler.loggedUser!!.username)
                 .addOnSuccessListener { cars ->
                     if (cars.isNotEmpty()) {
                         carAdapter = CarAdapter(cars)
@@ -99,7 +99,8 @@ class ProfileActivity : AppCompatActivity() {
                 true
             }
             R.id.action_logout -> {
-                loggedUser = null
+                Handler.loggedUser = null
+                Handler.save()
                 ToastManager.show(this, "Logged out successfully", Toast.LENGTH_SHORT)
                 val intent = Intent(this, MainActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
