@@ -131,7 +131,7 @@ class BackgroundService : Service() {
                 .setContentText("You are ${timeDifferenceInDays.toInt()} days late on your car ${title.lowercase()}! (deadline was $formattedDate)")
                 .build()
 
-            NotificationHandler.notify(n, hash(title))
+            NotificationHandler.notify(n, hash(title + car.plate))
 
             return false
         }
@@ -149,7 +149,7 @@ class BackgroundService : Service() {
                 .setContentText(textStr)
                 .build()
 
-            NotificationHandler.notify(n, hash(title))
+            NotificationHandler.notify(n, hash(title + car.plate))
         }
 
         else if (showThreeDays && date.seconds - currentDate.seconds <= 259200)  { // Three days
@@ -164,7 +164,7 @@ class BackgroundService : Service() {
                 .setContentText(textStr)
                 .build()
 
-            NotificationHandler.notify(n, hash(title))
+            NotificationHandler.notify(n, hash(title + car.plate))
         }
 
         else if (showOneWeek && date.seconds - currentDate.seconds <= 604800)  { // One week
@@ -178,7 +178,7 @@ class BackgroundService : Service() {
                 .setContentText(textStr)
                 .build()
 
-            NotificationHandler.notify(n, hash(title))
+            NotificationHandler.notify(n, hash(title + car.plate))
         }
 
         return true
