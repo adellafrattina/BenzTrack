@@ -23,7 +23,7 @@
                 android:id="@+id/text_refills_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Refills"
+                android:text="@string/refills"
                 android:textStyle="bold"
                 android:textSize="18sp"
                 android:layout_gravity="center_horizontal"
@@ -33,7 +33,7 @@
                 android:id="@+id/button_add_refill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Add Refill"
+                android:text="@string/add_refill"
                 android:layout_gravity="center_horizontal"/>
 
         </LinearLayout>
