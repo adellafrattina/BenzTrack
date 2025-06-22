@@ -64,4 +64,5 @@
     <!-- Refill card -->
     <string name="refills">Refills</string>
     <string name="add_refill">Add Refill</string>
+    <string name="refill_placeholder">Refill details will appear here.</string>
 </resources>
