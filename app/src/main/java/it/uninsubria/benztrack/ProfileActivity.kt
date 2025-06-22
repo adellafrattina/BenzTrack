@@ -1,23 +1,26 @@
 package it.uninsubria.benztrack
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 /**
- * Activity responsible for displaying user profile information.
+ * Activity responsible for displaying user profile information and car management.
  */
 class ProfileActivity : AppCompatActivity() {
 
-    private lateinit var usernameTextView: TextView
-    private lateinit var nameTextView: TextView
-    private lateinit var surnameTextView: TextView
-    private lateinit var emailTextView: TextView
-    private lateinit var nameLabelTextView: TextView
-    private lateinit var surnameLabelTextView: TextView
-    private lateinit var emailLabelTextView: TextView
-    private lateinit var backButton: Button
+    private lateinit var noCarsTextView: TextView
+    private lateinit var addCarButton: Button
+    private lateinit var carsRecyclerView: RecyclerView
+    private var carAdapter: CarAdapter? = null
 
     /**
      * Initializes the activity and sets up the UI components.
@@ -30,34 +33,81 @@ class ProfileActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         // Initialize views
-        usernameTextView = findViewById(R.id.text_username)
-        nameTextView = findViewById(R.id.text_name)
-        surnameTextView = findViewById(R.id.text_surname)
-        emailTextView = findViewById(R.id.text_email)
-        nameLabelTextView = findViewById(R.id.label_name)
-        surnameLabelTextView = findViewById(R.id.label_surname)
-        emailLabelTextView = findViewById(R.id.label_email)
-        backButton = findViewById(R.id.button_back)
+        noCarsTextView = findViewById(R.id.text_no_cars)
+        addCarButton = findViewById(R.id.button_add_car)
+        carsRecyclerView = findViewById(R.id.recycler_cars)
+        carsRecyclerView.layoutManager = LinearLayoutManager(this)
+        carsRecyclerView.visibility = View.GONE
 
-        // Get data from logged user
-        val username = loggedUser?.username
-        val password = loggedUser?.password
-        val name = loggedUser?.name
-        val surname = loggedUser?.surname
-        val email = loggedUser?.email
+        // Set up button click listeners
+        addCarButton.setOnClickListener {
+            val intent = Intent(this, AddCarActivity::class.java)
+            startActivity(intent)
+        }
+    }
 
-        // Set data to views
-        usernameTextView.text = username
+    override fun onResume() {
+        super.onResume()
+        // Load cars for the logged user
+        if (loggedUser != null) {
+            Database().getUserCars(loggedUser!!.username)
+                .addOnSuccessListener { cars ->
+                    if (cars.isNotEmpty()) {
+                        carAdapter = CarAdapter(cars)
+                        carsRecyclerView.adapter = carAdapter
+                        carsRecyclerView.visibility = View.VISIBLE
+                        noCarsTextView.visibility = View.GONE
+                    } else {
+                        carsRecyclerView.visibility = View.GONE
+                        noCarsTextView.visibility = View.VISIBLE
+                    }
+                }
+                .addOnFailureListener {
+                    carsRecyclerView.visibility = View.GONE
+                    noCarsTextView.visibility = View.VISIBLE
+                }
+        }
+    }
 
-        // Check if additional fields are available (from registration)
-        nameTextView.text = name
-        surnameTextView.text = surname
-        emailTextView.text = email
+    /**
+     * Creates the options menu.
+     * 
+     * @param menu The menu to inflate
+     * @return true if the menu was created successfully
+     */
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.profile_menu, menu)
+        return true
+    }
 
-        // Set up back button click listener
-        backButton.setOnClickListener {
-            finish() // Close this activity and return to previous one
-            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+    /**
+     * Handles action bar item selection.
+     * 
+     * @param item The selected menu item
+     * @return true if the item was handled, false otherwise
+     */
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                true
+            }
+            R.id.action_view_info -> {
+                val intent = Intent(this, UserInfoActivity::class.java)
+                startActivity(intent)
+                true
+            }
+            R.id.action_logout -> {
+                loggedUser = null
+                ToastManager.show(this, "Logged out successfully", Toast.LENGTH_SHORT)
+                val intent = Intent(this, MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
@@ -69,20 +119,5 @@ class ProfileActivity : AppCompatActivity() {
     override fun onBackPressed() {
         super.onBackPressed()
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-    }
-
-    /**
-     * Handles action bar item selection.
-     * 
-     * @param item The selected menu item
-     * @return true if the item was handled, false otherwise
-     */
-    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
-        if (item.itemId == android.R.id.home) {
-            finish()
-            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-            return true
-        }
-        return super.onOptionsItemSelected(item)
     }
 }

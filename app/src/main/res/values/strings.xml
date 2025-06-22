@@ -19,7 +19,7 @@
     <string name="register_button">Register</string>
     <string name="register_link">Don\'t have an account? Register here</string>
 
-    <!-- Profile screen -->
+    <!-- User Info screen -->
     <string name="profile_title">User Profile</string>
     <string name="label_username">Username:</string>
     <string name="label_password">Password:</string>
@@ -27,4 +27,37 @@
     <string name="label_surname">Surname:</string>
     <string name="label_email">Email:</string>
     <string name="back_button">Back to Login</string>
+    <string name="go_back_button">Go Back</string>
+
+    <!-- Main menu (Logged in) -->
+    <string name="user">User</string>
+    <string name="view_info">View Info</string>
+    <string name="logout">Logout</string>
+    <string name="no_cars">No cars added yet</string>
+    <string name="add_cars">+</string>
+    <string name="show_graphs">📊</string>
+
+    <!-- Add new car -->
+    <string name="car_name">Car Name</string>
+    <string name="plate_number">Plate Number</string>
+    <string name="add_car">Add Car</string>
+    <string name="create_new_model">Add Model</string>
+    <string name="car_model">Car Model</string>
+
+    <!-- Add new car model -->
+    <string name="fuel_type">Fuel Type</string>
+    <string name="height_cm">Height (cm)</string>
+    <string name="length_cm">Length (cm)</string>
+    <string name="weight_kg">Weight (kg)</string>
+    <string name="co_factor_g_km">CO₂ Factor (g/km)</string>
+    <string name="capacity_cm">Capacity (cm³)</string>
+    <string name="year">Year</string>
+    <string name="model_name">Model Name</string>
+    <string name="width_cm">Width (cm)</string>
+    <string name="add_model">Add Model</string>
+
+    <!-- User's cars (cards) -->
+    <string name="car_name_card">Car Name</string>
+    <string name="car_model_card">Model</string>
+    <string name="car_plate_card">Plate</string>
 </resources>
