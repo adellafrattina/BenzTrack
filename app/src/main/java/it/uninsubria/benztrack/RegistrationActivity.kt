@@ -60,10 +60,10 @@ class RegistrationActivity : AppCompatActivity() {
             user.email = emailEditText.text.toString().trim()
             user.password = passwordEditText.text.toString().trim()
 
-            database.registration(user)
+            Handler.database.registration(user)
                 .addOnSuccessListener {
                     ToastManager.show(this, "Registration successful!", Toast.LENGTH_SHORT)
-                    loggedUser = user
+                    Handler.loggedUser = user
 
                     val intent = Intent(this, ProfileActivity::class.java)
                     startActivity(intent)
