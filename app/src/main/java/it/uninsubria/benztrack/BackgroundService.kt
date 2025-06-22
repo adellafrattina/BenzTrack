@@ -49,15 +49,22 @@ class BackgroundService : Service() {
         context = baseContext
         scope.launch {
 
-            Log.d("test", "Start")
-
             while (isActive) {
 
                 val currentDate = Timestamp.now()
-                if (loggedUser != null) {
+
+                if (user != loggedUser) {
+
+                    user = loggedUser
+
+                    dateRegister = HashMap()
+                    notificationRegister = HashMap()
+                }
+
+                if (user != null) {
 
                     database
-                        .getUserCars(loggedUser!!.username)
+                        .getUserCars(user!!.username)
                         .addOnSuccessListener { cars ->
 
                             for (car in cars) {
@@ -82,8 +89,6 @@ class BackgroundService : Service() {
 
                 delay(secondsToWait * 1000L) // Check every ${secondsToWait} seconds
             }
-
-            Log.d("test", "End")
         }
 
         return START_STICKY
@@ -254,4 +259,5 @@ class BackgroundService : Service() {
     private val scope = CoroutineScope(Dispatchers.IO + job)
     private var dateRegister = HashMap<String, HashMap<String, Timestamp>>()
     private var notificationRegister = HashMap<String, HashMap<String, BooleanArray>>()
+    private var user: User? = null
 }
