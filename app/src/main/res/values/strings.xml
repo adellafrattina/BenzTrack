@@ -60,4 +60,8 @@
     <string name="car_name_card">Car Name</string>
     <string name="car_model_card">Model</string>
     <string name="car_plate_card">Plate</string>
+
+    <!-- Refill card -->
+    <string name="refills">Refills</string>
+    <string name="add_refill">Add Refill</string>
 </resources>
