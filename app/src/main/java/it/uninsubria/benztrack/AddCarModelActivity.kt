@@ -12,6 +12,9 @@ class AddCarModelActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_car_model)
 
+        // Enable the up button in the action bar
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
         val nameEdit = findViewById<TextInputEditText>(R.id.edit_model_name)
         val yearEdit = findViewById<TextInputEditText>(R.id.edit_model_year)
         val capacityEdit = findViewById<TextInputEditText>(R.id.edit_model_capacity)
@@ -58,5 +61,10 @@ class AddCarModelActivity : AppCompatActivity() {
                     ToastManager.show(this, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT)
                 }
         }
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
     }
 } 
