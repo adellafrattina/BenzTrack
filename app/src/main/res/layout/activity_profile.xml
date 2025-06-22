@@ -34,21 +34,9 @@
 
         <Button
             android:id="@+id/button_add_car"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginEnd="8dp"
             android:text="@string/add_cars"
-            android:textSize="24sp"
-            style="@style/AppButton"/>
-
-        <Button
-            android:id="@+id/button_graphs"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:text="@string/show_graphs"
             android:textSize="24sp"
             style="@style/AppButton"/>
 

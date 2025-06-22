@@ -36,7 +36,6 @@ class ProfileActivity : AppCompatActivity() {
         // Initialize views
         noCarsTextView = findViewById(R.id.text_no_cars)
         addCarButton = findViewById(R.id.button_add_car)
-        graphsButton = findViewById(R.id.button_graphs)
         carsRecyclerView = findViewById(R.id.recycler_cars)
         carsRecyclerView.layoutManager = LinearLayoutManager(this)
         carsRecyclerView.visibility = View.GONE
@@ -45,11 +44,6 @@ class ProfileActivity : AppCompatActivity() {
         addCarButton.setOnClickListener {
             val intent = Intent(this, AddCarActivity::class.java)
             startActivity(intent)
-        }
-
-        graphsButton.setOnClickListener {
-            // TODO: Implement graphs functionality
-            Toast.makeText(this, "Graphs functionality coming soon", Toast.LENGTH_SHORT).show()
         }
     }
 
