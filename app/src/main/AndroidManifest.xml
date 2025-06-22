@@ -72,6 +72,14 @@
             android:exported="false"
             android:theme="@style/AppTheme" />
 
+        <activity android:name=".CarGraphActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
+        <activity android:name=".CarInfoActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
     </application>
 
 </manifest>
