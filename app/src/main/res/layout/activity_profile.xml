@@ -20,7 +20,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/text_no_cars"
-        android:layout_above="@id/button_add_car"
         android:visibility="gone"
         tools:listitem="@layout/item_car"/>
 

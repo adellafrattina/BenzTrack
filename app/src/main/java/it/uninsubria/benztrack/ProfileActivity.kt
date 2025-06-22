@@ -19,7 +19,6 @@ class ProfileActivity : AppCompatActivity() {
 
     private lateinit var noCarsTextView: TextView
     private lateinit var addCarButton: Button
-    private lateinit var graphsButton: Button
     private lateinit var carsRecyclerView: RecyclerView
     private var carAdapter: CarAdapter? = null
 
