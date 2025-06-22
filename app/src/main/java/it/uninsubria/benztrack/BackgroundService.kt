@@ -15,6 +15,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -49,15 +52,23 @@ class BackgroundService : Service() {
         context = baseContext
         scope.launch {
 
-            Log.d("test", "Start")
-
             while (isActive) {
 
                 val currentDate = Timestamp.now()
-                if (loggedUser != null) {
+
+                if (user != loggedUser) {
+
+                    user = loggedUser
+
+                    NotificationHandler.cancelAllNotifications()
+                    dateRegister = HashMap()
+                    notificationRegister = HashMap()
+                }
+
+                if (user != null) {
 
                     database
-                        .getUserCars(loggedUser!!.username)
+                        .getUserCars(user!!.username)
                         .addOnSuccessListener { cars ->
 
                             for (car in cars) {
@@ -82,8 +93,6 @@ class BackgroundService : Service() {
 
                 delay(secondsToWait * 1000L) // Check every ${secondsToWait} seconds
             }
-
-            Log.d("test", "End")
         }
 
         return START_STICKY
@@ -102,45 +111,70 @@ class BackgroundService : Service() {
         initRegisters(car.plate, date, title)
 
         val showLate = notificationRegister[car.plate]!![title]!![0]
-        val showTomorrow = notificationRegister[car.plate]!![title]!![1]
-        val showThreeDays = notificationRegister[car.plate]!![title]!![2]
-        val showOneWeek = notificationRegister[car.plate]!![title]!![3]
+        val showToday = notificationRegister[car.plate]!![title]!![1]
+        val showTomorrow = notificationRegister[car.plate]!![title]!![2]
+        val showThreeDays = notificationRegister[car.plate]!![title]!![3]
+        val showOneWeek = notificationRegister[car.plate]!![title]!![4]
 
         val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val formattedDate = sdf.format(date.toDate())
-        val timeDifferenceInDays = ceil(abs(date.seconds - currentDate.seconds).toDouble() / 86400.0)
+        val timeDifferenceInDays = abs(daysBetweenDates(currentDate, date))
 
         val titleStr = title + " date" + " - " + car.plate
         val textStr =
-            if (timeDifferenceInDays > 1.4)
-                "You have ${timeDifferenceInDays.toInt()} days left to pay your car ${title.lowercase()} (deadline is $formattedDate)"
+            if (timeDifferenceInDays > 1)
+                "You have $timeDifferenceInDays days left to pay your car ${title.lowercase()} (deadline is $formattedDate)"
             else
                 "The ${title.lowercase()} payment is due tomorrow"
 
-        if (showLate && currentDate > date) {
+        if (showLate && !isSameDay(currentDate, date) && currentDate > date) {
 
             notificationRegister[car.plate]!![title]!![0] = false
             notificationRegister[car.plate]!![title]!![1] = false
             notificationRegister[car.plate]!![title]!![2] = false
             notificationRegister[car.plate]!![title]!![3] = false
+            notificationRegister[car.plate]!![title]!![4] = false
+
+            val text =
+                if (timeDifferenceInDays > 1)
+                    "You are $timeDifferenceInDays days late on your car ${title.lowercase()}! (deadline was $formattedDate)"
+                else
+                    "You are one day late on your car ${title.lowercase()}! (deadline was $formattedDate)"
 
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentTitle(titleStr)
-                .setContentText("You are ${timeDifferenceInDays.toInt()} days late on your car ${title.lowercase()}! (deadline was $formattedDate)")
+                .setContentText(text)
                 .build()
 
-            NotificationHandler.notify(n, hash(title))
+            NotificationHandler.notify(n, hash(title + car.plate))
 
             return false
         }
 
-        else if (showTomorrow && date.seconds - currentDate.seconds <= 86400)  { // Tomorrow
+        else if (showToday && isSameDay(currentDate, date)) {
 
             notificationRegister[car.plate]!![title]!![1] = false
             notificationRegister[car.plate]!![title]!![2] = false
             notificationRegister[car.plate]!![title]!![3] = false
+            notificationRegister[car.plate]!![title]!![4] = false
+
+            val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentTitle(titleStr)
+                .setContentText("Today is the last day to pay the car ${title.lowercase()}!")
+                .build()
+
+            NotificationHandler.notify(n, hash(title + car.plate))
+        }
+
+        else if (showTomorrow && date.seconds - currentDate.seconds <= 86400)  { // Tomorrow
+
+            notificationRegister[car.plate]!![title]!![2] = false
+            notificationRegister[car.plate]!![title]!![3] = false
+            notificationRegister[car.plate]!![title]!![4] = false
 
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -149,13 +183,13 @@ class BackgroundService : Service() {
                 .setContentText(textStr)
                 .build()
 
-            NotificationHandler.notify(n, hash(title))
+            NotificationHandler.notify(n, hash(title + car.plate))
         }
 
         else if (showThreeDays && date.seconds - currentDate.seconds <= 259200)  { // Three days
 
-            notificationRegister[car.plate]!![title]!![2] = false
             notificationRegister[car.plate]!![title]!![3] = false
+            notificationRegister[car.plate]!![title]!![4] = false
 
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -164,12 +198,12 @@ class BackgroundService : Service() {
                 .setContentText(textStr)
                 .build()
 
-            NotificationHandler.notify(n, hash(title))
+            NotificationHandler.notify(n, hash(title + car.plate))
         }
 
         else if (showOneWeek && date.seconds - currentDate.seconds <= 604800)  { // One week
 
-            notificationRegister[car.plate]!![title]!![3] = false
+            notificationRegister[car.plate]!![title]!![4] = false
 
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -178,7 +212,7 @@ class BackgroundService : Service() {
                 .setContentText(textStr)
                 .build()
 
-            NotificationHandler.notify(n, hash(title))
+            NotificationHandler.notify(n, hash(title + car.plate))
         }
 
         return true
@@ -199,24 +233,26 @@ class BackgroundService : Service() {
 
             if (!notificationRegister[plate]!!.containsKey(title)) {
 
-                notificationRegister[plate]!![title] = BooleanArray(4)
+                notificationRegister[plate]!![title] = BooleanArray(5)
                 val array = notificationRegister[plate]!![title]!!
                 array[0] = true
                 array[1] = true
                 array[2] = true
                 array[3] = true
+                array[4] = true
             }
         }
 
         else {
 
             notificationRegister[plate] = HashMap()
-            notificationRegister[plate]!![title] = BooleanArray(4)
+            notificationRegister[plate]!![title] = BooleanArray(5)
             val array = notificationRegister[plate]!![title]!!
             array[0] = true
             array[1] = true
             array[2] = true
             array[3] = true
+            array[4] = true
         }
 
         if (dateRegister.containsKey(plate)) {
@@ -226,12 +262,13 @@ class BackgroundService : Service() {
                 if (dateRegister[plate]!![title] != date) {
 
                     dateRegister[plate]!![title] = date
-                    notificationRegister[plate]!![title] = BooleanArray(4)
+                    notificationRegister[plate]!![title] = BooleanArray(5)
                     val array = notificationRegister[plate]!![title]!!
                     array[0] = true
                     array[1] = true
                     array[2] = true
                     array[3] = true
+                    array[4] = true
                 }
             }
 
@@ -248,10 +285,36 @@ class BackgroundService : Service() {
         }
     }
 
+    private fun isSameDay(ts1: Timestamp, ts2: Timestamp): Boolean {
+
+        val zoneId = ZoneId.systemDefault()
+
+        val date1 = Instant.ofEpochSecond(ts1.seconds)
+            .atZone(zoneId)
+            .toLocalDate()
+
+        val date2 = Instant.ofEpochSecond(ts2.seconds)
+            .atZone(zoneId)
+            .toLocalDate()
+
+        return date1 == date2
+    }
+
+    private fun daysBetweenDates(ts1: Timestamp, ts2: Timestamp): Long {
+
+        val zoneId = ZoneId.systemDefault()
+
+        val date1 = Instant.ofEpochSecond(ts1.seconds).atZone(zoneId).toLocalDate()
+        val date2 = Instant.ofEpochSecond(ts2.seconds).atZone(zoneId).toLocalDate()
+
+        return ChronoUnit.DAYS.between(date1, date2)
+    }
+
     private val secondsToWait = 10
     private lateinit var context: Context
     private val job = Job()
     private val scope = CoroutineScope(Dispatchers.IO + job)
     private var dateRegister = HashMap<String, HashMap<String, Timestamp>>()
     private var notificationRegister = HashMap<String, HashMap<String, BooleanArray>>()
+    private var user: User? = null
 }
