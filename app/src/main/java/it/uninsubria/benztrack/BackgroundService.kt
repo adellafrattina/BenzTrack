@@ -56,9 +56,9 @@ class BackgroundService : Service() {
 
                 val currentDate = Timestamp.now()
 
-                if (user != loggedUser) {
+                if (user != Handler.loggedUser) {
 
-                    user = loggedUser
+                    user = Handler.loggedUser
 
                     NotificationHandler.cancelAllNotifications()
                     dateRegister = HashMap()
@@ -67,7 +67,7 @@ class BackgroundService : Service() {
 
                 if (user != null) {
 
-                    database
+                    Handler.database
                         .getUserCars(user!!.username)
                         .addOnSuccessListener { cars ->
 

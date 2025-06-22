@@ -6,23 +6,9 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 
 /**
- * Global database instance for the application.
- */
-val database = Database()
-
-/**
- * Global variable to store the currently logged-in user.
- * Null when no user is logged in.
- */
-var loggedUser: User? = null
-
-/**
  * The main entry point of the application.
  */
 class MainActivity : AppCompatActivity() {
-
-    private lateinit var loginButton: Button
-    private lateinit var registerButton: Button
 
     /**
      * Initializes the activity and sets up the UI components and their listeners.
@@ -33,8 +19,6 @@ class MainActivity : AppCompatActivity() {
 
         loginButton = findViewById(R.id.button_login)
         registerButton = findViewById(R.id.button_register)
-
-        NotificationHandler.init(this)
 
         if (!BackgroundService.isRunning) {
 
@@ -50,9 +34,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         registerButton.setOnClickListener {
+
             val intent = Intent(this, RegistrationActivity::class.java)
             startActivity(intent)
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         }
     }
+
+    private lateinit var loginButton: Button
+    private lateinit var registerButton: Button
 }
