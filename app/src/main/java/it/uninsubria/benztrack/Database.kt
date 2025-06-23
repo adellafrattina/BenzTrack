@@ -695,7 +695,7 @@ public class Database {
                             // Check that the mileage is greater than the last one (if there is one)
                             for (document in query.documents) {
 
-                                val mileage = document.get(MILEAGE_FIELD) as Int
+                                val mileage = document.get(MILEAGE_FIELD) as Double
                                 if (mileage > refill.mileage)
                                     errorMap[MILEAGE_FIELD] = "The mileage value is not valid"
                             }
@@ -770,7 +770,7 @@ public class Database {
      * @param to The end date (by default the current date)
      * @throws RefillException
      */
-    public fun getRefillData(username: String, plate: String, from: Date = Date.from(Instant.MIN), to: Date = Date.from(Instant.now())) : Task<ArrayList<Refill>> {
+    public fun getRefillData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.now())) : Task<ArrayList<Refill>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Refill>>()
 
@@ -936,7 +936,7 @@ public class Database {
      * @param to The end date (by default the current date)
      * @throws MaintenanceException
      */
-    public fun getMaintenanceData(username: String, plate: String, from: Date = Date.from(Instant.MIN), to: Date = Date.from(Instant.now())) : Task<ArrayList<Maintenance>> {
+    public fun getMaintenanceData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.now())) : Task<ArrayList<Maintenance>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Maintenance>>()
 
@@ -1102,7 +1102,7 @@ public class Database {
      * @param to The end date (by default the current date)
      * @throws InsuranceException
      */
-    public fun getInsuranceData(username: String, plate: String, from: Date = Date.from(Instant.MIN), to: Date = Date.from(Instant.now())) : Task<ArrayList<Insurance>> {
+    public fun getInsuranceData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.now())) : Task<ArrayList<Insurance>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Insurance>>()
 
@@ -1268,7 +1268,7 @@ public class Database {
      * @param to The end date (by default the current date)
      * @throws TaxException
      */
-    public fun getTaxData(username: String, plate: String, from: Date = Date.from(Instant.MIN), to: Date = Date.from(Instant.now())) : Task<ArrayList<Tax>> {
+    public fun getTaxData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.now())) : Task<ArrayList<Tax>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Tax>>()
 
