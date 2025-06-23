@@ -18,7 +18,7 @@
                 android:id="@+id/edit_refill_date"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Date"
+                android:hint="@string/refill_date"
                 android:focusable="false"
                 android:inputType="none"/>
         </com.google.android.material.textfield.TextInputLayout>
@@ -32,7 +32,7 @@
                 android:id="@+id/edit_refill_position"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Position (address or coordinates)"/>
+                android:hint="@string/refill_position"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -44,7 +44,7 @@
                 android:id="@+id/edit_refill_ppl"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Price per liter (€)"
+                android:hint="@string/refill_ppl"
                 android:inputType="numberDecimal"/>
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -57,7 +57,7 @@
                 android:id="@+id/edit_refill_mileage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Mileage (km)"
+                android:hint="@string/refill_mileage"
                 android:inputType="numberDecimal"/>
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -70,7 +70,7 @@
                 android:id="@+id/edit_refill_amount"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Amount (€)"
+                android:hint="@string/refill_amount"
                 android:inputType="numberDecimal"/>
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -78,7 +78,7 @@
             android:id="@+id/button_submit_refill"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add Refill"/>
+            android:text="@string/refill_submit"/>
 
     </LinearLayout>
 </ScrollView> 
