@@ -704,13 +704,13 @@ public class Database {
                             if (refill.position.isEmpty())
                                 errorMap[POSITION_FIELD] = "This value must not be empty"
 
-                            // Check position
+                            // Check price per liter
                             if (refill.ppl < 0)
-                                errorMap[POSITION_FIELD] = "The price per liter cannot be negative"
+                                errorMap[PRICE_PER_LITER_FIELD] = "The price per liter cannot be negative"
 
                             // Check amount
                             if (refill.amount < 0)
-                                errorMap[POSITION_FIELD] = "The amount cannot be negative"
+                                errorMap[AMOUNT_FIELD] = "The amount cannot be negative"
 
                             // Check consistency
                             if (refill.amount != 0.0f && refill.ppl == 0.0f)
