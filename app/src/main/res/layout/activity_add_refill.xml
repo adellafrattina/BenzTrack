@@ -10,6 +10,7 @@
         android:padding="16dp">
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/date_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp">
@@ -23,6 +24,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/position_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp">
@@ -30,10 +32,11 @@
                 android:id="@+id/edit_refill_position"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/position"/>
+                android:hint="Position (address or coordinates)"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/ppl_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp">
@@ -41,11 +44,12 @@
                 android:id="@+id/edit_refill_ppl"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/ppl"
+                android:hint="Price per liter (€)"
                 android:inputType="numberDecimal"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/mileage_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp">
@@ -53,11 +57,12 @@
                 android:id="@+id/edit_refill_mileage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/mileage"
+                android:hint="Mileage (km)"
                 android:inputType="numberDecimal"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/amount_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp">
@@ -65,7 +70,7 @@
                 android:id="@+id/edit_refill_amount"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/amount"
+                android:hint="Amount (€)"
                 android:inputType="numberDecimal"/>
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -73,7 +78,7 @@
             android:id="@+id/button_submit_refill"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/submit_refill"/>
+            android:text="Add Refill"/>
 
     </LinearLayout>
 </ScrollView> 
