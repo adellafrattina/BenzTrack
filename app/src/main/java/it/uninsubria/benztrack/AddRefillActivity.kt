@@ -97,7 +97,7 @@ class AddRefillActivity : AppCompatActivity() {
     }
 
     private fun clearErrors() {
-        dateLayout.isErrorEnabled = false
+        pplLayout.isErrorEnabled = false
         positionLayout.isErrorEnabled = false
         mileageLayout.isErrorEnabled = false
         amountLayout.isErrorEnabled = false
