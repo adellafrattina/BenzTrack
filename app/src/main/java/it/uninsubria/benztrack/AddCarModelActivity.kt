@@ -60,26 +60,19 @@ class AddCarModelActivity : AppCompatActivity() {
         fuelSpinner.adapter = adapter
 
         submitButton.setOnClickListener {
-            val name = nameEdit.text.toString()
-            val year = yearEdit.text.toString().toIntOrNull() ?: 0
-            val capacity = capacityEdit.text.toString().toIntOrNull() ?: 0
-            val fuel = FuelType.valueOf(fuelSpinner.selectedItem.toString())
-            val co2 = co2Edit.text.toString().toFloatOrNull() ?: 0f
-            val weight = weightEdit.text.toString().toFloatOrNull() ?: 0f
-            val length = lengthEdit.text.toString().toFloatOrNull() ?: 0f
-            val height = heightEdit.text.toString().toFloatOrNull() ?: 0f
-            val width = widthEdit.text.toString().toFloatOrNull() ?: 0f
+
+            clearErrors()
 
             val model = CarModel()
-            model.name = name
-            model.year = year
-            model.capacity = capacity
-            model.fuel = fuel
-            model.co2factor = co2
-            model.weight = weight
-            model.length = length
-            model.height = height
-            model.width = width
+            model.name = nameEdit.text.toString()
+            model.year = yearEdit.text.toString().toIntOrNull() ?: 0
+            model.capacity = capacityEdit.text.toString().toIntOrNull() ?: 0
+            model.fuel = FuelType.valueOf(fuelSpinner.selectedItem.toString())
+            model.co2factor = co2Edit.text.toString().toFloatOrNull() ?: 0f
+            model.weight = weightEdit.text.toString().toFloatOrNull() ?: 0f
+            model.length = lengthEdit.text.toString().toFloatOrNull() ?: 0f
+            model.height = heightEdit.text.toString().toFloatOrNull() ?: 0f
+            model.width = widthEdit.text.toString().toFloatOrNull() ?: 0f
 
             Handler.database.createCarModel(model)
                 .addOnSuccessListener {
@@ -87,9 +80,52 @@ class AddCarModelActivity : AppCompatActivity() {
                     finish()
                 }
                 .addOnFailureListener { e ->
-                    ToastManager.show(this, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT)
+                    when (e) {
+                        is CarModelException -> {
+                            if (e.name.isNotEmpty()) {
+                                showError(nameLayout, e.name)
+                            }
+                            if (e.year.isNotEmpty()) {
+                                showError(yearLayout, e.year)
+                            }
+                            if (e.capacity.isNotEmpty()) {
+                                showError(capacityLayout, e.capacity)
+                            }
+                            if (e.co2factor.isNotEmpty()) {
+                                showError(co2Layout, e.co2factor)
+                            }
+                            if (e.weight.isNotEmpty()) {
+                                showError(weightLayout, e.weight)
+                            }
+                            if (e.length.isNotEmpty()) {
+                                showError(lengthLayout, e.length)
+                            }
+                            if (e.height.isNotEmpty()) {
+                                showError(heightLayout, e.height)
+                            }
+                            if (e.width.isNotEmpty()) {
+                                showError(widthLayout, e.width)
+                            }
+                        }
+                    }
                 }
         }
+    }
+
+    private fun showError(layout: TextInputLayout, message: String) {
+        layout.error = message
+        layout.isErrorEnabled = true
+    }
+
+    private fun clearErrors() {
+        nameLayout.isErrorEnabled = false
+        yearLayout.isErrorEnabled = false
+        capacityLayout.isErrorEnabled = false
+        co2Layout.isErrorEnabled = false
+        weightLayout.isErrorEnabled = false
+        lengthLayout.isErrorEnabled = false
+        heightLayout.isErrorEnabled = false
+        widthLayout.isErrorEnabled = false
     }
 
     override fun onSupportNavigateUp(): Boolean {
