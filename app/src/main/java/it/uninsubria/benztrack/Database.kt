@@ -692,12 +692,18 @@ public class Database {
                         .get()
                         .addOnSuccessListener { query ->
 
-                            // Check that the mileage is greater than the last one (if there is one)
-                            for (document in query.documents) {
+                            if (refill.mileage.isNaN())
+                                errorMap[MILEAGE_FIELD] = "This value must not be empty"
 
-                                val mileage = document.get(MILEAGE_FIELD) as Double
-                                if (mileage > refill.mileage)
-                                    errorMap[MILEAGE_FIELD] = "The mileage value is not valid"
+                            else {
+
+                                // Check that the mileage is greater than the last one (if there is one)
+                                for (document in query.documents) {
+
+                                    val mileage = document.get(MILEAGE_FIELD) as Double
+                                    if (mileage > refill.mileage)
+                                        errorMap[MILEAGE_FIELD] = "The mileage value is not valid"
+                                }
                             }
 
                             // Check position
@@ -705,11 +711,17 @@ public class Database {
                                 errorMap[POSITION_FIELD] = "This value must not be empty"
 
                             // Check price per liter
-                            if (refill.ppl < 0)
+                            if (refill.ppl.isNaN())
+                                errorMap[PRICE_PER_LITER_FIELD] = "This value must not be empty"
+
+                            else if (refill.ppl < 0)
                                 errorMap[PRICE_PER_LITER_FIELD] = "The price per liter cannot be negative"
 
                             // Check amount
-                            if (refill.amount < 0)
+                            if (refill.amount.isNaN())
+                                errorMap[AMOUNT_FIELD] = "This value must not be empty"
+
+                            else if (refill.amount < 0)
                                 errorMap[AMOUNT_FIELD] = "The amount cannot be negative"
 
                             // Check consistency
