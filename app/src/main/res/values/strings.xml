@@ -65,4 +65,9 @@
     <string name="refills">Refills</string>
     <string name="add_refill">Add Refill</string>
     <string name="refill_placeholder">Refill details will appear here.</string>
+    <string name="position">Position (address or coordinates)</string>
+    <string name="ppl">Price per liter (€)</string>
+    <string name="mileage">Mileage (km)</string>
+    <string name="amount">Amount (€)</string>
+    <string name="submit_refill">Add Refill</string>
 </resources>
