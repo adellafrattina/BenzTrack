@@ -70,8 +70,8 @@ class CarInfoActivity : AppCompatActivity() {
 
                 Handler.database.setNewMaintenanceDate(Handler.loggedUser!!.username, carPlate, Timestamp(cal.time))
                     .addOnSuccessListener {
-                        maintenancePlaceholder.text = "Next maintenance on: " + formatted
-                        ToastManager.show(this, "Maintenance date set to " + formatted, Toast.LENGTH_SHORT)
+                        maintenancePlaceholder.text = "Next maintenance on: $formatted"
+                        ToastManager.show(this, "Maintenance date set to $formatted", Toast.LENGTH_SHORT)
                         payButton.isEnabled = true
                         payButton.alpha = 1.0f
                     }
