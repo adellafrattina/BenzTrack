@@ -48,7 +48,7 @@ public class Database {
         public const val PLATE_FIELD = "plate"
         public const val MODEL_FIELD = "model"
         public const val MAINTENANCE_DATE_FIELD = "maintenancedate"
-        public const val INSURANCE_DATE_FIELD = "insurance"
+        public const val INSURANCE_DATE_FIELD = "insurancedate"
         public const val TAX_DATE_FIELD = "taxdate"
 
         public const val DATE_FIELD = "date"
@@ -1139,7 +1139,7 @@ public class Database {
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(e as InsuranceException)
+                            taskSource.setException(InsuranceException(e.message?:""))
                         }
                 }
 
@@ -1150,7 +1150,7 @@ public class Database {
             }
             .addOnFailureListener { e ->
 
-                taskSource.setException(e as InsuranceException)
+                taskSource.setException(InsuranceException(e.message?:""))
             }
 
         return taskSource.task
