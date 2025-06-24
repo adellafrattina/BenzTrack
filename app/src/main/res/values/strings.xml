@@ -78,4 +78,10 @@
     <string name="refill_mileage">Mileage (km)</string>
     <string name="refill_amount">Amount (€)</string>
     <string name="refill_submit">Add Refill</string>
+
+    <!-- Maintenance card -->
+    <string name="maintenance_pay">Pay</string>
+    <string name="maintenance_date">Set Date</string>
+    <string name="maintenance_placeholder">Maintenance details will appear here.</string>
+    <string name="maintenance_card">Maintenance</string>
 </resources>
