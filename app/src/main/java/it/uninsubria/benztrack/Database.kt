@@ -665,6 +665,120 @@ public class Database {
     }
 
     /**
+     * Gets the specified car owned by a specific user
+     *
+     * @param username The user's id
+     * @param plate The car's plate
+     * @throws CarException
+     */
+    public fun getUserCar(username: String, plate: String): Task<Car> {
+
+        val taskSource = TaskCompletionSource<Car>()
+
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .get()
+                        .addOnSuccessListener { document ->
+
+                            val car = document.toObject(Car::class.java)
+                            if (car != null)
+                                taskSource.setResult(car)
+                            else
+                                taskSource.setException(CarException("Cannot convert document object to Car type"))
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(CarException(e.message?:""))
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(CarException("The user does not exist"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(CarException(e.message?:""))
+            }
+
+        return taskSource.task
+    }
+
+    /**
+     * Gets the specified car model owned by a specific user
+     *
+     * @param username The user's id
+     * @param plate The car's plate
+     * @throws CarModelException
+     */
+    public fun getUserCarModel(username: String, plate: String): Task<CarModel> {
+
+        val taskSource = TaskCompletionSource<CarModel>()
+
+        isCarPresent(username, plate)
+            .addOnSuccessListener { carPresent ->
+
+                if (carPresent) {
+
+                    dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .get()
+                        .addOnSuccessListener { document ->
+
+                            val car = document.toObject(Car::class.java)
+
+                            if (car != null) {
+
+                                car.model!!.get()
+                                    .addOnSuccessListener { doc ->
+
+                                        val model = doc.toObject(CarModel::class.java)
+                                        if (model != null)
+                                            taskSource.setResult(model)
+                                        else
+                                            taskSource.setException(CarModelException("Cannot convert document object to CarModel type"))
+                                    }
+                                    .addOnFailureListener { e ->
+
+                                        taskSource.setException(CarModelException(e.message?:""))
+                                    }
+                            }
+
+                            else
+                                taskSource.setException(CarModelException("Cannot convert document object to Car type"))
+                        }
+                        .addOnFailureListener { e ->
+
+                            taskSource.setException(CarModelException(e.message?:""))
+                        }
+                }
+
+                else {
+
+                    taskSource.setException(CarModelException("The user does not exist"))
+                }
+            }
+            .addOnFailureListener { e ->
+
+                taskSource.setException(CarModelException(e.message?:""))
+            }
+
+        return taskSource.task
+    }
+
+    /**
      * Sets a new refill for a specific car of a specific user
      *
      * @param username The user's id
