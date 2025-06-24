@@ -6,6 +6,8 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import android.app.DatePickerDialog
 import android.widget.TextView
+import android.widget.Toast
+import com.google.firebase.Timestamp
 import java.util.Calendar
 
 class CarInfoActivity : AppCompatActivity() {
@@ -35,7 +37,17 @@ class CarInfoActivity : AppCompatActivity() {
             val dialog = DatePickerDialog(this, { _, year, month, dayOfMonth ->
                 cal.set(year, month, dayOfMonth)
                 val formatted = android.text.format.DateFormat.format("dd-MM-yyyy", cal.time)
-                maintenancePlaceholder.text = "Next maintenance on: " + formatted
+
+                Handler.database.setNewMaintenanceDate(Handler.loggedUser!!.username, carPlate!!, Timestamp(cal.time))
+                    .addOnSuccessListener {
+
+                        maintenancePlaceholder.text = "Next maintenance on: " + formatted
+                        ToastManager.show(this, "Maintenance date set to " + formatted, Toast.LENGTH_SHORT)
+                    }
+                    .addOnFailureListener {
+
+
+                    }
             }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
             dialog.show()
         }
