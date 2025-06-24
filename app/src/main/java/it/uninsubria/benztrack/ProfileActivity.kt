@@ -29,9 +29,6 @@ class ProfileActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
-        // Enable the up button in the action bar
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
         // Initialize views
         noCarsTextView = findViewById(R.id.text_no_cars)
         addCarButton = findViewById(R.id.button_add_car)
@@ -53,7 +50,11 @@ class ProfileActivity : AppCompatActivity() {
             Database().getUserCars(Handler.loggedUser!!.username)
                 .addOnSuccessListener { cars ->
                     if (cars.isNotEmpty()) {
-                        carAdapter = CarAdapter(cars)
+                        carAdapter = CarAdapter(cars) { car ->
+                            val intent = Intent(this, CarGraphActivity::class.java)
+                            intent.putExtra("car_plate", car.plate)
+                            startActivity(intent)
+                        }
                         carsRecyclerView.adapter = carAdapter
                         carsRecyclerView.visibility = View.VISIBLE
                         noCarsTextView.visibility = View.GONE
