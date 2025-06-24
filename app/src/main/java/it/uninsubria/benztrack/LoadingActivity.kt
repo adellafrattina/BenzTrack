@@ -18,6 +18,12 @@ class LoadingActivity: AppCompatActivity() {
         val task = Handler.init(this)
         NotificationHandler.init(this)
 
+        if (!BackgroundService.isRunning) {
+
+            val intent = Intent(this, BackgroundService::class.java)
+            startService(intent)
+        }
+
         when {
 
             task != null -> {

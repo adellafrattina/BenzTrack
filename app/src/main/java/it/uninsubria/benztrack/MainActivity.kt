@@ -20,12 +20,6 @@ class MainActivity : AppCompatActivity() {
         loginButton = findViewById(R.id.button_login)
         registerButton = findViewById(R.id.button_register)
 
-        if (!BackgroundService.isRunning) {
-
-            val intent = Intent(this, BackgroundService::class.java)
-            startService(intent)
-        }
-
         loginButton.setOnClickListener {
 
             val intent = Intent(this, LoginActivity::class.java)
