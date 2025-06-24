@@ -257,7 +257,7 @@ public class Database {
             errorMap[CAPACITY_FIELD] = "The capacity must be valid"
 
         // Check CO2 factor
-        if (model.co2factor < 0)
+        if (model.co2factor < 0 || model.co2factor.isNaN())
             errorMap[CO2_FACTOR_FIELD] = "The CO2 factor must be valid"
 
         // Check weight
@@ -464,21 +464,31 @@ public class Database {
     public fun addNewUserCar(username: String, car: Car): Task<Boolean> {
 
         val taskSource = TaskCompletionSource<Boolean>()
-        lateinit var errorMap: HashMap<String, String>
 
-        isCarPresent(username, car.plate)
-            .addOnSuccessListener { carPresent ->
+        val errorMap = checkNewCarParameters(car)
+        if (errorMap.isNotEmpty()) {
 
-                if (carPresent) {
+            taskSource.setException(CarException(
+                "Car creation has failed",
+                if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
+                if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
+                if (errorMap[MAINTENANCE_DATE_FIELD] != null) errorMap[MAINTENANCE_DATE_FIELD]!! else "",
+                if (errorMap[INSURANCE_DATE_FIELD] != null)   errorMap[INSURANCE_DATE_FIELD]!! else "",
+                if (errorMap[TAX_DATE_FIELD] != null)         errorMap[TAX_DATE_FIELD]!! else ""
+            ))
+        }
 
-                    taskSource.setException(CarException("A car with the same plate is already present"))
-                }
+        else {
 
-                else {
+            isCarPresent(username, car.plate)
+                .addOnSuccessListener { carPresent ->
 
-                    errorMap = checkNewCarParameters(car)
+                    if (carPresent) {
 
-                    if (errorMap.isEmpty()) {
+                        taskSource.setException(CarException("A car with the same plate is already present"))
+                    }
+
+                    else {
 
                         dbRef
                             .collection(USERS_COLLECTION)
@@ -495,24 +505,12 @@ public class Database {
                                 taskSource.setException(CarException(e.message?:""))
                             }
                     }
-
-                    else {
-
-                        taskSource.setException(CarException(
-                            "Car creation has failed",
-                            if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
-                            if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
-                            if (errorMap[MAINTENANCE_DATE_FIELD] != null) errorMap[MAINTENANCE_DATE_FIELD]!! else "",
-                            if (errorMap[INSURANCE_DATE_FIELD] != null)   errorMap[INSURANCE_DATE_FIELD]!! else "",
-                            if (errorMap[TAX_DATE_FIELD] != null)         errorMap[TAX_DATE_FIELD]!! else ""
-                        ))
-                    }
                 }
-            }
-            .addOnFailureListener { e ->
+                .addOnFailureListener { e ->
 
-                taskSource.setException(CarException(e.message?:""))
-            }
+                    taskSource.setException(CarException(e.message?:""))
+                }
+        }
 
         return taskSource.task
     }
