@@ -51,7 +51,7 @@ class ProfileActivity : AppCompatActivity() {
                 .addOnSuccessListener { cars ->
                     if (cars.isNotEmpty()) {
                         carAdapter = CarAdapter(cars) { car ->
-                            val intent = Intent(this, CarInfoActivity::class.java)
+                            val intent = Intent(this, CarGraphActivity::class.java)
                             intent.putExtra("car_plate", car.plate)
                             startActivity(intent)
                         }
