@@ -82,6 +82,6 @@
     <!-- Maintenance card -->
     <string name="maintenance_pay">Pay</string>
     <string name="maintenance_date">Set Date</string>
-    <string name="maintenance_placeholder">Maintenance details will appear here.</string>
+    <string name="maintenance_placeholder">No maintenance set to pay</string>
     <string name="maintenance_card">Maintenance</string>
 </resources>
