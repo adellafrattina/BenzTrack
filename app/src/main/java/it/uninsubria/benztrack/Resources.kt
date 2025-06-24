@@ -4,6 +4,7 @@ import android.content.Context
 import android.widget.Toast
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentReference
+import java.io.Serializable
 
 /**
  * Toast wrapper class to avoid message queuing
@@ -141,7 +142,7 @@ public data class CarModel(
      * The possible search terms that will be used in the search model algorithm
      */
     var searchterms: ArrayList<String>
-) {
+) : Serializable {
 
     constructor(): this("", Int.MAX_VALUE, Int.MAX_VALUE, FuelType.Petrol, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, ArrayList<String>())
 
@@ -188,7 +189,7 @@ public data class Car(
      * The next tax date
      */
     var taxdate: Timestamp?
-) {
+) : Serializable {
 
     constructor(): this("", "", null, null, null, null)
 }

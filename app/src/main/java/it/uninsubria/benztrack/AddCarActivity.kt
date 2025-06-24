@@ -21,10 +21,12 @@ class AddCarActivity : AppCompatActivity() {
     private lateinit var carNameEdit: TextInputEditText
     private lateinit var plateEdit: TextInputEditText
     private lateinit var modelEdit: TextInputEditText
+    private lateinit var carNameLayout: TextInputLayout
+    private lateinit var plateLayout: TextInputLayout
+    private lateinit var modelLayout: TextInputLayout
     private lateinit var modelsRecyclerView: RecyclerView
     private lateinit var confirmButton: Button
     private lateinit var addModelButton: Button
-    private lateinit var database: Database
     private var selectedModel: CarModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,11 +40,13 @@ class AddCarActivity : AppCompatActivity() {
         carNameEdit = findViewById(R.id.edit_car_name)
         plateEdit = findViewById(R.id.edit_plate)
         modelEdit = findViewById(R.id.edit_model)
+        carNameLayout = findViewById(R.id.car_name_layout)
+        plateLayout = findViewById(R.id.plate_layout)
+        modelLayout = findViewById(R.id.model_layout)
         modelsRecyclerView = findViewById(R.id.recycler_models)
         confirmButton = findViewById(R.id.button_confirm)
         addModelButton = findViewById(R.id.button_add_model)
-        val modelInputLayout = findViewById<TextInputLayout>(R.id.textinput_model)
-        database = Database()
+        val modelInputLayout = findViewById<TextInputLayout>(R.id.model_layout)
 
         // Set up RecyclerView
         modelsRecyclerView.layoutManager = LinearLayoutManager(this)
@@ -56,41 +60,49 @@ class AddCarActivity : AppCompatActivity() {
 
         // Set up confirm button
         confirmButton.setOnClickListener {
-            val carName = carNameEdit.text.toString()
-            val plate = plateEdit.text.toString()
-            
-            if (carName.isBlank() || plate.isBlank() || selectedModel == null) {
-
-                ToastManager.show(this, "Please fill all fields", Toast.LENGTH_SHORT)
-                return@setOnClickListener
-            }
+            clearErrors()
 
             val car = Car()
-            car.name = carName
-            car.plate = plate
-            //car.model =
+            car.name = carNameEdit.text.toString()
+            car.plate = plateEdit.text.toString()
 
-            database.getCarModelDocumentReference(selectedModel!!)
-                .addOnSuccessListener { model ->
+            if (selectedModel != null) {
+                Handler.database.getCarModelDocumentReference(selectedModel!!)
+                    .addOnSuccessListener { model ->
 
-                    car.model = model
-                }
-                .addOnFailureListener { e ->
+                        car.model = model
+                    }
+                    .addOnFailureListener { e ->
 
-                    ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
-                }
+                        ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
+                    }
 
-            database.addNewUserCar(Handler.loggedUser!!.username, car)
-                .addOnSuccessListener {
+                Handler.database.addNewUserCar(Handler.loggedUser!!.username, car)
+                    .addOnSuccessListener {
 
-                    ToastManager.show(this, "Car added successfully", Toast.LENGTH_SHORT)
-                    finish()
-                }
+                        ToastManager.show(this, "Car added successfully", Toast.LENGTH_SHORT)
+                        finish()
+                    }
 
-                .addOnFailureListener { e ->
+                    .addOnFailureListener { e ->
+                        when (e) {
+                            is CarException -> {
+                                if (e.name.isNotEmpty()) {
+                                    showError(carNameLayout, e.name)
+                                }
+                                if (e.plate.isNotEmpty()) {
+                                    showError(plateLayout, e.plate)
+                                }
+                            }
+                        }
+                        ToastManager.show(this, "Error adding car: ${e.message}", Toast.LENGTH_SHORT)
+                    }
+            }
 
-                    ToastManager.show(this, "Error adding car: ${e.message}", Toast.LENGTH_SHORT)
-                }
+            else {
+
+                ToastManager.show(this, "Error adding car: some fields are left blank", Toast.LENGTH_SHORT)
+            }
         }
 
         addModelButton.setOnClickListener {
@@ -104,7 +116,7 @@ class AddCarActivity : AppCompatActivity() {
                 modelsRecyclerView.visibility = View.GONE
                 return@setEndIconOnClickListener
             }
-            database.searchCarModelByName(query)
+            Handler.database.searchCarModelByName(query)
                 .addOnSuccessListener { models ->
                     if (models.isNotEmpty()) {
                         adapter.submitList(models)
@@ -123,6 +135,17 @@ class AddCarActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
+    }
+
+    private fun clearErrors() {
+
+        carNameLayout.isErrorEnabled = false
+        plateLayout.isErrorEnabled = false
+    }
+
+    private fun showError(layout: TextInputLayout, message: String) {
+        layout.error = message
+        layout.isErrorEnabled = true
     }
 }
 

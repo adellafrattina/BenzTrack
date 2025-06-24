@@ -60,4 +60,40 @@
     <string name="car_name_card">Car Name</string>
     <string name="car_model_card">Model</string>
     <string name="car_plate_card">Plate</string>
+
+    <!-- Refill card -->
+    <string name="refills">Refills</string>
+    <string name="add_refill">Add Refill</string>
+    <string name="refill_placeholder">Refill details will appear here.</string>
+
+    <!-- Refill form -->
+    <string name="position">Position (address or coordinates)</string>
+    <string name="ppl">Price per liter (€)</string>
+    <string name="mileage">Mileage (km)</string>
+    <string name="amount">Amount (€)</string>
+    <string name="submit_refill">Add Refill</string>
+    <string name="refill_date">Date</string>
+    <string name="refill_position">Position (address or coordinates)</string>
+    <string name="refill_ppl">Price per liter (€)</string>
+    <string name="refill_mileage">Mileage (km)</string>
+    <string name="refill_amount">Amount (€)</string>
+    <string name="refill_submit">Add Refill</string>
+
+    <!-- Maintenance card -->
+    <string name="maintenance_pay">Pay</string>
+    <string name="maintenance_date">Set Date</string>
+    <string name="maintenance_placeholder">No maintenance set to pay yet</string>
+    <string name="maintenance_card">Maintenance</string>
+
+    <!-- Insurance card -->
+    <string name="insurance_card">Insurance</string>
+    <string name="insurance_placeholder">No insurance set to pay yet</string>
+    <string name="insurance_date">Set Date</string>
+    <string name="insurance_pay">Pay</string>
+
+    <!-- Tax card -->
+    <string name="tax_card">Tax</string>
+    <string name="tax_placeholder">No tax set to pay yet</string>
+    <string name="tax_date">Set Date</string>
+    <string name="tax_pay">Pay</string>
 </resources>
