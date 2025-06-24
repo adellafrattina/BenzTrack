@@ -29,9 +29,6 @@ class ProfileActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
-        // Enable the up button in the action bar
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
         // Initialize views
         noCarsTextView = findViewById(R.id.text_no_cars)
         addCarButton = findViewById(R.id.button_add_car)
