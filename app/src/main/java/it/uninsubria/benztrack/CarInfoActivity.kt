@@ -4,6 +4,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
+import android.app.DatePickerDialog
+import android.widget.TextView
+import java.util.Calendar
 
 class CarInfoActivity : AppCompatActivity() {
 
@@ -20,6 +23,21 @@ class CarInfoActivity : AppCompatActivity() {
             val intent = Intent(this, AddRefillActivity::class.java)
             intent.putExtra("car_plate", carPlate)
             startActivity(intent)
+        }
+
+        val setDateButton = findViewById<Button>(R.id.button_set_maintenance_date)
+        val payButton = findViewById<Button>(R.id.button_pay_maintenance)
+        val maintenancePlaceholder = findViewById<TextView>(R.id.text_maintenance_placeholder)
+        payButton.isEnabled = false
+        payButton.alpha = 0.5f
+        setDateButton.setOnClickListener {
+            val cal = Calendar.getInstance()
+            val dialog = DatePickerDialog(this, { _, year, month, dayOfMonth ->
+                cal.set(year, month, dayOfMonth)
+                val formatted = android.text.format.DateFormat.format("dd-MM-yyyy", cal.time)
+                maintenancePlaceholder.text = "Next maintenance on: " + formatted
+            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
+            dialog.show()
         }
     }
 
