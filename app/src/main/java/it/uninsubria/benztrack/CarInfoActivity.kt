@@ -40,15 +40,14 @@ class CarInfoActivity : AppCompatActivity() {
 
                 Handler.database.setNewMaintenanceDate(Handler.loggedUser!!.username, carPlate!!, Timestamp(cal.time))
                     .addOnSuccessListener {
-
                         maintenancePlaceholder.text = "Next maintenance on: " + formatted
                         ToastManager.show(this, "Maintenance date set to " + formatted, Toast.LENGTH_SHORT)
                     }
                     .addOnFailureListener {
-
-
+                        ToastManager.show(this, "Error while setting maintenance date", Toast.LENGTH_SHORT)
                     }
             }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
+            dialog.datePicker.minDate = System.currentTimeMillis()
             dialog.show()
         }
     }
