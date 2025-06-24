@@ -68,7 +68,7 @@ class AddCarModelActivity : AppCompatActivity() {
             model.year = yearEdit.text.toString().toIntOrNull() ?: 0
             model.capacity = capacityEdit.text.toString().toIntOrNull() ?: 0
             model.fuel = FuelType.valueOf(fuelSpinner.selectedItem.toString())
-            model.co2factor = co2Edit.text.toString().toFloatOrNull() ?: 0f
+            model.co2factor = co2Edit.text.toString().toFloatOrNull() ?: Float.NaN
             model.weight = weightEdit.text.toString().toFloatOrNull() ?: 0f
             model.length = lengthEdit.text.toString().toFloatOrNull() ?: 0f
             model.height = heightEdit.text.toString().toFloatOrNull() ?: 0f
