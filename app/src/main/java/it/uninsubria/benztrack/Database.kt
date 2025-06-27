@@ -56,6 +56,7 @@ public class Database {
         public const val PRICE_PER_LITER_FIELD = "ppl"
         public const val MILEAGE_FIELD = "mileage"
         public const val AMOUNT_FIELD = "amount"
+        public const val CURRENT_FUEL_AMOUNT_FIELD = "currentfuelamount"
     }
 
     /**
@@ -835,6 +836,13 @@ public class Database {
 
                             else if (refill.amount < 0)
                                 errorMap[AMOUNT_FIELD] = "The amount cannot be negative"
+
+                            // Check current fuel amount
+                            if (refill.currentFuelAmount.isNaN())
+                                errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "This value must not be empty"
+
+                            else if (refill.currentFuelAmount < 0)
+                                errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount cannot be negative"
 
                             // Check consistency
                             if (refill.amount != 0.0f && refill.ppl == 0.0f)
