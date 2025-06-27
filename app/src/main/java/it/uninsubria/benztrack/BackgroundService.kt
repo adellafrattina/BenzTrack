@@ -78,17 +78,6 @@ class BackgroundService : Service() {
                                 car.taxdate?.let { checkDate(car, it, currentDate, "Tax") }
                             }
                         }
-                        .addOnFailureListener { e ->
-
-                            val n = NotificationHandler.createNotification(context, NotificationHandler.BACKGROUND_CHANNEL)
-                                .setSmallIcon(R.drawable.ic_launcher_background)
-                                .setContentTitle("An exception has occurred")
-                                .setContentText(e.message?:"")
-                                .setPriority(NotificationCompat.PRIORITY_MAX)
-                                .build()
-
-                            NotificationHandler.notify(n)
-                        }
                 }
 
                 delay(secondsToWait * 1000L) // Check every ${secondsToWait} seconds
