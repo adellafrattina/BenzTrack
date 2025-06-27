@@ -6,33 +6,64 @@
     android:orientation="vertical"
     tools:context=".CarGraphActivity">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-        <com.github.mikephil.charting.charts.PieChart
-            android:id="@+id/pie_chart"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/line_chart"
-            android:layout_width="match_parent"
-            android:layout_height="-50dp"
-            android:layout_weight="2.0" />
-    </LinearLayout>
-
     <FrameLayout
         android:id="@+id/loading_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#80000000"
-        android:visibility="gone"
-        android:gravity="center">
+        android:visibility="gone" >
 
         <ProgressBar
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            style="?android:attr/progressBarStyleLarge"
+            android:indeterminateTint="@android:color/darker_gray"
+            android:layout_gravity="center"/>
     </FrameLayout>
+
+    <TextView
+        android:id="@+id/text_car_name"
+        android:layout_gravity="center"
+        android:layout_margin="15dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.github.mikephil.charting.charts.PieChart
+            android:id="@+id/pie_chart"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/text_car_model"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_margin="20dp"
+            android:text="" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:background="?android:attr/windowBackground">
+
+            <Button
+                android:id="@+id/button_car_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/car_show_activity"
+                android:textSize="24sp"
+                style="@style/AppButton"/>
+
+        </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>

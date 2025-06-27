@@ -1,37 +1,44 @@
 package it.uninsubria.benztrack
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.LegendEntry
-import com.github.mikephil.charting.components.XAxis
-import com.github.mikephil.charting.data.Entry
-import com.github.mikephil.charting.data.LineData
-import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
-import com.github.mikephil.charting.formatter.PercentFormatter
-import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.gms.tasks.Tasks
-import java.text.SimpleDateFormat
-import java.time.Instant
-import java.util.Date
-import java.util.Locale
 
 class CarGraphActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_car_graph)
-        loadingOverlay = findViewById(R.id.loading_overlay)
 
-        val plate = intent.getStringExtra("plate")
+        // Enable the up button in the action bar
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        val plate = intent.getStringExtra("car_plate")
+
+        loadingOverlay = findViewById(R.id.loading_overlay)
+        val button: Button = findViewById(R.id.button_car_info)
+        button.setOnClickListener {
+
+            val intent = Intent(this, CarInfoActivity::class.java)
+            intent.putExtra("car_plate", plate)
+            startActivity(intent)
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+        }
+
+        val title: TextView = findViewById(R.id.text_car_name)
+        val text: TextView = findViewById(R.id.text_car_model)
 
         if (plate == null) {
 
@@ -45,13 +52,13 @@ class CarGraphActivity : AppCompatActivity() {
         val maintenanceDataTask = Handler.database.getMaintenanceData(Handler.loggedUser!!.username, plate)
         val insuranceDataTask = Handler.database.getInsuranceData(Handler.loggedUser!!.username, plate)
         val taxDataTask = Handler.database.getTaxData(Handler.loggedUser!!.username, plate)
+        val carTask = Handler.database.getUserCar(Handler.loggedUser!!.username, plate)
+        val modelTask = Handler.database.getUserCarModel(Handler.loggedUser!!.username, plate)
 
         showLoading(true)
 
-        Tasks.whenAll(refillDataTask, maintenanceDataTask, insuranceDataTask, taxDataTask)
+        Tasks.whenAll(refillDataTask, maintenanceDataTask, insuranceDataTask, taxDataTask, carTask, modelTask)
             .addOnCompleteListener {
-
-                showLoading(false)
 
                 if (it.isSuccessful) {
 
@@ -59,6 +66,18 @@ class CarGraphActivity : AppCompatActivity() {
                     val maintenanceData = maintenanceDataTask.result
                     val insuranceData = insuranceDataTask.result
                     val taxData = taxDataTask.result
+                    val car = carTask.result
+                    val model = modelTask.result
+
+                    title.text = car.name + " - " + car.plate
+
+                    val fuelString = when (model.fuel) {
+                        FuelType.Petrol -> "Petrol"
+                        FuelType.Diesel -> "Diesel"
+                        FuelType.Electric -> "Electric"
+                    }
+
+                    text.text = "${model.name} (${model.year}, $fuelString)\nW, ${model.width} cm | L ${model.length} | H ${model.height} | M ${model.weight} kg\nCO2 ${model.co2factor} g/km | Capacity ${model.capacity} cm3"
 
                     setUpPieChart(refillData, maintenanceData, insuranceData, taxData)
                 }
@@ -68,7 +87,15 @@ class CarGraphActivity : AppCompatActivity() {
                     ToastManager.show(this, it.exception?.message, Toast.LENGTH_SHORT)
                     finish()
                 }
+
+                showLoading(false)
             }
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+
+        finish()
+        return true
     }
 
     private fun setUpPieChart(refillData: ArrayList<Refill>, maintenanceData: ArrayList<Maintenance>, insuranceData: ArrayList<Insurance>, taxData: ArrayList<Tax>) {
@@ -132,7 +159,7 @@ class CarGraphActivity : AppCompatActivity() {
         pieChart.setEntryLabelColor(Color.BLACK)
         pieChart.setUsePercentValues(false)
         pieChart.isDrawHoleEnabled = true
-        pieChart.holeRadius = 40f
+        pieChart.holeRadius = if (noAvailableData) 100f else 40f
         pieChart.transparentCircleRadius = 45f
         pieChart.animateY(1000)
 
