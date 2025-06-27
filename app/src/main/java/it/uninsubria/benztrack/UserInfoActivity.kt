@@ -17,12 +17,14 @@ class UserInfoActivity : AppCompatActivity() {
     private lateinit var nameLabelTextView: TextView
     private lateinit var surnameLabelTextView: TextView
     private lateinit var emailLabelTextView: TextView
+
     private lateinit var backButton: Button
 
     /**
      * Initializes the activity and sets up the UI components.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_userinfo)
 
@@ -38,6 +40,7 @@ class UserInfoActivity : AppCompatActivity() {
         nameLabelTextView = findViewById(R.id.label_name)
         surnameLabelTextView = findViewById(R.id.label_surname)
         emailLabelTextView = findViewById(R.id.label_email)
+
         backButton = findViewById(R.id.button_back)
 
         // Get data from logged user
@@ -56,6 +59,7 @@ class UserInfoActivity : AppCompatActivity() {
 
         // Set up back button click listener
         backButton.setOnClickListener {
+
             val intent = Intent(this, ProfileActivity::class.java)
             startActivity(intent)
             finish() // Close this activity
@@ -69,6 +73,7 @@ class UserInfoActivity : AppCompatActivity() {
      */
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
+
         super.onBackPressed()
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }
@@ -78,13 +83,16 @@ class UserInfoActivity : AppCompatActivity() {
      * Provides a smooth transition animation when navigating back.
      */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+
         if (item.itemId == android.R.id.home) {
+
             val intent = Intent(this, ProfileActivity::class.java)
             startActivity(intent)
             finish()
             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
             return true
         }
+
         return super.onOptionsItemSelected(item)
     }
 }

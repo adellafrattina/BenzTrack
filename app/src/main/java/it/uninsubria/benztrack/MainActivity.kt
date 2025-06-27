@@ -14,6 +14,7 @@ class MainActivity : AppCompatActivity() {
      * Initializes the activity and sets up the UI components and their listeners.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 

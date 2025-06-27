@@ -17,13 +17,17 @@ class AddRefillActivity : AppCompatActivity() {
     private lateinit var pplEdit: TextInputEditText
     private lateinit var mileageEdit: TextInputEditText
     private lateinit var amountEdit: TextInputEditText
+
     private lateinit var pplLayout: TextInputLayout
     private lateinit var dateLayout: TextInputLayout
     private lateinit var positionLayout: TextInputLayout
     private lateinit var mileageLayout: TextInputLayout
     private lateinit var amountLayout: TextInputLayout
+
     private lateinit var submitButton: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_refill)
 
@@ -46,16 +50,20 @@ class AddRefillActivity : AppCompatActivity() {
         var refillDate: Timestamp = Timestamp.now()
         dateEdit.setText(android.text.format.DateFormat.format("dd-MM-yyyy", refillDate.toDate()))
         dateEdit.setOnClickListener {
+
             val cal = Calendar.getInstance()
             val dialog = DatePickerDialog(this, { _, year, month, dayOfMonth ->
+
                 cal.set(year, month, dayOfMonth)
                 refillDate = Timestamp(cal.time)
                 dateEdit.setText(android.text.format.DateFormat.format("dd-MM-yyyy", cal.time))
             }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
+
             dialog.show()
         }
 
         submitButton.setOnClickListener {
+
             clearErrors()
 
             val refill = Refill()
@@ -67,22 +75,34 @@ class AddRefillActivity : AppCompatActivity() {
 
             Handler.database.setNewRefill(Handler.loggedUser!!.username, carPlate!!, refill)
                 .addOnSuccessListener {
+
                     ToastManager.show(this, "Refill added!", Toast.LENGTH_SHORT)
                     finish()
                 }
+
                 .addOnFailureListener { e ->
+
                     when (e) {
+
                         is RefillException -> {
+
                             if (e.position.isNotEmpty()) {
+
                                 showError(positionLayout, e.position)
                             }
+
                             if (e.ppl.isNotEmpty()) {
+
                                 showError(pplLayout, e.ppl)
                             }
+
                             if (e.amount.isNotEmpty()) {
+
                                 showError(amountLayout, e.amount)
                             }
+
                             if (e.mileage.isNotEmpty()) {
+
                                 showError(mileageLayout, e.mileage)
                             }
                         }
@@ -92,11 +112,13 @@ class AddRefillActivity : AppCompatActivity() {
     }
 
     private fun showError(layout: TextInputLayout, message: String) {
+
         layout.error = message
         layout.isErrorEnabled = true
     }
 
     private fun clearErrors() {
+
         pplLayout.isErrorEnabled = false
         positionLayout.isErrorEnabled = false
         mileageLayout.isErrorEnabled = false
@@ -104,6 +126,7 @@ class AddRefillActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
+
         finish()
         return true
     }
