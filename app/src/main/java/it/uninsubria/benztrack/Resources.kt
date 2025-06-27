@@ -224,10 +224,15 @@ public data class Refill(
     /**
      * The refill's amount in euros
      */
-    var amount: Float
+    var amount: Float,
+
+    /**
+     * The refill's current fuel amount in liters
+     */
+    var currentFuelAmount: Float
 ) {
 
-    constructor(): this(Timestamp.now(), "", Float.NaN, Float.NaN, Float.NaN)
+    constructor(): this(Timestamp.now(), "", Float.NaN, Float.NaN, Float.NaN, Float.NaN)
 }
 
 /**
