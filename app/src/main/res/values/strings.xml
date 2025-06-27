@@ -96,4 +96,7 @@
     <string name="tax_placeholder">No tax set to pay yet</string>
     <string name="tax_date">Set Date</string>
     <string name="tax_pay">Pay</string>
+
+    <!-- Car info -->
+    <string name="car_show_activity">Show other activities</string>
 </resources>
