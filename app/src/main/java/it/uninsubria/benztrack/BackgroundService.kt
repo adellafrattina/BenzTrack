@@ -116,74 +116,79 @@ class BackgroundService : Service() {
                                 for (car in cars) {
 
                                     Handler.database
-                                        .getRefillData(u!!.username, car.plate, lastDate)
-                                        .addOnSuccessListener { refills ->
+                                        .getUserCarModel(u!!.username, car.plate)
+                                        .addOnSuccessListener { model ->
 
-                                            if (refills.size >= 3) {
+                                            Handler.database
+                                                .getRefillData(u.username, car.plate, lastDate)
+                                                .addOnSuccessListener { refills ->
 
-                                                var prevRefill = refills[0]
-                                                var lastEmittedCO2 = 0.0f
-                                                var sumEmittedCO2 = 0.0f
-                                                var lastCost = 0.0f
-                                                var sumCost = 0.0f
-                                                var lastTravelledKm = 0.0f
-                                                var lastDaysInterval = 0L
-                                                for (i in 1 until refills.size) {
+                                                    if (refills.size >= 3) {
 
-                                                    val currentRefill = refills[i]
+                                                        var prevRefill = refills[0]
+                                                        var lastEmittedCO2 = 0.0f
+                                                        var sumEmittedCO2 = 0.0f
+                                                        var lastCost = 0.0f
+                                                        var sumCost = 0.0f
+                                                        var lastTravelledKm = 0.0f
+                                                        var lastDaysInterval = 0L
+                                                        for (i in 1 until refills.size) {
 
-                                                    val consumedLiters = prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl - currentRefill.currentfuelamount
-                                                    val travelledKm = if (currentRefill.mileage - prevRefill.mileage > 0) currentRefill.mileage - prevRefill.mileage else 1.0f
-                                                    lastTravelledKm = travelledKm
-                                                    val daysInterval = if (daysBetweenDates(currentRefill.date, prevRefill.date) > 0) daysBetweenDates(currentRefill.date, prevRefill.date) else 1
-                                                    lastDaysInterval = daysInterval
-                                                    val emittedCO2 = ((consumedLiters * 2.35f) / travelledKm) / daysInterval // TODO: Make it based on the fuel type instead of hard-coded value
-                                                    lastEmittedCO2 = emittedCO2
-                                                    sumEmittedCO2 += emittedCO2
-                                                    val cost = ((consumedLiters * prevRefill.ppl) / travelledKm) / daysInterval
-                                                    lastCost = cost
-                                                    sumCost += cost
+                                                            val currentRefill = refills[i]
 
-                                                    prevRefill = currentRefill
+                                                            val consumedLiters = prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl - currentRefill.currentfuelamount
+                                                            val travelledKm = if (currentRefill.mileage - prevRefill.mileage > 0) currentRefill.mileage - prevRefill.mileage else 1.0f
+                                                            lastTravelledKm = travelledKm
+                                                            val daysInterval = if (daysBetweenDates(currentRefill.date, prevRefill.date) > 0) daysBetweenDates(currentRefill.date, prevRefill.date) else 1
+                                                            lastDaysInterval = daysInterval
+                                                            val emittedCO2 = ((consumedLiters * model.fuel.value) / travelledKm) / daysInterval
+                                                            lastEmittedCO2 = emittedCO2
+                                                            sumEmittedCO2 += emittedCO2
+                                                            val cost = ((consumedLiters * prevRefill.ppl) / travelledKm) / daysInterval
+                                                            lastCost = cost
+                                                            sumCost += cost
+
+                                                            prevRefill = currentRefill
+                                                        }
+
+                                                        // Calculate CO2 emission percentage
+                                                        sumEmittedCO2 -= lastEmittedCO2
+                                                        val avgEmittedCO2 = sumEmittedCO2 / (refills.size - 2)
+                                                        val percCO2 = (abs(avgEmittedCO2 - lastEmittedCO2) * 100.0f) / avgEmittedCO2
+
+                                                        // Calculate fuel cost
+                                                        sumCost -= lastCost
+                                                        val avgCost = sumCost / (refills.size - 2)
+
+                                                        val titleStr = "CO2 Emissions - " + car.plate
+                                                        val textStr =
+                                                            if (avgEmittedCO2 > lastEmittedCO2) {
+
+                                                                "Congratulations! You reduced your CO2 emissions by ${DecimalFormat("#.#").format(percCO2)}% and saved up €${DecimalFormat("#.##").format((avgCost - lastCost) * lastTravelledKm * lastDaysInterval)}"
+                                                            }
+
+                                                            else if (avgEmittedCO2 < lastEmittedCO2) {
+
+                                                                "Warning! You increased your CO2 emissions by ${DecimalFormat("#.#").format(percCO2)}% and lost the equivalent of €${DecimalFormat("#.##").format((lastCost - avgCost)* lastTravelledKm * lastDaysInterval)}"
+                                                            }
+
+                                                            else {
+
+                                                                "You can do better! Your CO2 emissions are steady (${DecimalFormat("#.#").format(lastEmittedCO2 * 1000.0f)} g/km of CO2 per day)"
+                                                            }
+
+                                                        val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
+                                                            .setSmallIcon(R.drawable.ic_launcher_foreground)
+                                                            .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                                            .setContentTitle(titleStr)
+                                                            .setContentText(textStr)
+                                                            .build()
+
+                                                        NotificationHandler.notify(n, hash(titleStr + car.plate))
+
+                                                        lastDate = refills[refills.size - 1].date.toDate()
+                                                    }
                                                 }
-
-                                                // Calculate CO2 emission percentage
-                                                sumEmittedCO2 -= lastEmittedCO2
-                                                val avgEmittedCO2 = sumEmittedCO2 / (refills.size - 2)
-                                                val percCO2 = (abs(avgEmittedCO2 - lastEmittedCO2) * 100.0f) / avgEmittedCO2
-
-                                                // Calculate fuel cost
-                                                sumCost -= lastCost
-                                                val avgCost = sumCost / (refills.size - 2)
-
-                                                val titleStr = "CO2 Emissions - " + car.plate
-                                                val textStr =
-                                                    if (avgEmittedCO2 > lastEmittedCO2) {
-
-                                                        "Congratulations! You reduced your CO2 emissions by ${DecimalFormat("#.#").format(percCO2)}% and saved up €${DecimalFormat("#.##").format((avgCost - lastCost) * lastTravelledKm * lastDaysInterval)}"
-                                                    }
-
-                                                    else if (avgEmittedCO2 < lastEmittedCO2) {
-
-                                                        "Warning! You increased your CO2 emissions by ${DecimalFormat("#.#").format(percCO2)}% and lost the equivalent of €${DecimalFormat("#.##").format((lastCost - avgCost)* lastTravelledKm * lastDaysInterval)}"
-                                                    }
-
-                                                    else {
-
-                                                        "You can do better! Your CO2 emissions are steady (${DecimalFormat("#.#").format(lastEmittedCO2 * 1000.0f)} g/km of CO2 per day)"
-                                                    }
-
-                                                val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
-                                                    .setSmallIcon(R.drawable.ic_launcher_foreground)
-                                                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                                                    .setContentTitle(titleStr)
-                                                    .setContentText(textStr)
-                                                    .build()
-
-                                                NotificationHandler.notify(n, hash(titleStr + car.plate))
-
-                                                lastDate = refills[refills.size - 1].date.toDate()
-                                            }
                                         }
                                 }
                             }
