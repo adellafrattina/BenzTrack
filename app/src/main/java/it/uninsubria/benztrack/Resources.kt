@@ -229,7 +229,7 @@ public data class Refill(
     /**
      * The refill's current fuel amount in liters
      */
-    var currentFuelAmount: Float
+    var currentfuelamount: Float
 ) {
 
     constructor(): this(Timestamp.now(), "", Float.NaN, Float.NaN, Float.NaN, Float.NaN)

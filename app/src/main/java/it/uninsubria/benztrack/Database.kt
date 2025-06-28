@@ -838,10 +838,10 @@ public class Database {
                                 errorMap[AMOUNT_FIELD] = "The amount cannot be negative"
 
                             // Check current fuel amount
-                            if (refill.currentFuelAmount.isNaN())
+                            if (refill.currentfuelamount.isNaN())
                                 errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "This value must not be empty"
 
-                            else if (refill.currentFuelAmount < 0)
+                            else if (refill.currentfuelamount < 0)
                                 errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount cannot be negative"
 
                             // Check consistency
