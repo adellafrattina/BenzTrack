@@ -5,7 +5,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.CoroutineScope
@@ -14,13 +13,16 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
-import kotlin.math.ceil
 
 class BackgroundService : Service() {
 
@@ -49,40 +51,146 @@ class BackgroundService : Service() {
 
         startForeground(1, notification)
 
+        today = Timestamp.now()
         context = baseContext
-        scope.launch {
+        mainScope.launch {
 
-            today = Timestamp.now()
             while (isActive) {
 
-                val currentDate = Timestamp.now()
+                mutex.withLock {
 
-                if (user != Handler.loggedUser || currentDate.seconds >= 86400 + today.seconds) {
+                    val currentDate = Timestamp.now()
 
-                    user = Handler.loggedUser
-                    today = currentDate
+                    if (user != Handler.loggedUser || currentDate.seconds >= 86400 + today.seconds) {
 
-                    NotificationHandler.cancelAllNotifications()
-                    dateRegister = HashMap()
-                    notificationRegister = HashMap()
+                        user = Handler.loggedUser
+                        today = currentDate
+
+                        NotificationHandler.cancelAllNotifications()
+                        notificationDateRegister = HashMap()
+                    }
                 }
+            }
+        }
 
-                if (user != null) {
+        dateScope.launch {
 
-                    Handler.database
-                        .getUserCars(user!!.username)
-                        .addOnSuccessListener { cars ->
+            while (isActive) {
 
-                            for (car in cars) {
+                mutex.withLock {
 
-                                car.maintenancedate?.let { checkDate(car, it, currentDate, "Maintenance") }
-                                car.insurancedate?.let { checkDate(car, it, currentDate, "Insurance") }
-                                car.taxdate?.let { checkDate(car, it, currentDate, "Tax") }
+                    if (user != null) {
+
+                        val currentDate = Timestamp.now()
+                        Handler.database
+                            .getUserCars(user!!.username)
+                            .addOnSuccessListener { cars ->
+
+                                for (car in cars) {
+
+                                    car.maintenancedate?.let { checkDate(car, it, currentDate, "Maintenance") }
+                                    car.insurancedate?.let { checkDate(car, it, currentDate, "Insurance") }
+                                    car.taxdate?.let { checkDate(car, it, currentDate, "Tax") }
+                                }
                             }
-                        }
+                    }
                 }
 
-                delay(secondsToWait * 1000L) // Check every ${secondsToWait} seconds
+                delay(10_000) // Check every 10 seconds
+            }
+        }
+
+        co2Scope.launch {
+
+            while (isActive) {
+
+                mutex.withLock {
+
+                    if (user != null) {
+
+                        val u = user
+                        Handler.database
+                            .getUserCars(user!!.username)
+                            .addOnSuccessListener { cars ->
+
+                                for (car in cars) {
+
+                                    Handler.database
+                                        .getRefillData(u!!.username, car.plate, lastDate)
+                                        .addOnSuccessListener { refills ->
+
+                                            if (refills.size >= 3) {
+
+                                                var prevRefill = refills[0]
+                                                var lastEmittedCO2 = 0.0f
+                                                var sumEmittedCO2 = 0.0f
+                                                var lastCost = 0.0f
+                                                var sumCost = 0.0f
+                                                var lastTravelledKm = 0.0f
+                                                var lastDaysInterval = 0L
+                                                for (i in 1 until refills.size) {
+
+                                                    val currentRefill = refills[i]
+
+                                                    val consumedLiters = prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl - currentRefill.currentfuelamount
+                                                    val travelledKm = if (currentRefill.mileage - prevRefill.mileage > 0) currentRefill.mileage - prevRefill.mileage else 1.0f
+                                                    lastTravelledKm = travelledKm
+                                                    val daysInterval = if (daysBetweenDates(currentRefill.date, prevRefill.date) > 0) daysBetweenDates(currentRefill.date, prevRefill.date) else 1
+                                                    lastDaysInterval = daysInterval
+                                                    val emittedCO2 = ((consumedLiters * 2.35f) / travelledKm) / daysInterval // TODO: Make it based on the fuel type instead of hard-coded value
+                                                    lastEmittedCO2 = emittedCO2
+                                                    sumEmittedCO2 += emittedCO2
+                                                    val cost = ((consumedLiters * prevRefill.ppl) / travelledKm) / daysInterval
+                                                    lastCost = cost
+                                                    sumCost += cost
+
+                                                    prevRefill = currentRefill
+                                                }
+
+                                                // Calculate CO2 emission percentage
+                                                sumEmittedCO2 -= lastEmittedCO2
+                                                val avgEmittedCO2 = sumEmittedCO2 / (refills.size - 2)
+                                                val percCO2 = (abs(avgEmittedCO2 - lastEmittedCO2) * 100.0f) / avgEmittedCO2
+
+                                                // Calculate fuel cost
+                                                sumCost -= lastCost
+                                                val avgCost = sumCost / (refills.size - 2)
+
+                                                val titleStr = "CO2 Emissions - " + car.plate
+                                                val textStr =
+                                                    if (avgEmittedCO2 > lastEmittedCO2) {
+
+                                                        "Congratulations! You reduced your CO2 emissions by ${DecimalFormat("#.#").format(percCO2)}% and saved up €${DecimalFormat("#.##").format((avgCost - lastCost) * lastTravelledKm * lastDaysInterval)}"
+                                                    }
+
+                                                    else if (avgEmittedCO2 < lastEmittedCO2) {
+
+                                                        "Warning! You increased your CO2 emissions by ${DecimalFormat("#.#").format(percCO2)}% and lost the equivalent of €${DecimalFormat("#.##").format((lastCost - avgCost)* lastTravelledKm * lastDaysInterval)}"
+                                                    }
+
+                                                    else {
+
+                                                        "You can do better! Your CO2 emissions are steady (${DecimalFormat("#.#").format(lastEmittedCO2 * 1000.0f)} g/km of CO2 per day)"
+                                                    }
+
+                                                val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
+                                                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                                                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                                    .setContentTitle(titleStr)
+                                                    .setContentText(textStr)
+                                                    .build()
+
+                                                NotificationHandler.notify(n, hash(titleStr + car.plate))
+
+                                                lastDate = refills[refills.size - 1].date.toDate()
+                                            }
+                                        }
+                                }
+                            }
+                    }
+                }
+
+                delay(5_000) // Check every 5 seconds
             }
         }
 
@@ -94,12 +202,14 @@ class BackgroundService : Service() {
         isRunning = false
 
         super.onDestroy()
-        job.cancel()
+        mainJob.cancel()
+        dateJob.cancel()
+        co2Job.cancel()
     }
 
     private fun checkDate(car: Car, date: Timestamp, currentDate: Timestamp, title: String) {
 
-        initRegisters(car.plate, date, title)
+        initRegisters(notificationDateRegister, car.plate, title)
 
         val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val formattedDate = sdf.format(date.toDate())
@@ -133,11 +243,11 @@ class BackgroundService : Service() {
                 ""
             }
 
-        val showNotification = textStr.isNotEmpty() && notificationRegister[car.plate]!![title]!!
+        val showNotification = textStr.isNotEmpty() && notificationDateRegister[car.plate]!![title]!!
 
         if (showNotification) {
 
-            notificationRegister[car.plate]!![title] = false
+            notificationDateRegister[car.plate]!![title] = false
 
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -159,20 +269,20 @@ class BackgroundService : Service() {
         return hash
     }
 
-    private fun initRegisters(plate: String, date: Timestamp, title: String) {
+    private fun initRegisters(register: HashMap<String, HashMap<String, Boolean>>, plate: String, title: String) {
 
-        if (notificationRegister.containsKey(plate)) {
+        if (register.containsKey(plate)) {
 
-            if (!notificationRegister[plate]!!.containsKey(title)) {
+            if (!register[plate]!!.containsKey(title)) {
 
-                notificationRegister[plate]!![title] = true
+                register[plate]!![title] = true
             }
         }
 
         else {
 
-            notificationRegister[plate] = HashMap()
-            notificationRegister[plate]!![title] = true
+            register[plate] = HashMap()
+            register[plate]!![title] = true
         }
     }
 
@@ -201,12 +311,16 @@ class BackgroundService : Service() {
         return ChronoUnit.DAYS.between(date1, date2)
     }
 
-    private lateinit var today: Timestamp
-    private val secondsToWait = 10
-    private lateinit var context: Context
-    private val job = Job()
-    private val scope = CoroutineScope(Dispatchers.IO + job)
-    private var dateRegister = HashMap<String, HashMap<String, Timestamp>>()
-    private var notificationRegister = HashMap<String, HashMap<String, Boolean>>()
     private var user: User? = null
+    private lateinit var today: Timestamp
+    private lateinit var context: Context
+    private val mutex = Mutex()
+    private val mainJob = Job()
+    private val mainScope = CoroutineScope(Dispatchers.IO + mainJob)
+    private val dateJob = Job()
+    private val dateScope = CoroutineScope(Dispatchers.IO + dateJob)
+    private val co2Job = Job()
+    private val co2Scope = CoroutineScope(Dispatchers.IO + co2Job)
+    private var notificationDateRegister = HashMap<String, HashMap<String, Boolean>>()
+    private var lastDate = Date.from(Instant.EPOCH)
 }
