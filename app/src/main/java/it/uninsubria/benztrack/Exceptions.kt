@@ -199,10 +199,16 @@ public class RefillException(
     /**
      * Error with the amount. If empty, then there are no errors
       */
-    val amount: String
+    val amount: String,
+
+    /**
+     * Error with the fuel capacity. If empty, then there are no errors
+     */
+    val fuelcapacity: String
+
 ) : Exception(message) {
 
-    constructor(message: String): this(message, "", "", "", "")
+    constructor(message: String): this(message, "", "", "", "", "")
 }
 
 /**
