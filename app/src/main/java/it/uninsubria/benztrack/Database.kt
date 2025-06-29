@@ -2,11 +2,13 @@ package it.uninsubria.benztrack
 
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.TaskCompletionSource
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import java.security.MessageDigest
 import java.time.Instant
@@ -800,114 +802,143 @@ public class Database {
 
                 if (carPresent) {
 
-                    getUserCarModel(username, plate)
-                        .addOnSuccessListener { model ->
+                    val lessTask = dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(REFILLS_COLLECTION)
+                        .orderBy(DATE_FIELD, Query.Direction.ASCENDING)
+                        .whereLessThanOrEqualTo(DATE_FIELD, refill.date)
+                        .limit(1)
+                        .get()
 
-                            val fuelCapacity = model.fuelcapacity
+                    val greaterTask = dbRef
+                        .collection(USERS_COLLECTION)
+                        .document(username)
+                        .collection(CARS_COLLECTION)
+                        .document(plate)
+                        .collection(REFILLS_COLLECTION)
+                        .orderBy(DATE_FIELD, Query.Direction.ASCENDING)
+                        .whereGreaterThan(DATE_FIELD, refill.date)
+                        .limit(1)
+                        .get()
 
-                            if (fuelCapacity < refill.amount / refill.ppl + refill.currentfuelamount) {
+                    val modelTask = getUserCarModel(username, plate)
 
-                                errorMap["message"] = "Your car can only contain ${fuelCapacity}L of fuel (there are ${refill.amount / refill.ppl + refill.currentfuelamount - fuelCapacity} extra liters)"
+                    Tasks.whenAll(lessTask, greaterTask, modelTask)
+                        .addOnCompleteListener {
+
+                            if (it.isSuccessful) {
+
+                                val prevRefill: Refill? =
+                                    if (lessTask.result.documents.isNotEmpty())
+                                        lessTask.result.documents[0].toObject(Refill::class.java)
+                                    else
+                                        null
+
+                                val nextRefill: Refill? =
+                                    if (greaterTask.result.documents.isNotEmpty())
+                                        greaterTask.result.documents[0].toObject(Refill::class.java)
+                                    else
+                                        null
+
+                                val model = modelTask.result
+
+                                val fuelCapacity = model.fuelcapacity
+
+                                if (fuelCapacity < refill.amount / refill.ppl + refill.currentfuelamount)
+                                    errorMap["message"] = "Your car can only contain ${fuelCapacity}L of fuel (there are ${refill.amount / refill.ppl + refill.currentfuelamount - fuelCapacity} extra liters)"
+
+                                // Check mileage
+                                if (refill.mileage.isNaN())
+                                    errorMap[MILEAGE_FIELD] = "This value must not be empty"
+
+                                // Check position
+                                if (refill.position.isEmpty())
+                                    errorMap[POSITION_FIELD] = "This value must not be empty"
+
+                                // Check price per liter
+                                if (refill.ppl.isNaN())
+                                    errorMap[PRICE_PER_LITER_FIELD] = "This value must not be empty"
+
+                                else if (refill.ppl < 0)
+                                    errorMap[PRICE_PER_LITER_FIELD] = "The price per liter cannot be negative"
+
+                                // Check amount
+                                if (refill.amount.isNaN())
+                                    errorMap[AMOUNT_FIELD] = "This value must not be empty"
+
+                                else if (refill.amount < 0)
+                                    errorMap[AMOUNT_FIELD] = "The amount cannot be negative"
+
+                                // Check current fuel amount
+                                if (refill.currentfuelamount.isNaN())
+                                    errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "This value must not be empty"
+                                else if (refill.currentfuelamount < 0)
+                                    errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount cannot be negative"
+
+                                // Check consistency
+                                if (refill.amount != 0.0f && refill.ppl == 0.0f)
+                                    errorMap[AMOUNT_FIELD] = "The value is not consistent with the price per liter"
+
+                                // Check previous refill data
+                                if (prevRefill != null) {
+
+                                    if (prevRefill.mileage > refill.mileage && !refill.mileage.isNaN())
+                                        errorMap[MILEAGE_FIELD] = "The mileage value is not valid (should be higher than the previous one - ${prevRefill.mileage}km)"
+
+                                    if (refill.currentfuelamount > prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl)
+                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount is not valid (should be less than ${prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl}L)"
+                                }
+
+                                // Check next refill data
+                                if (nextRefill != null) {
+
+                                    if (nextRefill.mileage < refill.mileage && !refill.mileage.isNaN())
+                                        errorMap[MILEAGE_FIELD] = "The mileage value is not valid (should be lower than the next one - ${nextRefill.mileage}km)"
+
+                                    if (refill.currentfuelamount + refill.amount / refill.ppl < nextRefill.currentfuelamount)
+                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount is not valid (should be greater than ${nextRefill.currentfuelamount}L)"
+                                }
+
+                                // If there are errors, then do not save the refill. Instead, throw a RefillException
+                                if (errorMap.isEmpty()) {
+
+                                    dbRef
+                                        .collection(USERS_COLLECTION)
+                                        .document(username)
+                                        .collection(CARS_COLLECTION)
+                                        .document(plate)
+                                        .collection(REFILLS_COLLECTION)
+                                        .document(refill.date.toString())
+                                        .set(refill)
+                                        .addOnSuccessListener {
+
+                                            taskSource.setResult(true)
+                                        }
+                                        .addOnFailureListener { e ->
+
+                                            taskSource.setException(RefillException(e.message?:""))
+                                        }
+                                }
+
+                                else {
+
+                                    taskSource.setException(RefillException(
+                                        if (errorMap["message"] != null)                 errorMap["message"]!! else "Failed to add new refill",
+                                        if (errorMap[POSITION_FIELD] != null)            errorMap[POSITION_FIELD]!! else "",
+                                        if (errorMap[PRICE_PER_LITER_FIELD] != null)     errorMap[PRICE_PER_LITER_FIELD]!! else "",
+                                        if (errorMap[MILEAGE_FIELD] != null)             errorMap[MILEAGE_FIELD]!! else "",
+                                        if (errorMap[AMOUNT_FIELD] != null)              errorMap[AMOUNT_FIELD]!! else "",
+                                        if (errorMap[CURRENT_FUEL_AMOUNT_FIELD] != null) errorMap[CURRENT_FUEL_AMOUNT_FIELD]!! else ""))
+                                }
                             }
 
-                            dbRef
-                                .collection(USERS_COLLECTION)
-                                .document(username)
-                                .collection(CARS_COLLECTION)
-                                .document(plate)
-                                .collection(REFILLS_COLLECTION)
-                                .orderBy(DATE_FIELD)
-                                .limit(1)
-                                .get()
-                                .addOnSuccessListener { query ->
+                            else {
 
-                                    if (refill.mileage.isNaN())
-                                        errorMap[MILEAGE_FIELD] = "This value must not be empty"
-
-                                    else {
-
-                                        // Check that the mileage is greater than the last one (if there is one)
-                                        for (document in query.documents) {
-
-                                            val prevRefill = document.toObject(Refill::class.java)
-                                            if (prevRefill != null) {
-
-                                                if (prevRefill.mileage > refill.mileage && !refill.mileage.isNaN() && !refill.currentfuelamount.isNaN())
-                                                    errorMap[MILEAGE_FIELD] = "The mileage value is not valid (should be higher than the previous one - ${prevRefill.mileage}km)"
-
-                                                if (refill.currentfuelamount > prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl)
-                                                    errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount is not valid (should be less than ${prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl}L)"
-                                            }
-                                        }
-                                    }
-
-                                    // Check position
-                                    if (refill.position.isEmpty())
-                                        errorMap[POSITION_FIELD] = "This value must not be empty"
-
-                                    // Check price per liter
-                                    if (refill.ppl.isNaN())
-                                        errorMap[PRICE_PER_LITER_FIELD] = "This value must not be empty"
-
-                                    else if (refill.ppl < 0)
-                                        errorMap[PRICE_PER_LITER_FIELD] = "The price per liter cannot be negative"
-
-                                    // Check amount
-                                    if (refill.amount.isNaN())
-                                        errorMap[AMOUNT_FIELD] = "This value must not be empty"
-
-                                    else if (refill.amount < 0)
-                                        errorMap[AMOUNT_FIELD] = "The amount cannot be negative"
-
-                                    // Check current fuel amount
-                                    if (refill.currentfuelamount.isNaN())
-                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "This value must not be empty"
-                                    else if (refill.currentfuelamount < 0)
-                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount cannot be negative"
-
-                                    // Check consistency
-                                    if (refill.amount != 0.0f && refill.ppl == 0.0f)
-                                        errorMap[AMOUNT_FIELD] = "The value is not consistent with the price per liter"
-
-                                    if (errorMap.isEmpty()) {
-
-                                        dbRef
-                                            .collection(USERS_COLLECTION)
-                                            .document(username)
-                                            .collection(CARS_COLLECTION)
-                                            .document(plate)
-                                            .collection(REFILLS_COLLECTION)
-                                            .document(refill.date.toString())
-                                            .set(refill)
-                                            .addOnSuccessListener {
-
-                                                taskSource.setResult(true)
-                                            }
-                                            .addOnFailureListener { e ->
-
-                                                taskSource.setException(RefillException(e.message?:""))
-                                            }
-                                    }
-
-                                    else {
-
-                                        taskSource.setException(RefillException(
-                                            if (errorMap["message"] != null)                 errorMap["message"]!! else "Failed to add new refill",
-                                            if (errorMap[POSITION_FIELD] != null)            errorMap[POSITION_FIELD]!! else "",
-                                            if (errorMap[PRICE_PER_LITER_FIELD] != null)     errorMap[PRICE_PER_LITER_FIELD]!! else "",
-                                            if (errorMap[MILEAGE_FIELD] != null)             errorMap[MILEAGE_FIELD]!! else "",
-                                            if (errorMap[AMOUNT_FIELD] != null)              errorMap[AMOUNT_FIELD]!! else "",
-                                            if (errorMap[CURRENT_FUEL_AMOUNT_FIELD] != null) errorMap[CURRENT_FUEL_AMOUNT_FIELD]!! else ""))
-                                    }
-                                }
-                                .addOnFailureListener { e ->
-
-                                    taskSource.setException(RefillException(e.message?:""))
-                                }
-                        }
-                        .addOnFailureListener { e ->
-
-                            taskSource.setException(RefillException(e.message?:""))
+                                taskSource.setException(RefillException(it.exception!!.message?:""))
+                            }
                         }
                 }
 
@@ -925,11 +956,11 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
-     * @param from The start date (Date.from(Instant.MIN) to get the oldest date)
-     * @param to The end date (by default the current date)
+     * @param from The start date (Date.from(Instant.EPOCH) by default to get the oldest date)
+     * @param to The end date (Date.from(Instant.EPOCH) by default to get the latest date)
      * @throws RefillException
      */
-    public fun getRefillData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.now())) : Task<ArrayList<Refill>> {
+    public fun getRefillData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.EPOCH)) : Task<ArrayList<Refill>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Refill>>()
 
@@ -944,21 +975,50 @@ public class Database {
                         .collection(CARS_COLLECTION)
                         .document(plate)
                         .collection(REFILLS_COLLECTION)
-                        .orderBy(DATE_FIELD)
-                        .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
-                        .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                        .orderBy(DATE_FIELD, Query.Direction.DESCENDING)
+                        .limit(1)
                         .get()
-                        .addOnSuccessListener { query ->
+                        .addOnSuccessListener { queryRefill ->
 
-                            val list = ArrayList<Refill>()
-                            for (document in query.documents) {
+                            lateinit var last: Date
+                            for (document in queryRefill.documents) {
 
                                 val refill = document.toObject(Refill::class.java)
                                 if (refill != null)
-                                    list.add(refill)
+                                    last = refill.date.toDate()
+                                else
+                                    taskSource.setException(RefillException("Last refill date is null (database error)"))
                             }
 
-                            taskSource.setResult(list)
+                            if (to != Date.from(Instant.EPOCH))
+                                last = to
+
+                            dbRef
+                                .collection(USERS_COLLECTION)
+                                .document(username)
+                                .collection(CARS_COLLECTION)
+                                .document(plate)
+                                .collection(REFILLS_COLLECTION)
+                                .orderBy(DATE_FIELD, Query.Direction.ASCENDING)
+                                .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                                .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(last))
+                                .get()
+                                .addOnSuccessListener { query ->
+
+                                    val list = ArrayList<Refill>()
+                                    for (document in query.documents) {
+
+                                        val refill = document.toObject(Refill::class.java)
+                                        if (refill != null)
+                                            list.add(refill)
+                                    }
+
+                                    taskSource.setResult(list)
+                                }
+                                .addOnFailureListener { e ->
+
+                                    taskSource.setException(RefillException(e.message?:""))
+                                }
                         }
                         .addOnFailureListener { e ->
 
@@ -1091,11 +1151,11 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
-     * @param from The start date (Date.from(Instant.MIN) to get the oldest date)
-     * @param to The end date (by default the current date)
+     * @param from The start date (Date.from(Instant.EPOCH) by default to get the oldest date)
+     * @param to The end date (Date.from(Instant.EPOCH) by default to get the latest date)
      * @throws MaintenanceException
      */
-    public fun getMaintenanceData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.now())) : Task<ArrayList<Maintenance>> {
+    public fun getMaintenanceData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.EPOCH)) : Task<ArrayList<Maintenance>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Maintenance>>()
 
@@ -1110,25 +1170,54 @@ public class Database {
                         .collection(CARS_COLLECTION)
                         .document(plate)
                         .collection(MAINTENANCE_COLLECTION)
-                        .orderBy(DATE_FIELD)
-                        .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
-                        .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                        .orderBy(DATE_FIELD, Query.Direction.DESCENDING)
+                        .limit(1)
                         .get()
-                        .addOnSuccessListener { query ->
+                        .addOnSuccessListener { queryMaintenance ->
 
-                            val list = ArrayList<Maintenance>()
-                            for (document in query.documents) {
+                            lateinit var last: Date
+                            for (document in queryMaintenance.documents) {
 
                                 val maintenance = document.toObject(Maintenance::class.java)
                                 if (maintenance != null)
-                                    list.add(maintenance)
+                                    last = maintenance.date.toDate()
+                                else
+                                    taskSource.setException(MaintenanceException("Last maintenance date is null (database error)"))
                             }
 
-                            taskSource.setResult(list)
+                            if (to != Date.from(Instant.EPOCH))
+                                last = to
+
+                            dbRef
+                                .collection(USERS_COLLECTION)
+                                .document(username)
+                                .collection(CARS_COLLECTION)
+                                .document(plate)
+                                .collection(MAINTENANCE_COLLECTION)
+                                .orderBy(DATE_FIELD)
+                                .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                                .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(last))
+                                .get()
+                                .addOnSuccessListener { query ->
+
+                                    val list = ArrayList<Maintenance>()
+                                    for (document in query.documents) {
+
+                                        val maintenance = document.toObject(Maintenance::class.java)
+                                        if (maintenance != null)
+                                            list.add(maintenance)
+                                    }
+
+                                    taskSource.setResult(list)
+                                }
+                                .addOnFailureListener { e ->
+
+                                    taskSource.setException(MaintenanceException(e.message?:""))
+                                }
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(MaintenanceException(e.message?:""))
+                            taskSource.setException(RefillException(e.message?:""))
                         }
                 }
 
@@ -1257,11 +1346,11 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
-     * @param from The start date (Date.from(Instant.MIN) to get the oldest date)
-     * @param to The end date (by default the current date)
+     * @param from The start date (Date.from(Instant.EPOCH) by default to get the oldest date)
+     * @param to The start date (Date.from(Instant.EPOCH) by default to get the latest date)
      * @throws InsuranceException
      */
-    public fun getInsuranceData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.now())) : Task<ArrayList<Insurance>> {
+    public fun getInsuranceData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.EPOCH)) : Task<ArrayList<Insurance>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Insurance>>()
 
@@ -1276,21 +1365,50 @@ public class Database {
                         .collection(CARS_COLLECTION)
                         .document(plate)
                         .collection(INSURANCE_COLLECTION)
-                        .orderBy(DATE_FIELD)
-                        .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
-                        .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                        .orderBy(DATE_FIELD, Query.Direction.DESCENDING)
+                        .limit(1)
                         .get()
-                        .addOnSuccessListener { query ->
+                        .addOnSuccessListener { queryInsurance ->
 
-                            val list = ArrayList<Insurance>()
-                            for (document in query.documents) {
+                            lateinit var last: Date
+                            for (document in queryInsurance.documents) {
 
                                 val insurance = document.toObject(Insurance::class.java)
                                 if (insurance != null)
-                                    list.add(insurance)
+                                    last = insurance.date.toDate()
+                                else
+                                    taskSource.setException(InsuranceException("Last insurance date is null (database error)"))
                             }
 
-                            taskSource.setResult(list)
+                            if (to != Date.from(Instant.EPOCH))
+                                last = to
+
+                            dbRef
+                                .collection(USERS_COLLECTION)
+                                .document(username)
+                                .collection(CARS_COLLECTION)
+                                .document(plate)
+                                .collection(INSURANCE_COLLECTION)
+                                .orderBy(DATE_FIELD)
+                                .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                                .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                                .get()
+                                .addOnSuccessListener { query ->
+
+                                    val list = ArrayList<Insurance>()
+                                    for (document in query.documents) {
+
+                                        val insurance = document.toObject(Insurance::class.java)
+                                        if (insurance != null)
+                                            list.add(insurance)
+                                    }
+
+                                    taskSource.setResult(list)
+                                }
+                                .addOnFailureListener { e ->
+
+                                    taskSource.setException(InsuranceException(e.message?:""))
+                                }
                         }
                         .addOnFailureListener { e ->
 
@@ -1423,11 +1541,11 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
-     * @param from The start date (Date.from(Instant.MIN) to get the oldest date)
-     * @param to The end date (by default the current date)
+     * @param from The start date (Date.from(Instant.EPOCH) by default to get the oldest date)
+     * @param to The start date (Date.from(Instant.EPOCH) by default to get the latest date)
      * @throws TaxException
      */
-    public fun getTaxData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.now())) : Task<ArrayList<Tax>> {
+    public fun getTaxData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.EPOCH)) : Task<ArrayList<Tax>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Tax>>()
 
@@ -1442,21 +1560,50 @@ public class Database {
                         .collection(CARS_COLLECTION)
                         .document(plate)
                         .collection(TAX_COLLECTION)
-                        .orderBy(DATE_FIELD)
-                        .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
-                        .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                        .orderBy(DATE_FIELD, Query.Direction.DESCENDING)
+                        .limit(1)
                         .get()
-                        .addOnSuccessListener { query ->
+                        .addOnSuccessListener { queryInsurance ->
 
-                            val list = ArrayList<Tax>()
-                            for (document in query.documents) {
+                            lateinit var last: Date
+                            for (document in queryInsurance.documents) {
 
                                 val tax = document.toObject(Tax::class.java)
                                 if (tax != null)
-                                    list.add(tax)
+                                    last = tax.date.toDate()
+                                else
+                                    taskSource.setException(TaxException("Last tax date is null (database error)"))
                             }
 
-                            taskSource.setResult(list)
+                            if (to != Date.from(Instant.EPOCH))
+                                last = to
+
+                            dbRef
+                                .collection(USERS_COLLECTION)
+                                .document(username)
+                                .collection(CARS_COLLECTION)
+                                .document(plate)
+                                .collection(TAX_COLLECTION)
+                                .orderBy(DATE_FIELD)
+                                .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                                .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                                .get()
+                                .addOnSuccessListener { query ->
+
+                                    val list = ArrayList<Tax>()
+                                    for (document in query.documents) {
+
+                                        val tax = document.toObject(Tax::class.java)
+                                        if (tax != null)
+                                            list.add(tax)
+                                    }
+
+                                    taskSource.setResult(list)
+                                }
+                                .addOnFailureListener { e ->
+
+                                    taskSource.setException(TaxException(e.message?:""))
+                                }
                         }
                         .addOnFailureListener { e ->
 
