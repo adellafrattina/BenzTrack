@@ -7,6 +7,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import java.security.MessageDigest
 import java.time.Instant
@@ -925,11 +926,11 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
-     * @param from The start date (Date.from(Instant.MIN) to get the oldest date)
-     * @param to The end date (by default the current date)
+     * @param from The start date (Date.from(Instant.EPOCH) by default to get the oldest date)
+     * @param to The end date (Date.from(Instant.EPOCH) by default to get the latest date)
      * @throws RefillException
      */
-    public fun getRefillData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.now())) : Task<ArrayList<Refill>> {
+    public fun getRefillData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.EPOCH)) : Task<ArrayList<Refill>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Refill>>()
 
@@ -944,21 +945,50 @@ public class Database {
                         .collection(CARS_COLLECTION)
                         .document(plate)
                         .collection(REFILLS_COLLECTION)
-                        .orderBy(DATE_FIELD)
-                        .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
-                        .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                        .orderBy(DATE_FIELD, Query.Direction.DESCENDING)
+                        .limit(1)
                         .get()
                         .addOnSuccessListener { query ->
 
-                            val list = ArrayList<Refill>()
+                            lateinit var last: Date
                             for (document in query.documents) {
 
                                 val refill = document.toObject(Refill::class.java)
                                 if (refill != null)
-                                    list.add(refill)
+                                    last = refill.date.toDate()
+                                else
+                                    taskSource.setException(RefillException("Last refill date is null (database error)"))
                             }
 
-                            taskSource.setResult(list)
+                            if (!to.equals(Instant.EPOCH))
+                                last = to
+
+                            dbRef
+                                .collection(USERS_COLLECTION)
+                                .document(username)
+                                .collection(CARS_COLLECTION)
+                                .document(plate)
+                                .collection(REFILLS_COLLECTION)
+                                .orderBy(DATE_FIELD, Query.Direction.ASCENDING)
+                                .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                                .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(last))
+                                .get()
+                                .addOnSuccessListener { query ->
+
+                                    val list = ArrayList<Refill>()
+                                    for (document in query.documents) {
+
+                                        val refill = document.toObject(Refill::class.java)
+                                        if (refill != null)
+                                            list.add(refill)
+                                    }
+
+                                    taskSource.setResult(list)
+                                }
+                                .addOnFailureListener { e ->
+
+                                    taskSource.setException(RefillException(e.message?:""))
+                                }
                         }
                         .addOnFailureListener { e ->
 
