@@ -49,6 +49,19 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/fuel_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_refill_fuel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/refill_fuel"
+                android:inputType="numberDecimal"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/mileage_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

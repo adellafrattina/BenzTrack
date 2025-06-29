@@ -78,6 +78,7 @@
     <string name="refill_ppl">Price per liter (€)</string>
     <string name="refill_mileage">Mileage (km)</string>
     <string name="refill_amount">Amount (€)</string>
+    <string name="refill_fuel">Fuel liters (before refilling)</string>
     <string name="refill_submit">Add Refill</string>
 
     <!-- Maintenance card -->

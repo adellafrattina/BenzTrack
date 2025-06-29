@@ -17,12 +17,14 @@ class AddRefillActivity : AppCompatActivity() {
     private lateinit var pplEdit: TextInputEditText
     private lateinit var mileageEdit: TextInputEditText
     private lateinit var amountEdit: TextInputEditText
+    private lateinit var fuelEdit: TextInputEditText
 
     private lateinit var pplLayout: TextInputLayout
     private lateinit var dateLayout: TextInputLayout
     private lateinit var positionLayout: TextInputLayout
     private lateinit var mileageLayout: TextInputLayout
     private lateinit var amountLayout: TextInputLayout
+    private lateinit var fuelLayout: TextInputLayout
 
     private lateinit var submitButton: Button
 
@@ -35,16 +37,21 @@ class AddRefillActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val carPlate = intent.getStringExtra("car_plate")
+
         dateEdit = findViewById(R.id.edit_refill_date)
         positionEdit = findViewById(R.id.edit_refill_position)
         pplEdit = findViewById(R.id.edit_refill_ppl)
         mileageEdit = findViewById(R.id.edit_refill_mileage)
         amountEdit = findViewById(R.id.edit_refill_amount)
+        fuelEdit = findViewById(R.id.edit_refill_fuel)
+
         pplLayout = findViewById(R.id.ppl_layout)
         dateLayout = findViewById(R.id.date_layout)
         positionLayout = findViewById(R.id.position_layout)
         mileageLayout = findViewById(R.id.mileage_layout)
         amountLayout = findViewById(R.id.amount_layout)
+        fuelLayout = findViewById(R.id.fuel_layout)
+
         submitButton = findViewById(R.id.button_submit_refill)
 
         var refillDate: Timestamp = Timestamp.now()
@@ -72,6 +79,7 @@ class AddRefillActivity : AppCompatActivity() {
             refill.amount = amountEdit.text.toString().toFloatOrNull() ?: Float.NaN
             refill.mileage = mileageEdit.text.toString().toFloatOrNull() ?: Float.NaN
             refill.position = positionEdit.text.toString()
+            refill.currentfuelamount = fuelEdit.text.toString().toFloatOrNull() ?: Float.NaN
 
             Handler.database.setNewRefill(Handler.loggedUser!!.username, carPlate!!, refill)
                 .addOnSuccessListener {
@@ -105,6 +113,11 @@ class AddRefillActivity : AppCompatActivity() {
 
                                 showError(mileageLayout, e.mileage)
                             }
+
+                            if (e.fuelcapacity.isNotEmpty()) {
+
+                                showError(fuelLayout, e.fuelcapacity)
+                            }
                         }
                     }
                 }
@@ -123,6 +136,7 @@ class AddRefillActivity : AppCompatActivity() {
         positionLayout.isErrorEnabled = false
         mileageLayout.isErrorEnabled = false
         amountLayout.isErrorEnabled = false
+        fuelLayout.isErrorEnabled = false
     }
 
     override fun onSupportNavigateUp(): Boolean {
