@@ -19,11 +19,13 @@ class RegistrationActivity : AppCompatActivity() {
     private lateinit var surnameLayout: TextInputLayout
     private lateinit var emailLayout: TextInputLayout
     private lateinit var passwordLayout: TextInputLayout
+
     private lateinit var usernameEditText: TextInputEditText
     private lateinit var nameEditText: TextInputEditText
     private lateinit var surnameEditText: TextInputEditText
     private lateinit var emailEditText: TextInputEditText
     private lateinit var passwordEditText: TextInputEditText
+
     private lateinit var registerButton: Button
     private lateinit var loginLink: TextView
 
@@ -31,6 +33,7 @@ class RegistrationActivity : AppCompatActivity() {
      * Initializes the activity and sets up the UI components and their listeners.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registration)
 
@@ -40,16 +43,19 @@ class RegistrationActivity : AppCompatActivity() {
         surnameLayout = findViewById(R.id.surname_layout)
         emailLayout = findViewById(R.id.email_layout)
         passwordLayout = findViewById(R.id.password_layout)
+
         usernameEditText = findViewById(R.id.edit_reg_username)
         nameEditText = findViewById(R.id.edit_name)
         surnameEditText = findViewById(R.id.edit_surname)
         emailEditText = findViewById(R.id.edit_email)
         passwordEditText = findViewById(R.id.edit_reg_password)
+
         registerButton = findViewById(R.id.button_register)
         loginLink = findViewById(R.id.text_login_link)
 
         // Set up register button click listener
         registerButton.setOnClickListener {
+
             // Clear previous errors
             clearErrors()
 
@@ -62,6 +68,7 @@ class RegistrationActivity : AppCompatActivity() {
 
             Handler.database.registration(user)
                 .addOnSuccessListener {
+
                     ToastManager.show(this, "Registration successful!", Toast.LENGTH_SHORT)
                     Handler.loggedUser = user
 
@@ -70,26 +77,41 @@ class RegistrationActivity : AppCompatActivity() {
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
                     finish() // Finish registration activity after successful registration
                 }
+
                 .addOnFailureListener { e ->
+
                     when (e) {
+
                         is RegistrationException -> {
+
                             if (e.username.isNotEmpty()) {
+
                                 showError(usernameLayout, e.username)
                             }
+
                             if (e.name.isNotEmpty()) {
+
                                 showError(nameLayout, e.name)
                             }
+
                             if (e.surname.isNotEmpty()) {
+
                                 showError(surnameLayout, e.surname)
                             }
+
                             if (e.email.isNotEmpty()) {
+
                                 showError(emailLayout, e.email)
                             }
+
                             if (e.password.isNotEmpty()) {
+
                                 showError(passwordLayout, e.password)
                             }
+
                             ToastManager.show(this, "Registration unsuccessful", Toast.LENGTH_SHORT)
                         }
+
                         else -> ToastManager.show(this, "An unexpected error occurred", Toast.LENGTH_LONG)
                     }
                 }
@@ -97,6 +119,7 @@ class RegistrationActivity : AppCompatActivity() {
 
         // Set up login link click listener
         loginLink.setOnClickListener {
+
             clearFields()
             clearErrors()
             val intent = Intent(this, LoginActivity::class.java)
@@ -110,6 +133,7 @@ class RegistrationActivity : AppCompatActivity() {
      * Clears all input fields in the registration form.
      */
     private fun clearFields() {
+
         usernameEditText.text?.clear()
         nameEditText.text?.clear()
         surnameEditText.text?.clear()
@@ -122,6 +146,7 @@ class RegistrationActivity : AppCompatActivity() {
      * This removes error messages and collapses the error space.
      */
     private fun clearErrors() {
+
         usernameLayout.isErrorEnabled = false
         nameLayout.isErrorEnabled = false
         surnameLayout.isErrorEnabled = false
@@ -136,6 +161,7 @@ class RegistrationActivity : AppCompatActivity() {
      * @param message The error message to display
      */
     private fun showError(layout: TextInputLayout, message: String) {
+
         layout.error = message
         layout.isErrorEnabled = true
     }
@@ -145,6 +171,7 @@ class RegistrationActivity : AppCompatActivity() {
      * Clears all fields and errors before navigating back.
      */
     override fun onBackPressed() {
+
         clearFields()
         clearErrors()
         super.onBackPressed()

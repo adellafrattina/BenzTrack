@@ -26,6 +26,7 @@ class ProfileActivity : AppCompatActivity() {
      * Initializes the activity and sets up the UI components.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
@@ -38,32 +39,45 @@ class ProfileActivity : AppCompatActivity() {
 
         // Set up button click listeners
         addCarButton.setOnClickListener {
+
             val intent = Intent(this, AddCarActivity::class.java)
             startActivity(intent)
         }
     }
 
     override fun onResume() {
+
         super.onResume()
+
         // Load cars for the logged user
         if (Handler.loggedUser != null) {
+
             Database().getUserCars(Handler.loggedUser!!.username)
                 .addOnSuccessListener { cars ->
+
                     if (cars.isNotEmpty()) {
+
                         carAdapter = CarAdapter(cars) { car ->
+
                             val intent = Intent(this, CarGraphActivity::class.java)
                             intent.putExtra("car_plate", car.plate)
                             startActivity(intent)
                         }
+
                         carsRecyclerView.adapter = carAdapter
                         carsRecyclerView.visibility = View.VISIBLE
                         noCarsTextView.visibility = View.GONE
-                    } else {
+                    }
+
+                    else {
+
                         carsRecyclerView.visibility = View.GONE
                         noCarsTextView.visibility = View.VISIBLE
                     }
                 }
+
                 .addOnFailureListener {
+
                     carsRecyclerView.visibility = View.GONE
                     noCarsTextView.visibility = View.VISIBLE
                 }
@@ -77,6 +91,7 @@ class ProfileActivity : AppCompatActivity() {
      * @return true if the menu was created successfully
      */
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
+
         menuInflater.inflate(R.menu.profile_menu, menu)
         return true
     }
@@ -88,18 +103,25 @@ class ProfileActivity : AppCompatActivity() {
      * @return true if the item was handled, false otherwise
      */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+
         return when (item.itemId) {
+
             android.R.id.home -> {
+
                 finish()
                 overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                 true
             }
+
             R.id.action_view_info -> {
+
                 val intent = Intent(this, UserInfoActivity::class.java)
                 startActivity(intent)
                 true
             }
+
             R.id.action_logout -> {
+
                 Handler.loggedUser = null
                 Handler.save()
                 ToastManager.show(this, "Logged out successfully", Toast.LENGTH_SHORT)
@@ -109,6 +131,7 @@ class ProfileActivity : AppCompatActivity() {
                 finish()
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -119,6 +142,7 @@ class ProfileActivity : AppCompatActivity() {
      */
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
+
         super.onBackPressed()
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }

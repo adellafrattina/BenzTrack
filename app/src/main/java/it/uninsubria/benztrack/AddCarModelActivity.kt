@@ -19,6 +19,8 @@ class AddCarModelActivity : AppCompatActivity() {
     private lateinit var lengthEdit: TextInputEditText
     private lateinit var heightEdit: TextInputEditText
     private lateinit var widthEdit: TextInputEditText
+    private lateinit var fuelCapacityEdit: TextInputEditText
+
     private lateinit var nameLayout: TextInputLayout
     private lateinit var yearLayout: TextInputLayout
     private lateinit var capacityLayout: TextInputLayout
@@ -27,9 +29,12 @@ class AddCarModelActivity : AppCompatActivity() {
     private lateinit var lengthLayout: TextInputLayout
     private lateinit var heightLayout: TextInputLayout
     private lateinit var widthLayout: TextInputLayout
+    private lateinit var fuelCapacityLayout: TextInputLayout
+
     private lateinit var submitButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_car_model)
 
@@ -45,6 +50,8 @@ class AddCarModelActivity : AppCompatActivity() {
         lengthEdit = findViewById(R.id.edit_model_length)
         heightEdit = findViewById(R.id.edit_model_height)
         widthEdit = findViewById(R.id.edit_model_width)
+        fuelCapacityEdit = findViewById(R.id.edit_fuel_capacity)
+
         nameLayout = findViewById(R.id.name_layout)
         yearLayout = findViewById(R.id.year_layout)
         capacityLayout = findViewById(R.id.capacity_layout)
@@ -53,7 +60,10 @@ class AddCarModelActivity : AppCompatActivity() {
         lengthLayout = findViewById(R.id.length_layout)
         heightLayout = findViewById(R.id.height_layout)
         widthLayout = findViewById(R.id.width_layout)
+        fuelCapacityLayout = findViewById(R.id.fuel_capacity_layout)
+
         submitButton = findViewById(R.id.button_submit_model)
+
         val fuelTypes = FuelType.entries.map { it.name }
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, fuelTypes)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -73,38 +83,64 @@ class AddCarModelActivity : AppCompatActivity() {
             model.length = lengthEdit.text.toString().toFloatOrNull() ?: 0f
             model.height = heightEdit.text.toString().toFloatOrNull() ?: 0f
             model.width = widthEdit.text.toString().toFloatOrNull() ?: 0f
+            model.fuelcapacity = fuelCapacityEdit.text.toString().toFloatOrNull() ?: 0f
 
             Handler.database.createCarModel(model)
                 .addOnSuccessListener {
+
                     ToastManager.show(this, "Model added!", android.widget.Toast.LENGTH_SHORT)
                     finish()
                 }
+
                 .addOnFailureListener { e ->
+
                     when (e) {
+
                         is CarModelException -> {
+
                             if (e.name.isNotEmpty()) {
+
                                 showError(nameLayout, e.name)
                             }
+
                             if (e.year.isNotEmpty()) {
+
                                 showError(yearLayout, e.year)
                             }
+
                             if (e.capacity.isNotEmpty()) {
+
                                 showError(capacityLayout, e.capacity)
                             }
+
                             if (e.co2factor.isNotEmpty()) {
+
                                 showError(co2Layout, e.co2factor)
                             }
+
                             if (e.weight.isNotEmpty()) {
+
                                 showError(weightLayout, e.weight)
                             }
+
                             if (e.length.isNotEmpty()) {
+
                                 showError(lengthLayout, e.length)
                             }
+
                             if (e.height.isNotEmpty()) {
+
                                 showError(heightLayout, e.height)
                             }
+
                             if (e.width.isNotEmpty()) {
+
                                 showError(widthLayout, e.width)
+                            }
+
+                            if (e.capacity.isNotEmpty()) {
+
+                                showError(fuelCapacityLayout, e.capacity)
                             }
                         }
                     }
@@ -113,11 +149,13 @@ class AddCarModelActivity : AppCompatActivity() {
     }
 
     private fun showError(layout: TextInputLayout, message: String) {
+
         layout.error = message
         layout.isErrorEnabled = true
     }
 
     private fun clearErrors() {
+
         nameLayout.isErrorEnabled = false
         yearLayout.isErrorEnabled = false
         capacityLayout.isErrorEnabled = false
@@ -126,9 +164,11 @@ class AddCarModelActivity : AppCompatActivity() {
         lengthLayout.isErrorEnabled = false
         heightLayout.isErrorEnabled = false
         widthLayout.isErrorEnabled = false
+        fuelCapacityLayout.isErrorEnabled = false
     }
 
     override fun onSupportNavigateUp(): Boolean {
+
         finish()
         return true
     }

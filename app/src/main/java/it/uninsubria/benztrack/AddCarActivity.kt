@@ -21,15 +21,20 @@ class AddCarActivity : AppCompatActivity() {
     private lateinit var carNameEdit: TextInputEditText
     private lateinit var plateEdit: TextInputEditText
     private lateinit var modelEdit: TextInputEditText
+
     private lateinit var carNameLayout: TextInputLayout
     private lateinit var plateLayout: TextInputLayout
     private lateinit var modelLayout: TextInputLayout
+
     private lateinit var modelsRecyclerView: RecyclerView
+
     private lateinit var confirmButton: Button
     private lateinit var addModelButton: Button
+
     private var selectedModel: CarModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_car)
 
@@ -40,12 +45,16 @@ class AddCarActivity : AppCompatActivity() {
         carNameEdit = findViewById(R.id.edit_car_name)
         plateEdit = findViewById(R.id.edit_plate)
         modelEdit = findViewById(R.id.edit_model)
+
         carNameLayout = findViewById(R.id.car_name_layout)
         plateLayout = findViewById(R.id.plate_layout)
         modelLayout = findViewById(R.id.model_layout)
+
         modelsRecyclerView = findViewById(R.id.recycler_models)
+
         confirmButton = findViewById(R.id.button_confirm)
         addModelButton = findViewById(R.id.button_add_model)
+
         val modelInputLayout = findViewById<TextInputLayout>(R.id.model_layout)
 
         // Set up RecyclerView
@@ -60,6 +69,7 @@ class AddCarActivity : AppCompatActivity() {
 
         // Set up confirm button
         confirmButton.setOnClickListener {
+
             clearErrors()
 
             val car = Car()
@@ -67,6 +77,7 @@ class AddCarActivity : AppCompatActivity() {
             car.plate = plateEdit.text.toString()
 
             if (selectedModel != null) {
+
                 Handler.database.getCarModelDocumentReference(selectedModel!!)
                     .addOnSuccessListener { model ->
 
@@ -85,16 +96,23 @@ class AddCarActivity : AppCompatActivity() {
                     }
 
                     .addOnFailureListener { e ->
+
                         when (e) {
+
                             is CarException -> {
+
                                 if (e.name.isNotEmpty()) {
+
                                     showError(carNameLayout, e.name)
                                 }
+
                                 if (e.plate.isNotEmpty()) {
+
                                     showError(plateLayout, e.plate)
                                 }
                             }
                         }
+
                         ToastManager.show(this, "Error adding car: ${e.message}", Toast.LENGTH_SHORT)
                     }
             }
@@ -106,26 +124,38 @@ class AddCarActivity : AppCompatActivity() {
         }
 
         addModelButton.setOnClickListener {
+
             val intent = Intent(this, AddCarModelActivity::class.java)
             startActivity(intent)
         }
 
         modelInputLayout.setEndIconOnClickListener {
+
             val query = modelEdit.text.toString()
+
             if (query.isBlank()) {
+
                 modelsRecyclerView.visibility = View.GONE
                 return@setEndIconOnClickListener
             }
+
             Handler.database.searchCarModelByName(query)
                 .addOnSuccessListener { models ->
+
                     if (models.isNotEmpty()) {
+
                         adapter.submitList(models)
                         modelsRecyclerView.visibility = View.VISIBLE
-                    } else {
+                    }
+
+                    else {
+
                         modelsRecyclerView.visibility = View.GONE
                     }
                 }
+
                 .addOnFailureListener { e ->
+
                     ToastManager.show(this@AddCarActivity, "Error searching models: ${e.message}", Toast.LENGTH_SHORT)
                     modelsRecyclerView.visibility = View.GONE
                 }
@@ -133,6 +163,7 @@ class AddCarActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
+
         onBackPressed()
         return true
     }
@@ -144,6 +175,7 @@ class AddCarActivity : AppCompatActivity() {
     }
 
     private fun showError(layout: TextInputLayout, message: String) {
+
         layout.error = message
         layout.isErrorEnabled = true
     }
@@ -155,17 +187,21 @@ class CarModelAdapter(private val onModelSelected: (CarModel) -> Unit) :
     private var models: ArrayList<CarModel> = arrayListOf()
 
     fun submitList(newModels: ArrayList<CarModel>) {
+
         models = newModels
         notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): ViewHolder {
+
         val view = android.view.LayoutInflater.from(parent.context)
             .inflate(R.layout.item_car_model, parent, false)
+
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+
         val model = models[position]
         holder.bind(model)
     }
@@ -173,6 +209,7 @@ class CarModelAdapter(private val onModelSelected: (CarModel) -> Unit) :
     override fun getItemCount() = models.size
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+
         private val modelNameText: TextView = itemView.findViewById(R.id.text_model_name)
         private val modelDimensionsText: TextView = itemView.findViewById(R.id.text_model_dimensions)
         private val modelCo2CapacityText: TextView = itemView.findViewById(R.id.text_model_co2_capacity)
@@ -184,10 +221,12 @@ class CarModelAdapter(private val onModelSelected: (CarModel) -> Unit) :
 
             // First line
             val fuelString = when (model.fuel) {
+
                 FuelType.Petrol -> "Benzina"
                 FuelType.Diesel -> "Diesel"
                 FuelType.Electric -> "Elettrica"
             }
+
             "${model.name} (${model.year}, $fuelString)".also { modelNameText.text = it }
 
             // Second line
@@ -195,6 +234,7 @@ class CarModelAdapter(private val onModelSelected: (CarModel) -> Unit) :
             val length = if (model.length.isNaN()) "?" else model.length.toInt().toString()
             val height = if (model.height.isNaN()) "?" else model.height.toInt().toString()
             val weight = if (model.weight.isNaN()) "?" else model.weight.toInt().toString()
+
             modelDimensionsText.text = buildColoredLine(
                 listOf(
                     "W ", width, " cm | ",
@@ -208,6 +248,7 @@ class CarModelAdapter(private val onModelSelected: (CarModel) -> Unit) :
             // Third line
             val co2 = if (model.co2factor.isNaN()) "?" else model.co2factor.toInt().toString()
             val capacity = if (model.capacity == Int.MAX_VALUE) "?" else model.capacity.toString()
+
             modelCo2CapacityText.text = buildColoredLine(
                 listOf(
                     "CO2 ", co2, " g/km | ",
@@ -223,15 +264,20 @@ class CarModelAdapter(private val onModelSelected: (CarModel) -> Unit) :
 
         // Helper function to color only the values
         private fun buildColoredLine(parts: List<String>, valueColor: Int): CharSequence {
+
             val builder = SpannableStringBuilder()
             val grayUnits = listOf("cm", "kg", "g/km", "cm3")
+
             for (part in parts) {
+
                 val trimmed = part.trim().removePrefix("|").removeSuffix("|")
                 val isValueOrUnit = part.trim().all { it.isDigit() || it == '?' } ||
                     grayUnits.any { trimmed.startsWith(it) || trimmed.endsWith(it) || trimmed == it }
                 val start = builder.length
                 builder.append(part)
+
                 if (isValueOrUnit) {
+
                     builder.setSpan(
                         ForegroundColorSpan(valueColor),
                         start,
