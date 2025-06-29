@@ -41,6 +41,7 @@ class PickLocationActivity : AppCompatActivity() {
         val confirmButton = Button(this)
         confirmButton.text = "Confirm Location"
         confirmButton.isEnabled = false
+        confirmButton.tag = "confirm_button"
 
         addContentView(confirmButton, android.widget.FrameLayout.LayoutParams(
 
@@ -101,7 +102,7 @@ class PickLocationActivity : AppCompatActivity() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
             map.controller.setCenter(GeoPoint(45.0, 9.0))
-            map.controller.setZoom(15.0)
+            map.controller.setZoom(18.0)
             return
         }
 
@@ -113,7 +114,17 @@ class PickLocationActivity : AppCompatActivity() {
 
                 val userPoint = GeoPoint(location.latitude, location.longitude)
                 map.controller.setCenter(userPoint)
-                map.controller.setZoom(15.0)
+                map.controller.setZoom(18.0)
+                selectedPoint = userPoint
+                if (marker == null) {
+                    marker = Marker(map)
+                    map.overlays.add(marker)
+                }
+                marker!!.position = userPoint
+                marker!!.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                map.invalidate()
+                val confirmButton = (map.parent as android.view.ViewGroup).findViewWithTag<Button>("confirm_button")
+                confirmButton?.isEnabled = true
                 locationManager.removeUpdates(this)
             }
 
@@ -129,7 +140,17 @@ class PickLocationActivity : AppCompatActivity() {
 
             val userPoint = GeoPoint(lastKnown.latitude, lastKnown.longitude)
             map.controller.setCenter(userPoint)
-            map.controller.setZoom(15.0)
+            map.controller.setZoom(18.0)
+            selectedPoint = userPoint
+            if (marker == null) {
+                marker = Marker(map)
+                map.overlays.add(marker)
+            }
+            marker!!.position = userPoint
+            marker!!.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            map.invalidate()
+            val confirmButton = (map.parent as android.view.ViewGroup).findViewWithTag<Button>("confirm_button")
+            confirmButton?.isEnabled = true
         }
     }
 
@@ -142,7 +163,7 @@ class PickLocationActivity : AppCompatActivity() {
 
         else {
             map.controller.setCenter(GeoPoint(45.0, 9.0))
-            map.controller.setZoom(15.0)
+            map.controller.setZoom(18.0)
         }
     }
 } 
