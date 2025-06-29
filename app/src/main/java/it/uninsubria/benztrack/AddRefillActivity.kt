@@ -1,6 +1,7 @@
 package it.uninsubria.benztrack
 
 import android.app.DatePickerDialog
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.Toast
@@ -69,6 +70,14 @@ class AddRefillActivity : AppCompatActivity() {
             dialog.show()
         }
 
+        positionEdit.isFocusable = false
+        positionEdit.isClickable = true
+        positionEdit.setOnClickListener {
+
+            val intent = Intent(this, PickLocationActivity::class.java)
+            startActivityForResult(intent, 1001)
+        }
+
         submitButton.setOnClickListener {
 
             clearErrors()
@@ -121,6 +130,15 @@ class AddRefillActivity : AppCompatActivity() {
                         }
                     }
                 }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1001 && resultCode == RESULT_OK && data != null) {
+            val lat = data.getDoubleExtra("latitude", 0.0)
+            val lon = data.getDoubleExtra("longitude", 0.0)
+            positionEdit.setText("$lat,$lon")
         }
     }
 
