@@ -2,24 +2,43 @@ package it.uninsubria.benztrack
 
 import android.content.Intent
 import android.graphics.Color
-import android.os.Bundle
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.view.View
+import android.view.ViewTreeObserver
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
+import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.LegendEntry
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
+import com.github.mikephil.charting.formatter.ValueFormatter
+import com.github.mikephil.charting.highlight.Highlight
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import com.google.android.gms.tasks.Tasks
+import com.google.firebase.Timestamp
+import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
+import java.util.Date
+import java.util.Locale
 
 class CarGraphActivity : AppCompatActivity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onResume() {
+        super.onResume()
         setContentView(R.layout.activity_car_graph)
 
         // Enable the up button in the action bar
@@ -77,9 +96,10 @@ class CarGraphActivity : AppCompatActivity() {
                         FuelType.Electric -> "Electric"
                     }
 
-                    text.text = "${model.name} (${model.year}, $fuelString)\nW, ${model.width} cm | L ${model.length} | H ${model.height} | M ${model.weight} kg\nCO2 ${model.co2factor} g/km | Capacity ${model.capacity} cm3"
+                    text.text = "${model.name} (${model.year}, $fuelString)\nW ${model.width} cm | L ${model.length} | H ${model.height} | M ${model.weight} kg\nCO2 ${model.co2factor} g/km | Capacity ${model.capacity} cm3"
 
                     setUpPieChart(refillData, maintenanceData, insuranceData, taxData)
+                    setUpLineChart(refillData, model)
                 }
 
                 else {
@@ -173,6 +193,138 @@ class CarGraphActivity : AppCompatActivity() {
         legend.setCustom(legendEntries)
 
         pieChart.invalidate()
+    }
+
+    private fun setUpLineChart(refills: ArrayList<Refill>, model: CarModel) {
+
+        val noAvailableData = refills.size < 3
+
+        // Find the LineChart view from XML
+        val lineChart: LineChart = findViewById(R.id.line_chart)
+
+        val entries = mutableListOf<Entry>()
+
+        val co2Emissions = ArrayList<Float>()
+
+        if (noAvailableData) {
+
+            entries.add(Entry(0.0f, 0.0f))
+        }
+
+        else {
+
+            var prevRefill = refills[0]
+            for (i in 1 until refills.size) {
+
+                val currentRefill = refills[i]
+
+                val consumedLiters =
+                    prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl - currentRefill.currentfuelamount
+                val travelledKm =
+                    if (currentRefill.mileage - prevRefill.mileage > 0) currentRefill.mileage - prevRefill.mileage else 1.0f
+                val daysInterval =
+                    if (daysBetweenDates(currentRefill.date, prevRefill.date) > 0) daysBetweenDates(
+                        currentRefill.date,
+                        prevRefill.date
+                    ) else 1
+                val emittedCO2 =
+                    (((consumedLiters * model.fuel.value) / travelledKm) / daysInterval) * 1000.0f
+                co2Emissions.add(emittedCO2)
+
+                prevRefill = currentRefill
+            }
+
+            // Set up time data
+            for (i in co2Emissions.indices)
+                entries.add(Entry(refills[i + 1].date.seconds * 1000f, co2Emissions[i]))
+        }
+
+        // Set up x axis
+        val xAxis = lineChart.xAxis
+        xAxis.position = XAxis.XAxisPosition.BOTTOM
+        xAxis.valueFormatter = object : ValueFormatter() {
+            private val sdf = SimpleDateFormat("dd/MM", Locale.getDefault())
+            override fun getFormattedValue(value: Float): String {
+                return sdf.format(Date(value.toLong()))
+            }
+        }
+
+        xAxis.setLabelCount(entries.size, true)
+        xAxis.granularity = 1.0f
+
+        // Create a LineDataSet (this holds the data and settings for the line)
+        val dataSet = LineDataSet(entries, "CO2 emissions (g/km per day)")
+        dataSet.color = resources.getColor(android.R.color.holo_blue_dark)
+        dataSet.valueTextColor = resources.getColor(android.R.color.black)
+
+        // Create LineData using the LineDataSet
+        val lineData = LineData(dataSet)
+
+        // Set the data to the LineChart
+        lineChart.data = lineData
+
+        // Customize chart appearance
+
+        val description = Description()
+        description.text = if(noAvailableData) "Not enough data" else "CO2 emission graph"
+        description.textSize = 14f
+
+        lineChart.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+
+                val paint = Paint().apply {
+                    textSize = description.textSize
+                    typeface = Typeface.DEFAULT
+                }
+
+                val textWidth = paint.measureText(description.text)
+
+                val centerX = lineChart.width / 2f + textWidth / 2f
+                val topPadding = 30f
+
+                description.setPosition(centerX, topPadding)
+                lineChart.description = description
+
+                lineChart.viewTreeObserver.removeOnGlobalLayoutListener(this)
+            }
+        })
+
+        // Apply the description to the chart
+        lineChart.description = description
+
+        lineChart.setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
+
+            override fun onValueSelected(e: Entry?, h: Highlight?) {
+                e?.let {
+
+                    val sdf = SimpleDateFormat("HH:mm:ss - dd/MM/2025", Locale.getDefault())
+                    val value = it.y
+                    val xValue = sdf.format(it.x.toLong())
+
+                    // Show a popup dialog
+                    AlertDialog.Builder(this@CarGraphActivity)
+                        .setTitle("Refill info")
+                        .setMessage("Time and Date: $xValue\n\nCO2: $value g/km per day")
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+            }
+
+            override fun onNothingSelected() {}
+        })
+
+        // Refresh the chart
+        lineChart.invalidate()
+    }
+
+    private fun daysBetweenDates(ts1: Timestamp, ts2: Timestamp): Long {
+
+        val zoneId = ZoneId.systemDefault()
+
+        val date1 = Instant.ofEpochSecond(ts1.seconds).atZone(zoneId).toLocalDate()
+        val date2 = Instant.ofEpochSecond(ts2.seconds).atZone(zoneId).toLocalDate()
+
+        return ChronoUnit.DAYS.between(date1, date2)
     }
 
     private fun showLoading(show: Boolean) {
