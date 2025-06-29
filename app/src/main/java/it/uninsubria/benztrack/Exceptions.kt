@@ -21,6 +21,7 @@ public class LoginException(
      * Error with the password. If empty, then there are no errors
      */
     val password: String
+
 ) : Exception(message) {
 
     constructor(message: String): this(message, "", "")
@@ -62,6 +63,7 @@ public class RegistrationException(
      * Error with the surname. If empty, then there are no errors
      */
     val surname: String
+
 ) : Exception(message) {
 
     constructor(message: String): this(message, "", "", "", "", "")
@@ -122,10 +124,16 @@ public class CarModelException(
     /**
      * Error with the height. If empty, then there are no errors
      */
-    val height: String
+    val height: String,
+
+    /**
+     * Error with the fuel capacity. If empty, then there are no errors
+     */
+    val fuelcapacity: String
+
 ) : Exception(message) {
 
-    constructor(message: String): this(message, "", "", "", "", "", "", "", "", "")
+    constructor(message: String): this(message, "", "", "", "", "", "", "", "", "", "")
 }
 
 /**
@@ -164,13 +172,14 @@ public class CarException(
      * Error with the tax date. If empty, then there are no errors
      */
     val taxdate: String
+
 ) : Exception(message) {
 
     constructor(message: String): this(message, "", "" ,"", "", "")
 }
 
 /**
- * When the car creation procedure fails
+ * When the refill procedure fails
  *
  * @author adellafrattina
  */
@@ -202,9 +211,9 @@ public class RefillException(
     val amount: String,
 
     /**
-     * Error with the fuel capacity. If empty, then there are no errors
+     * Error with the current fuel amount. If empty, then there are no errors
      */
-    val fuelcapacity: String
+    val currentfuelamount: String
 
 ) : Exception(message) {
 
