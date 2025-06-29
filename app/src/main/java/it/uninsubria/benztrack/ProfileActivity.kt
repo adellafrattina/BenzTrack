@@ -11,6 +11,7 @@ import android.view.MenuItem
 import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import android.app.AlertDialog
 
 /**
  * Activity responsible for displaying user profile information and car management.
@@ -57,12 +58,31 @@ class ProfileActivity : AppCompatActivity() {
 
                     if (cars.isNotEmpty()) {
 
-                        carAdapter = CarAdapter(cars) { car ->
-
+                        carAdapter = CarAdapter(cars.toMutableList(), { car ->
                             val intent = Intent(this, CarGraphActivity::class.java)
                             intent.putExtra("car_plate", car.plate)
                             startActivity(intent)
-                        }
+                        }, { car ->
+
+                            AlertDialog.Builder(this)
+                                .setTitle("Delete Car")
+                                .setMessage("Are you sure you want to delete ${car.name} (${car.plate})?")
+                                .setPositiveButton("Yes") { _, _ ->
+
+                                    Handler.database.deleteUserCar(Handler.loggedUser!!.username, car.plate)
+                                        .addOnSuccessListener {
+
+                                            ToastManager.show(this, "Deleted ${car.name} (${car.plate})", Toast.LENGTH_SHORT)
+                                            carAdapter?.removeCar(car)
+                                        }
+                                        .addOnFailureListener { e ->
+
+                                            ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
+                                        }
+                                }
+                                .setNegativeButton("No", null)
+                                .show()
+                        })
 
                         carsRecyclerView.adapter = carAdapter
                         carsRecyclerView.visibility = View.VISIBLE
