@@ -19,6 +19,7 @@ class AddCarModelActivity : AppCompatActivity() {
     private lateinit var lengthEdit: TextInputEditText
     private lateinit var heightEdit: TextInputEditText
     private lateinit var widthEdit: TextInputEditText
+    private lateinit var fuelCapacityEdit: TextInputEditText
 
     private lateinit var nameLayout: TextInputLayout
     private lateinit var yearLayout: TextInputLayout
@@ -28,6 +29,7 @@ class AddCarModelActivity : AppCompatActivity() {
     private lateinit var lengthLayout: TextInputLayout
     private lateinit var heightLayout: TextInputLayout
     private lateinit var widthLayout: TextInputLayout
+    private lateinit var fuelCapacityLayout: TextInputLayout
 
     private lateinit var submitButton: Button
 
@@ -48,6 +50,7 @@ class AddCarModelActivity : AppCompatActivity() {
         lengthEdit = findViewById(R.id.edit_model_length)
         heightEdit = findViewById(R.id.edit_model_height)
         widthEdit = findViewById(R.id.edit_model_width)
+        fuelCapacityEdit = findViewById(R.id.edit_fuel_capacity)
 
         nameLayout = findViewById(R.id.name_layout)
         yearLayout = findViewById(R.id.year_layout)
@@ -57,6 +60,7 @@ class AddCarModelActivity : AppCompatActivity() {
         lengthLayout = findViewById(R.id.length_layout)
         heightLayout = findViewById(R.id.height_layout)
         widthLayout = findViewById(R.id.width_layout)
+        fuelCapacityLayout = findViewById(R.id.fuel_capacity_layout)
 
         submitButton = findViewById(R.id.button_submit_model)
 
@@ -79,6 +83,7 @@ class AddCarModelActivity : AppCompatActivity() {
             model.length = lengthEdit.text.toString().toFloatOrNull() ?: 0f
             model.height = heightEdit.text.toString().toFloatOrNull() ?: 0f
             model.width = widthEdit.text.toString().toFloatOrNull() ?: 0f
+            model.fuelcapacity = fuelCapacityEdit.text.toString().toFloatOrNull() ?: 0f
 
             Handler.database.createCarModel(model)
                 .addOnSuccessListener {
@@ -132,6 +137,11 @@ class AddCarModelActivity : AppCompatActivity() {
 
                                 showError(widthLayout, e.width)
                             }
+
+                            if (e.capacity.isNotEmpty()) {
+
+                                showError(fuelCapacityLayout, e.capacity)
+                            }
                         }
                     }
                 }
@@ -154,6 +164,7 @@ class AddCarModelActivity : AppCompatActivity() {
         lengthLayout.isErrorEnabled = false
         heightLayout.isErrorEnabled = false
         widthLayout.isErrorEnabled = false
+        fuelCapacityLayout.isErrorEnabled = false
     }
 
     override fun onSupportNavigateUp(): Boolean {

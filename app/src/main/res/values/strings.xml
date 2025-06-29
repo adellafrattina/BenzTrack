@@ -55,6 +55,7 @@
     <string name="model_name">Model Name</string>
     <string name="width_cm">Width (cm)</string>
     <string name="add_model">Add Model</string>
+    <string name="fuel_capacity">Fuel capacity (l)</string>
 
     <!-- User's cars (cards) -->
     <string name="car_name_card">Car Name</string>
