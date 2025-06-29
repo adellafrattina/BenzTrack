@@ -832,14 +832,10 @@ public class Database {
                                             val prevRefill = document.toObject(Refill::class.java)
                                             if (prevRefill != null) {
 
-                                                if (prevRefill.mileage > refill.mileage)
+                                                if (prevRefill.mileage > refill.mileage && !refill.mileage.isNaN() && !refill.currentfuelamount.isNaN())
                                                     errorMap[MILEAGE_FIELD] = "The mileage value is not valid (should be higher than the previous one - ${prevRefill.mileage}km)"
 
-                                                if (refill.currentfuelamount.isNaN())
-                                                    errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "This value must not be empty"
-                                                else if (refill.currentfuelamount < 0)
-                                                    errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount cannot be negative"
-                                                else if (refill.currentfuelamount > prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl)
+                                                if (refill.currentfuelamount > prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl)
                                                     errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount is not valid (should be less than ${prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl}L)"
                                             }
                                         }
@@ -862,6 +858,12 @@ public class Database {
 
                                     else if (refill.amount < 0)
                                         errorMap[AMOUNT_FIELD] = "The amount cannot be negative"
+
+                                    // Check current fuel amount
+                                    if (refill.currentfuelamount.isNaN())
+                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "This value must not be empty"
+                                    else if (refill.currentfuelamount < 0)
+                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount cannot be negative"
 
                                     // Check consistency
                                     if (refill.amount != 0.0f && refill.ppl == 0.0f)
