@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class CarAdapter(private val cars: List<Car>, private val onCarClick: (Car) -> Unit) : RecyclerView.Adapter<CarAdapter.CarViewHolder>() {
+class CarAdapter(private val cars: MutableList<Car>, private val onCarClick: (Car) -> Unit, private val onCarLongClick: (Car) -> Unit) : RecyclerView.Adapter<CarAdapter.CarViewHolder>() {
 
     class CarViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
@@ -48,7 +48,24 @@ class CarAdapter(private val cars: List<Car>, private val onCarClick: (Car) -> U
 
             onCarClick(car)
         }
+
+        holder.itemView.setOnLongClickListener {
+
+            onCarLongClick(car)
+            true
+        }
     }
 
     override fun getItemCount() = cars.size
+
+    fun removeCar(car: Car) {
+
+        val index = cars.indexOf(car)
+
+        if (index != -1) {
+
+            cars.removeAt(index)
+            notifyItemRemoved(index)
+        }
+    }
 } 
