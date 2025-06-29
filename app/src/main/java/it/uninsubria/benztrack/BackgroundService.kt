@@ -5,7 +5,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.CoroutineScope
@@ -14,13 +13,16 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
-import kotlin.math.ceil
 
 class BackgroundService : Service() {
 
@@ -49,49 +51,151 @@ class BackgroundService : Service() {
 
         startForeground(1, notification)
 
+        today = Timestamp.now()
         context = baseContext
-        scope.launch {
+        mainScope.launch {
 
             while (isActive) {
 
-                val currentDate = Timestamp.now()
+                mutex.withLock {
 
-                if (user != Handler.loggedUser) {
+                    val currentDate = Timestamp.now()
 
-                    user = Handler.loggedUser
+                    if (user != Handler.loggedUser || currentDate.seconds >= 86400 + today.seconds) {
 
-                    NotificationHandler.cancelAllNotifications()
-                    dateRegister = HashMap()
-                    notificationRegister = HashMap()
+                        user = Handler.loggedUser
+                        today = currentDate
+
+                        NotificationHandler.cancelAllNotifications()
+                        notificationDateRegister = HashMap()
+                    }
                 }
+            }
+        }
 
-                if (user != null) {
+        dateScope.launch {
 
-                    Handler.database
-                        .getUserCars(user!!.username)
-                        .addOnSuccessListener { cars ->
+            while (isActive) {
 
-                            for (car in cars) {
+                mutex.withLock {
 
-                                car.maintenancedate?.let { checkDate(car, it, currentDate, "Maintenance") }
-                                car.insurancedate?.let { checkDate(car, it, currentDate, "Insurance") }
-                                car.taxdate?.let { checkDate(car, it, currentDate, "Tax") }
+                    if (user != null) {
+
+                        val currentDate = Timestamp.now()
+                        Handler.database
+                            .getUserCars(user!!.username)
+                            .addOnSuccessListener { cars ->
+
+                                for (car in cars) {
+
+                                    car.maintenancedate?.let { checkDate(car, it, currentDate, "Maintenance") }
+                                    car.insurancedate?.let { checkDate(car, it, currentDate, "Insurance") }
+                                    car.taxdate?.let { checkDate(car, it, currentDate, "Tax") }
+                                }
                             }
-                        }
-                        .addOnFailureListener { e ->
-
-                            val n = NotificationHandler.createNotification(context, NotificationHandler.BACKGROUND_CHANNEL)
-                                .setSmallIcon(R.drawable.ic_launcher_background)
-                                .setContentTitle("An exception has occurred")
-                                .setContentText(e.message?:"")
-                                .setPriority(NotificationCompat.PRIORITY_MAX)
-                                .build()
-
-                            NotificationHandler.notify(n)
-                        }
+                    }
                 }
 
-                delay(secondsToWait * 1000L) // Check every ${secondsToWait} seconds
+                delay(10_000) // Check every 10 seconds
+            }
+        }
+
+        co2Scope.launch {
+
+            while (isActive) {
+
+                mutex.withLock {
+
+                    if (user != null) {
+
+                        val u = user
+                        Handler.database
+                            .getUserCars(user!!.username)
+                            .addOnSuccessListener { cars ->
+
+                                for (car in cars) {
+
+                                    Handler.database
+                                        .getUserCarModel(u!!.username, car.plate)
+                                        .addOnSuccessListener { model ->
+
+                                            Handler.database
+                                                .getRefillData(u.username, car.plate, lastDate)
+                                                .addOnSuccessListener { refills ->
+
+                                                    if (refills.size >= 3) {
+
+                                                        var prevRefill = refills[0]
+                                                        var lastEmittedCO2 = 0.0f
+                                                        var sumEmittedCO2 = 0.0f
+                                                        var lastCost = 0.0f
+                                                        var sumCost = 0.0f
+                                                        var lastTravelledKm = 0.0f
+                                                        var lastDaysInterval = 0L
+                                                        for (i in 1 until refills.size) {
+
+                                                            val currentRefill = refills[i]
+
+                                                            val consumedLiters = prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl - currentRefill.currentfuelamount
+                                                            val travelledKm = if (currentRefill.mileage - prevRefill.mileage > 0) currentRefill.mileage - prevRefill.mileage else 1.0f
+                                                            lastTravelledKm = travelledKm
+                                                            val daysInterval = if (daysBetweenDates(currentRefill.date, prevRefill.date) > 0) daysBetweenDates(currentRefill.date, prevRefill.date) else 1
+                                                            lastDaysInterval = daysInterval
+                                                            val emittedCO2 = ((consumedLiters * model.fuel.value) / travelledKm) / daysInterval
+                                                            lastEmittedCO2 = emittedCO2
+                                                            sumEmittedCO2 += emittedCO2
+                                                            val cost = ((consumedLiters * prevRefill.ppl) / travelledKm) / daysInterval
+                                                            lastCost = cost
+                                                            sumCost += cost
+
+                                                            prevRefill = currentRefill
+                                                        }
+
+                                                        // Calculate CO2 emission percentage
+                                                        sumEmittedCO2 -= lastEmittedCO2
+                                                        val avgEmittedCO2 = sumEmittedCO2 / (refills.size - 2)
+                                                        val percCO2 = (abs(avgEmittedCO2 - lastEmittedCO2) * 100.0f) / avgEmittedCO2
+
+                                                        // Calculate fuel cost
+                                                        sumCost -= lastCost
+                                                        val avgCost = sumCost / (refills.size - 2)
+
+                                                        val titleStr = "CO2 Emissions - " + car.plate
+                                                        val textStr =
+                                                            if (avgEmittedCO2 > lastEmittedCO2) {
+
+                                                                "Congratulations! You reduced your CO2 emissions by ${DecimalFormat("#.#").format(percCO2)}% and saved up €${DecimalFormat("#.##").format((avgCost - lastCost) * lastTravelledKm * lastDaysInterval)}"
+                                                            }
+
+                                                            else if (avgEmittedCO2 < lastEmittedCO2) {
+
+                                                                "Warning! You increased your CO2 emissions by ${DecimalFormat("#.#").format(percCO2)}% and lost the equivalent of €${DecimalFormat("#.##").format((lastCost - avgCost)* lastTravelledKm * lastDaysInterval)}"
+                                                            }
+
+                                                            else {
+
+                                                                "You can do better! Your CO2 emissions are steady (${DecimalFormat("#.#").format(lastEmittedCO2 * 1000.0f)} g/km of CO2 per day)"
+                                                            }
+
+                                                        val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
+                                                            .setSmallIcon(R.drawable.ic_launcher_foreground)
+                                                            .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                                            .setContentTitle(titleStr)
+                                                            .setContentText(textStr)
+                                                            .build()
+
+                                                        NotificationHandler.notify(n, hash(titleStr + car.plate))
+
+                                                        lastDate = refills[refills.size - 1].date.toDate()
+                                                    }
+                                                }
+                                        }
+                                }
+                            }
+                    }
+                }
+
+                delay(5_000) // Check every 5 seconds
             }
         }
 
@@ -103,78 +207,52 @@ class BackgroundService : Service() {
         isRunning = false
 
         super.onDestroy()
-        job.cancel()
+        mainJob.cancel()
+        dateJob.cancel()
+        co2Job.cancel()
     }
 
-    private fun checkDate(car: Car, date: Timestamp, currentDate: Timestamp, title: String): Boolean {
+    private fun checkDate(car: Car, date: Timestamp, currentDate: Timestamp, title: String) {
 
-        initRegisters(car.plate, date, title)
-
-        val showLate = notificationRegister[car.plate]!![title]!![0]
-        val showToday = notificationRegister[car.plate]!![title]!![1]
-        val showTomorrow = notificationRegister[car.plate]!![title]!![2]
-        val showThreeDays = notificationRegister[car.plate]!![title]!![3]
-        val showOneWeek = notificationRegister[car.plate]!![title]!![4]
+        initRegisters(notificationDateRegister, car.plate, title)
 
         val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val formattedDate = sdf.format(date.toDate())
         val timeDifferenceInDays = abs(daysBetweenDates(currentDate, date))
 
         val titleStr = title + " date" + " - " + car.plate
-        val textStr =
-            if (timeDifferenceInDays > 1)
-                "You have $timeDifferenceInDays days left to pay your car ${title.lowercase()} (deadline is $formattedDate)"
-            else
-                "The ${title.lowercase()} payment is due tomorrow"
+        val textStr: String =
+            if (!isSameDay(currentDate, date) && currentDate > date) {
 
-        if (showLate && !isSameDay(currentDate, date) && currentDate > date) {
-
-            notificationRegister[car.plate]!![title]!![0] = false
-            notificationRegister[car.plate]!![title]!![1] = false
-            notificationRegister[car.plate]!![title]!![2] = false
-            notificationRegister[car.plate]!![title]!![3] = false
-            notificationRegister[car.plate]!![title]!![4] = false
-
-            val text =
                 if (timeDifferenceInDays > 1)
                     "You are $timeDifferenceInDays days late on your car ${title.lowercase()}! (deadline was $formattedDate)"
                 else
                     "You are one day late on your car ${title.lowercase()}! (deadline was $formattedDate)"
+            }
 
-            val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentTitle(titleStr)
-                .setContentText(text)
-                .build()
+            else if (isSameDay(currentDate, date)) {
 
-            NotificationHandler.notify(n, hash(title + car.plate))
+                "Today is the last day to pay the car ${title.lowercase()}!"
+            }
 
-            return false
-        }
+            else if (date.seconds - currentDate.seconds <= 604800) {
 
-        else if (showToday && isSameDay(currentDate, date)) {
+                if (timeDifferenceInDays > 1)
+                    "You have $timeDifferenceInDays days left to pay your car ${title.lowercase()} (deadline is $formattedDate)"
+                else
+                    "The ${title.lowercase()} payment is due tomorrow"
+            }
 
-            notificationRegister[car.plate]!![title]!![1] = false
-            notificationRegister[car.plate]!![title]!![2] = false
-            notificationRegister[car.plate]!![title]!![3] = false
-            notificationRegister[car.plate]!![title]!![4] = false
+            else {
 
-            val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentTitle(titleStr)
-                .setContentText("Today is the last day to pay the car ${title.lowercase()}!")
-                .build()
+                ""
+            }
 
-            NotificationHandler.notify(n, hash(title + car.plate))
-        }
+        val showNotification = textStr.isNotEmpty() && notificationDateRegister[car.plate]!![title]!!
 
-        else if (showTomorrow && date.seconds - currentDate.seconds <= 86400)  { // Tomorrow
+        if (showNotification) {
 
-            notificationRegister[car.plate]!![title]!![2] = false
-            notificationRegister[car.plate]!![title]!![3] = false
-            notificationRegister[car.plate]!![title]!![4] = false
+            notificationDateRegister[car.plate]!![title] = false
 
             val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -185,37 +263,6 @@ class BackgroundService : Service() {
 
             NotificationHandler.notify(n, hash(title + car.plate))
         }
-
-        else if (showThreeDays && date.seconds - currentDate.seconds <= 259200)  { // Three days
-
-            notificationRegister[car.plate]!![title]!![3] = false
-            notificationRegister[car.plate]!![title]!![4] = false
-
-            val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentTitle(titleStr)
-                .setContentText(textStr)
-                .build()
-
-            NotificationHandler.notify(n, hash(title + car.plate))
-        }
-
-        else if (showOneWeek && date.seconds - currentDate.seconds <= 604800)  { // One week
-
-            notificationRegister[car.plate]!![title]!![4] = false
-
-            val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentTitle(titleStr)
-                .setContentText(textStr)
-                .build()
-
-            NotificationHandler.notify(n, hash(title + car.plate))
-        }
-
-        return true
     }
 
     private fun hash(input: String): Int {
@@ -227,61 +274,20 @@ class BackgroundService : Service() {
         return hash
     }
 
-    private fun initRegisters(plate: String, date: Timestamp, title: String) {
+    private fun initRegisters(register: HashMap<String, HashMap<String, Boolean>>, plate: String, title: String) {
 
-        if (notificationRegister.containsKey(plate)) {
+        if (register.containsKey(plate)) {
 
-            if (!notificationRegister[plate]!!.containsKey(title)) {
+            if (!register[plate]!!.containsKey(title)) {
 
-                notificationRegister[plate]!![title] = BooleanArray(5)
-                val array = notificationRegister[plate]!![title]!!
-                array[0] = true
-                array[1] = true
-                array[2] = true
-                array[3] = true
-                array[4] = true
+                register[plate]!![title] = true
             }
         }
 
         else {
 
-            notificationRegister[plate] = HashMap()
-            notificationRegister[plate]!![title] = BooleanArray(5)
-            val array = notificationRegister[plate]!![title]!!
-            array[0] = true
-            array[1] = true
-            array[2] = true
-            array[3] = true
-            array[4] = true
-        }
-
-        if (dateRegister.containsKey(plate)) {
-
-            if (dateRegister[plate]!!.containsKey(title)) {
-
-                if (dateRegister[plate]!![title] != date) {
-
-                    dateRegister[plate]!![title] = date
-                    notificationRegister[plate]!![title] = BooleanArray(5)
-                    val array = notificationRegister[plate]!![title]!!
-                    array[0] = true
-                    array[1] = true
-                    array[2] = true
-                    array[3] = true
-                    array[4] = true
-                }
-            }
-
-            else {
-
-                dateRegister[plate]!![title] = date
-            }
-        }
-
-        else {
-
-            dateRegister[plate] = HashMap()
-            dateRegister[plate]!![title] = date
+            register[plate] = HashMap()
+            register[plate]!![title] = true
         }
     }
 
@@ -310,11 +316,16 @@ class BackgroundService : Service() {
         return ChronoUnit.DAYS.between(date1, date2)
     }
 
-    private val secondsToWait = 10
-    private lateinit var context: Context
-    private val job = Job()
-    private val scope = CoroutineScope(Dispatchers.IO + job)
-    private var dateRegister = HashMap<String, HashMap<String, Timestamp>>()
-    private var notificationRegister = HashMap<String, HashMap<String, BooleanArray>>()
     private var user: User? = null
+    private lateinit var today: Timestamp
+    private lateinit var context: Context
+    private val mutex = Mutex()
+    private val mainJob = Job()
+    private val mainScope = CoroutineScope(Dispatchers.IO + mainJob)
+    private val dateJob = Job()
+    private val dateScope = CoroutineScope(Dispatchers.IO + dateJob)
+    private val co2Job = Job()
+    private val co2Scope = CoroutineScope(Dispatchers.IO + co2Job)
+    private var notificationDateRegister = HashMap<String, HashMap<String, Boolean>>()
+    private var lastDate = Date.from(Instant.EPOCH)
 }

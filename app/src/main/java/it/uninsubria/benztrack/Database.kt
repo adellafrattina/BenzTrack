@@ -43,6 +43,7 @@ public class Database {
         public const val WIDTH_FIELD = "width"
         public const val LENGTH_FIELD = "length"
         public const val HEIGHT_FIELD = "height"
+        public const val FUEL_CAPACITY_FIELD = "fuelcapacity"
         public const val SEARCH_TERMS_FIELD = "searchterms"
 
         public const val PLATE_FIELD = "plate"
@@ -56,6 +57,7 @@ public class Database {
         public const val PRICE_PER_LITER_FIELD = "ppl"
         public const val MILEAGE_FIELD = "mileage"
         public const val AMOUNT_FIELD = "amount"
+        public const val CURRENT_FUEL_AMOUNT_FIELD = "currentfuelamount"
     }
 
     /**
@@ -793,82 +795,108 @@ public class Database {
 
                 if (carPresent) {
 
-                    dbRef
-                        .collection(USERS_COLLECTION)
-                        .document(username)
-                        .collection(CARS_COLLECTION)
-                        .document(plate)
-                        .collection(REFILLS_COLLECTION)
-                        .orderBy(DATE_FIELD)
-                        .limit(1)
-                        .get()
-                        .addOnSuccessListener { query ->
+                    getUserCarModel(username, plate)
+                        .addOnSuccessListener { model ->
 
-                            if (refill.mileage.isNaN())
-                                errorMap[MILEAGE_FIELD] = "This value must not be empty"
+                            val fuelCapacity = model.fuelcapacity
 
-                            else {
+                            if (fuelCapacity < refill.amount / refill.ppl + refill.currentfuelamount) {
 
-                                // Check that the mileage is greater than the last one (if there is one)
-                                for (document in query.documents) {
+                                errorMap["message"] = "Your car can only contain ${fuelCapacity}L of fuel (there are ${refill.amount / refill.ppl + refill.currentfuelamount - fuelCapacity} extra liters)"
+                            }
 
-                                    val mileage = document.get(MILEAGE_FIELD) as Double
-                                    if (mileage > refill.mileage)
-                                        errorMap[MILEAGE_FIELD] = "The mileage value is not valid"
+                            dbRef
+                                .collection(USERS_COLLECTION)
+                                .document(username)
+                                .collection(CARS_COLLECTION)
+                                .document(plate)
+                                .collection(REFILLS_COLLECTION)
+                                .orderBy(DATE_FIELD)
+                                .limit(1)
+                                .get()
+                                .addOnSuccessListener { query ->
+
+                                    if (refill.mileage.isNaN())
+                                        errorMap[MILEAGE_FIELD] = "This value must not be empty"
+
+                                    else {
+
+                                        // Check that the mileage is greater than the last one (if there is one)
+                                        for (document in query.documents) {
+
+                                            val prevRefill = document.toObject(Refill::class.java)
+                                            if (prevRefill != null) {
+
+                                                if (prevRefill.mileage > refill.mileage)
+                                                    errorMap[MILEAGE_FIELD] = "The mileage value is not valid (should be higher than the previous one - ${prevRefill.mileage}km)"
+
+                                                if (refill.currentfuelamount.isNaN())
+                                                    errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "This value must not be empty"
+                                                else if (refill.currentfuelamount < 0)
+                                                    errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount cannot be negative"
+                                                else if (refill.currentfuelamount > prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl)
+                                                    errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount is not valid (should be less than ${prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl}L)"
+                                            }
+                                        }
+                                    }
+
+                                    // Check position
+                                    if (refill.position.isEmpty())
+                                        errorMap[POSITION_FIELD] = "This value must not be empty"
+
+                                    // Check price per liter
+                                    if (refill.ppl.isNaN())
+                                        errorMap[PRICE_PER_LITER_FIELD] = "This value must not be empty"
+
+                                    else if (refill.ppl < 0)
+                                        errorMap[PRICE_PER_LITER_FIELD] = "The price per liter cannot be negative"
+
+                                    // Check amount
+                                    if (refill.amount.isNaN())
+                                        errorMap[AMOUNT_FIELD] = "This value must not be empty"
+
+                                    else if (refill.amount < 0)
+                                        errorMap[AMOUNT_FIELD] = "The amount cannot be negative"
+
+                                    // Check consistency
+                                    if (refill.amount != 0.0f && refill.ppl == 0.0f)
+                                        errorMap[AMOUNT_FIELD] = "The value is not consistent with the price per liter"
+
+                                    if (errorMap.isEmpty()) {
+
+                                        dbRef
+                                            .collection(USERS_COLLECTION)
+                                            .document(username)
+                                            .collection(CARS_COLLECTION)
+                                            .document(plate)
+                                            .collection(REFILLS_COLLECTION)
+                                            .document(refill.date.toString())
+                                            .set(refill)
+                                            .addOnSuccessListener {
+
+                                                taskSource.setResult(true)
+                                            }
+                                            .addOnFailureListener { e ->
+
+                                                taskSource.setException(RefillException(e.message?:""))
+                                            }
+                                    }
+
+                                    else {
+
+                                        taskSource.setException(RefillException(
+                                            if (errorMap["message"] != null)                 errorMap["message"]!! else "Failed to add new refill",
+                                            if (errorMap[POSITION_FIELD] != null)            errorMap[POSITION_FIELD]!! else "",
+                                            if (errorMap[PRICE_PER_LITER_FIELD] != null)     errorMap[PRICE_PER_LITER_FIELD]!! else "",
+                                            if (errorMap[MILEAGE_FIELD] != null)             errorMap[MILEAGE_FIELD]!! else "",
+                                            if (errorMap[AMOUNT_FIELD] != null)              errorMap[AMOUNT_FIELD]!! else "",
+                                            if (errorMap[CURRENT_FUEL_AMOUNT_FIELD] != null) errorMap[CURRENT_FUEL_AMOUNT_FIELD]!! else ""))
+                                    }
                                 }
-                            }
+                                .addOnFailureListener { e ->
 
-                            // Check position
-                            if (refill.position.isEmpty())
-                                errorMap[POSITION_FIELD] = "This value must not be empty"
-
-                            // Check price per liter
-                            if (refill.ppl.isNaN())
-                                errorMap[PRICE_PER_LITER_FIELD] = "This value must not be empty"
-
-                            else if (refill.ppl < 0)
-                                errorMap[PRICE_PER_LITER_FIELD] = "The price per liter cannot be negative"
-
-                            // Check amount
-                            if (refill.amount.isNaN())
-                                errorMap[AMOUNT_FIELD] = "This value must not be empty"
-
-                            else if (refill.amount < 0)
-                                errorMap[AMOUNT_FIELD] = "The amount cannot be negative"
-
-                            // Check consistency
-                            if (refill.amount != 0.0f && refill.ppl == 0.0f)
-                                errorMap[AMOUNT_FIELD] = "The value is not consistent with the price per liter"
-
-                            if (errorMap.isEmpty()) {
-
-                                dbRef
-                                    .collection(USERS_COLLECTION)
-                                    .document(username)
-                                    .collection(CARS_COLLECTION)
-                                    .document(plate)
-                                    .collection(REFILLS_COLLECTION)
-                                    .document(refill.date.toString())
-                                    .set(refill)
-                                    .addOnSuccessListener {
-
-                                        taskSource.setResult(true)
-                                    }
-                                    .addOnFailureListener { e ->
-
-                                        taskSource.setException(RefillException(e.message?:""))
-                                    }
-                            }
-
-                            else {
-
-                                taskSource.setException(RefillException(
-                                    "Failed to add new refill",
-                                    if (errorMap[POSITION_FIELD] != null)        errorMap[POSITION_FIELD]!! else "",
-                                    if (errorMap[PRICE_PER_LITER_FIELD] != null) errorMap[PRICE_PER_LITER_FIELD]!! else "",
-                                    if (errorMap[MILEAGE_FIELD] != null)         errorMap[MILEAGE_FIELD]!! else "",
-                                    if (errorMap[AMOUNT_FIELD] != null)          errorMap[AMOUNT_FIELD]!! else ""))
-                            }
+                                    taskSource.setException(RefillException(e.message?:""))
+                                }
                         }
                         .addOnFailureListener { e ->
 

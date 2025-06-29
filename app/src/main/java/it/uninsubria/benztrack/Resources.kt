@@ -4,7 +4,6 @@ import android.content.Context
 import android.widget.Toast
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentReference
-import java.io.Serializable
 
 /**
  * Toast wrapper class to avoid message queuing
@@ -70,22 +69,22 @@ public data class User(
  *
  * @author adellafrattina
  */
-enum class FuelType {
+enum class FuelType(val value: Float) {
 
     /**
-     * For cars fueled by petrol
+     * For cars fueled by petrol (2.31 kg/l of CO2)
      */
-    Petrol,
+    Petrol(2.31f),
 
     /**
-     * For cars fueled by diesel
+     * For cars fueled by diesel (2.68 kg/l of CO2)
      */
-    Diesel,
+    Diesel(2.68f),
 
     /**
      * For electric cars
      */
-    Electric
+    Electric(0.0f)
 }
 
 /**
@@ -139,17 +138,22 @@ public data class CarModel(
     var height: Float,
 
     /**
+     * The model's fuel capacity (in liters)
+     */
+    var fuelcapacity: Float,
+
+    /**
      * The possible search terms that will be used in the search model algorithm
      */
     var searchterms: ArrayList<String>
-) : Serializable {
+) {
 
-    constructor(): this("", Int.MAX_VALUE, Int.MAX_VALUE, FuelType.Petrol, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, ArrayList<String>())
+    constructor(): this("", Int.MAX_VALUE, Int.MAX_VALUE, FuelType.Petrol, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, ArrayList<String>())
 
     @Override
     public override fun toString(): String {
 
-        return "$name\n$year\n$capacity\n$fuel\n${co2factor.toInt().toFloat()}\n${weight.toInt().toFloat()}\n${length.toInt().toFloat()}\n${height.toInt().toFloat()}"
+        return "$name\n$year\n$capacity\n$fuel\n${fuelcapacity.toInt().toFloat()}\n${co2factor.toInt().toFloat()}\n${weight.toInt().toFloat()}\n${length.toInt().toFloat()}\n${height.toInt().toFloat()}"
     }
 }
 
@@ -189,7 +193,7 @@ public data class Car(
      * The next tax date
      */
     var taxdate: Timestamp?
-) : Serializable {
+) {
 
     constructor(): this("", "", null, null, null, null)
 }
@@ -224,10 +228,15 @@ public data class Refill(
     /**
      * The refill's amount in euros
      */
-    var amount: Float
+    var amount: Float,
+
+    /**
+     * The refill's current fuel amount in liters
+     */
+    var currentfuelamount: Float
 ) {
 
-    constructor(): this(Timestamp.now(), "", Float.NaN, Float.NaN, Float.NaN)
+    constructor(): this(Timestamp.now(), "", Float.NaN, Float.NaN, Float.NaN, Float.NaN)
 }
 
 /**
