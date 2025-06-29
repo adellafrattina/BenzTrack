@@ -948,10 +948,10 @@ public class Database {
                         .orderBy(DATE_FIELD, Query.Direction.DESCENDING)
                         .limit(1)
                         .get()
-                        .addOnSuccessListener { query ->
+                        .addOnSuccessListener { queryRefill ->
 
                             lateinit var last: Date
-                            for (document in query.documents) {
+                            for (document in queryRefill.documents) {
 
                                 val refill = document.toObject(Refill::class.java)
                                 if (refill != null)
@@ -1121,11 +1121,11 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
-     * @param from The start date (Date.from(Instant.MIN) to get the oldest date)
-     * @param to The end date (by default the current date)
+     * @param from The start date (Date.from(Instant.EPOCH) by default to get the oldest date)
+     * @param to The end date (Date.from(Instant.EPOCH) by default to get the latest date)
      * @throws MaintenanceException
      */
-    public fun getMaintenanceData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.now())) : Task<ArrayList<Maintenance>> {
+    public fun getMaintenanceData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.EPOCH)) : Task<ArrayList<Maintenance>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Maintenance>>()
 
@@ -1140,25 +1140,54 @@ public class Database {
                         .collection(CARS_COLLECTION)
                         .document(plate)
                         .collection(MAINTENANCE_COLLECTION)
-                        .orderBy(DATE_FIELD)
-                        .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
-                        .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                        .orderBy(DATE_FIELD, Query.Direction.DESCENDING)
+                        .limit(1)
                         .get()
-                        .addOnSuccessListener { query ->
+                        .addOnSuccessListener { queryMaintenance ->
 
-                            val list = ArrayList<Maintenance>()
-                            for (document in query.documents) {
+                            lateinit var last: Date
+                            for (document in queryMaintenance.documents) {
 
                                 val maintenance = document.toObject(Maintenance::class.java)
                                 if (maintenance != null)
-                                    list.add(maintenance)
+                                    last = maintenance.date.toDate()
+                                else
+                                    taskSource.setException(MaintenanceException("Last maintenance date is null (database error)"))
                             }
 
-                            taskSource.setResult(list)
+                            if (!to.equals(Instant.EPOCH))
+                                last = to
+
+                            dbRef
+                                .collection(USERS_COLLECTION)
+                                .document(username)
+                                .collection(CARS_COLLECTION)
+                                .document(plate)
+                                .collection(MAINTENANCE_COLLECTION)
+                                .orderBy(DATE_FIELD)
+                                .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                                .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(last))
+                                .get()
+                                .addOnSuccessListener { query ->
+
+                                    val list = ArrayList<Maintenance>()
+                                    for (document in query.documents) {
+
+                                        val maintenance = document.toObject(Maintenance::class.java)
+                                        if (maintenance != null)
+                                            list.add(maintenance)
+                                    }
+
+                                    taskSource.setResult(list)
+                                }
+                                .addOnFailureListener { e ->
+
+                                    taskSource.setException(MaintenanceException(e.message?:""))
+                                }
                         }
                         .addOnFailureListener { e ->
 
-                            taskSource.setException(MaintenanceException(e.message?:""))
+                            taskSource.setException(RefillException(e.message?:""))
                         }
                 }
 
@@ -1287,11 +1316,11 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
-     * @param from The start date (Date.from(Instant.MIN) to get the oldest date)
-     * @param to The end date (by default the current date)
+     * @param from The start date (Date.from(Instant.EPOCH) by default to get the oldest date)
+     * @param to The start date (Date.from(Instant.EPOCH) by default to get the latest date)
      * @throws InsuranceException
      */
-    public fun getInsuranceData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.now())) : Task<ArrayList<Insurance>> {
+    public fun getInsuranceData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.EPOCH)) : Task<ArrayList<Insurance>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Insurance>>()
 
@@ -1306,21 +1335,50 @@ public class Database {
                         .collection(CARS_COLLECTION)
                         .document(plate)
                         .collection(INSURANCE_COLLECTION)
-                        .orderBy(DATE_FIELD)
-                        .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
-                        .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                        .orderBy(DATE_FIELD, Query.Direction.DESCENDING)
+                        .limit(1)
                         .get()
-                        .addOnSuccessListener { query ->
+                        .addOnSuccessListener { queryInsurance ->
 
-                            val list = ArrayList<Insurance>()
-                            for (document in query.documents) {
+                            lateinit var last: Date
+                            for (document in queryInsurance.documents) {
 
                                 val insurance = document.toObject(Insurance::class.java)
                                 if (insurance != null)
-                                    list.add(insurance)
+                                    last = insurance.date.toDate()
+                                else
+                                    taskSource.setException(InsuranceException("Last insurance date is null (database error)"))
                             }
 
-                            taskSource.setResult(list)
+                            if (!to.equals(Instant.EPOCH))
+                                last = to
+
+                            dbRef
+                                .collection(USERS_COLLECTION)
+                                .document(username)
+                                .collection(CARS_COLLECTION)
+                                .document(plate)
+                                .collection(INSURANCE_COLLECTION)
+                                .orderBy(DATE_FIELD)
+                                .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                                .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                                .get()
+                                .addOnSuccessListener { query ->
+
+                                    val list = ArrayList<Insurance>()
+                                    for (document in query.documents) {
+
+                                        val insurance = document.toObject(Insurance::class.java)
+                                        if (insurance != null)
+                                            list.add(insurance)
+                                    }
+
+                                    taskSource.setResult(list)
+                                }
+                                .addOnFailureListener { e ->
+
+                                    taskSource.setException(InsuranceException(e.message?:""))
+                                }
                         }
                         .addOnFailureListener { e ->
 
@@ -1453,11 +1511,11 @@ public class Database {
      *
      * @param username The user's id
      * @param plate The user's car plate
-     * @param from The start date (Date.from(Instant.MIN) to get the oldest date)
-     * @param to The end date (by default the current date)
+     * @param from The start date (Date.from(Instant.EPOCH) by default to get the oldest date)
+     * @param to The start date (Date.from(Instant.EPOCH) by default to get the latest date)
      * @throws TaxException
      */
-    public fun getTaxData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.now())) : Task<ArrayList<Tax>> {
+    public fun getTaxData(username: String, plate: String, from: Date = Date.from(Instant.EPOCH), to: Date = Date.from(Instant.EPOCH)) : Task<ArrayList<Tax>> {
 
         val taskSource = TaskCompletionSource<ArrayList<Tax>>()
 
@@ -1472,21 +1530,50 @@ public class Database {
                         .collection(CARS_COLLECTION)
                         .document(plate)
                         .collection(TAX_COLLECTION)
-                        .orderBy(DATE_FIELD)
-                        .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
-                        .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                        .orderBy(DATE_FIELD, Query.Direction.DESCENDING)
+                        .limit(1)
                         .get()
-                        .addOnSuccessListener { query ->
+                        .addOnSuccessListener { queryInsurance ->
 
-                            val list = ArrayList<Tax>()
-                            for (document in query.documents) {
+                            lateinit var last: Date
+                            for (document in queryInsurance.documents) {
 
                                 val tax = document.toObject(Tax::class.java)
                                 if (tax != null)
-                                    list.add(tax)
+                                    last = tax.date.toDate()
+                                else
+                                    taskSource.setException(TaxException("Last tax date is null (database error)"))
                             }
 
-                            taskSource.setResult(list)
+                            if (!to.equals(Instant.EPOCH))
+                                last = to
+
+                            dbRef
+                                .collection(USERS_COLLECTION)
+                                .document(username)
+                                .collection(CARS_COLLECTION)
+                                .document(plate)
+                                .collection(TAX_COLLECTION)
+                                .orderBy(DATE_FIELD)
+                                .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
+                                .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                                .get()
+                                .addOnSuccessListener { query ->
+
+                                    val list = ArrayList<Tax>()
+                                    for (document in query.documents) {
+
+                                        val tax = document.toObject(Tax::class.java)
+                                        if (tax != null)
+                                            list.add(tax)
+                                    }
+
+                                    taskSource.setResult(list)
+                                }
+                                .addOnFailureListener { e ->
+
+                                    taskSource.setException(TaxException(e.message?:""))
+                                }
                         }
                         .addOnFailureListener { e ->
 
