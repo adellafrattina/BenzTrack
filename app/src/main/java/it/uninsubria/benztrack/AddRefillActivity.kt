@@ -114,9 +114,9 @@ class AddRefillActivity : AppCompatActivity() {
                                 showError(mileageLayout, e.mileage)
                             }
 
-                            if (e.fuelcapacity.isNotEmpty()) {
+                            if (e.currentfuelamount.isNotEmpty()) {
 
-                                showError(fuelLayout, e.fuelcapacity)
+                                showError(fuelLayout, e.currentfuelamount)
                             }
                         }
                     }
