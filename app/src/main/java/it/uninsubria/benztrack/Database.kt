@@ -259,7 +259,7 @@ public class Database {
             errorMap[CAPACITY_FIELD] = "The capacity must be valid"
 
         // Check CO2 factor
-        if (model.co2factor < 0 || model.co2factor.isNaN())
+        if (model.co2factor.isNaN() || model.co2factor < 0)
             errorMap[CO2_FACTOR_FIELD] = "The CO2 factor must be valid"
 
         // Check weight
@@ -277,6 +277,10 @@ public class Database {
         // Check height
         if (model.height < 1) // Shortest possible car (From what I've researched)
             errorMap[HEIGHT_FIELD] = "The height must be valid"
+
+        // Check fuel capacity
+        if (model.fuelcapacity.isNaN() || model.fuelcapacity < 0)
+            errorMap[FUEL_CAPACITY_FIELD] = "The fuel capacity must be valid"
 
         if (errorMap.isEmpty()) {
 
@@ -337,16 +341,17 @@ public class Database {
 
             errorMap["message"] = "This car model cannot exist"
             taskSource.setException(CarModelException(
-                if (errorMap["message"] != null)        errorMap["message"]!! else "" ,
-                if (errorMap[NAME_FIELD] != null)       errorMap[NAME_FIELD]!! else "",
-                if (errorMap[YEAR_FIELD] != null)       errorMap[YEAR_FIELD]!! else "",
-                if (errorMap[CAPACITY_FIELD] != null)   errorMap[CAPACITY_FIELD]!! else "",
-                if (errorMap[FUEL_FIELD] != null)       errorMap[FUEL_FIELD]!! else "",
-                if (errorMap[CO2_FACTOR_FIELD] != null) errorMap[CO2_FACTOR_FIELD]!! else "",
-                if (errorMap[WEIGHT_FIELD] != null)     errorMap[WEIGHT_FIELD]!! else "",
-                if (errorMap[WIDTH_FIELD] != null)      errorMap[WIDTH_FIELD]!! else "",
-                if (errorMap[LENGTH_FIELD] != null)     errorMap[LENGTH_FIELD]!! else "",
-                if (errorMap[HEIGHT_FIELD] != null)     errorMap[HEIGHT_FIELD]!! else ""))
+                if (errorMap["message"] != null)                errorMap["message"]!! else "" ,
+                if (errorMap[NAME_FIELD] != null)               errorMap[NAME_FIELD]!! else "",
+                if (errorMap[YEAR_FIELD] != null)               errorMap[YEAR_FIELD]!! else "",
+                if (errorMap[CAPACITY_FIELD] != null)           errorMap[CAPACITY_FIELD]!! else "",
+                if (errorMap[FUEL_FIELD] != null)               errorMap[FUEL_FIELD]!! else "",
+                if (errorMap[CO2_FACTOR_FIELD] != null)         errorMap[CO2_FACTOR_FIELD]!! else "",
+                if (errorMap[WEIGHT_FIELD] != null)             errorMap[WEIGHT_FIELD]!! else "",
+                if (errorMap[WIDTH_FIELD] != null)              errorMap[WIDTH_FIELD]!! else "",
+                if (errorMap[LENGTH_FIELD] != null)             errorMap[LENGTH_FIELD]!! else "",
+                if (errorMap[HEIGHT_FIELD] != null)             errorMap[HEIGHT_FIELD]!! else "",
+                if (errorMap[FUEL_CAPACITY_FIELD] != null)      errorMap[FUEL_CAPACITY_FIELD]!! else ""))
         }
 
         return taskSource.task

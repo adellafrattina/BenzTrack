@@ -59,6 +59,7 @@ public data class User(
      * The user surname
      */
     var surname: String
+
 ) {
 
     constructor(): this("", "", "", "", "")
@@ -146,6 +147,7 @@ public data class CarModel(
      * The possible search terms that will be used in the search model algorithm
      */
     var searchterms: ArrayList<String>
+
 ) {
 
     constructor(): this("", Int.MAX_VALUE, Int.MAX_VALUE, FuelType.Petrol, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, ArrayList<String>())
@@ -193,6 +195,7 @@ public data class Car(
      * The next tax date
      */
     var taxdate: Timestamp?
+
 ) {
 
     constructor(): this("", "", null, null, null, null)
@@ -234,6 +237,7 @@ public data class Refill(
      * The refill's current fuel amount in liters
      */
     var currentfuelamount: Float
+
 ) {
 
     constructor(): this(Timestamp.now(), "", Float.NaN, Float.NaN, Float.NaN, Float.NaN)
@@ -255,6 +259,7 @@ public data class Maintenance(
      * The maintenance amount
      */
     var amount: Float
+
 ) {
 
     constructor(): this(Timestamp.now(), Float.NaN)
@@ -276,6 +281,7 @@ public data class Insurance(
      * The insurance amount
      */
     var amount: Float
+
 ) {
 
     constructor(): this(Timestamp.now(), Float.NaN)
@@ -297,6 +303,7 @@ public data class Tax(
      * The tax amount
      */
     var amount: Float
+
 ) {
 
     constructor(): this(Timestamp.now(), Float.NaN)
