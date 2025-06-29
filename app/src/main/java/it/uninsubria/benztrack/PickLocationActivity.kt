@@ -12,8 +12,10 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Overlay
 import android.view.MotionEvent
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.os.Looper
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
@@ -23,7 +25,7 @@ class PickLocationActivity : AppCompatActivity() {
     private lateinit var map: MapView
     private var selectedPoint: GeoPoint? = null
     private var marker: Marker? = null
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var locationManager: LocationManager
     private val LOCATION_PERMISSION_REQUEST = 2001
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,8 +48,6 @@ class PickLocationActivity : AppCompatActivity() {
             android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
 
         ).apply { topMargin = 40 })
-
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST)
@@ -105,30 +105,32 @@ class PickLocationActivity : AppCompatActivity() {
             return
         }
 
-        fusedLocationClient.lastLocation
+        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
-            .addOnSuccessListener { location ->
+        val listener = object : LocationListener {
 
-                if (location != null) {
+            override fun onLocationChanged(location: Location) {
 
-                    val userPoint = GeoPoint(location.latitude, location.longitude)
-                    map.controller.setCenter(userPoint)
-                    map.controller.setZoom(15.0)
-                }
-
-                else {
-
-                    map.controller.setCenter(GeoPoint(45.0, 9.0))
-                    map.controller.setZoom(15.0)
-                }
-
-            }
-
-            .addOnFailureListener {
-
-                map.controller.setCenter(GeoPoint(45.0, 9.0))
+                val userPoint = GeoPoint(location.latitude, location.longitude)
+                map.controller.setCenter(userPoint)
                 map.controller.setZoom(15.0)
+                locationManager.removeUpdates(this)
             }
+
+            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+            override fun onProviderEnabled(provider: String) {}
+            override fun onProviderDisabled(provider: String) {}
+        }
+
+        locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, listener, Looper.getMainLooper())
+
+        val lastKnown = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        if (lastKnown != null) {
+
+            val userPoint = GeoPoint(lastKnown.latitude, lastKnown.longitude)
+            map.controller.setCenter(userPoint)
+            map.controller.setZoom(15.0)
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
