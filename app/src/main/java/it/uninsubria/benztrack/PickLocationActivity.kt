@@ -31,6 +31,8 @@ import android.graphics.drawable.Drawable
 import androidx.core.content.ContextCompat
 import android.view.ViewGroup
 import android.graphics.drawable.GradientDrawable
+import android.widget.ImageButton
+import android.widget.ImageView
 
 class PickLocationActivity : AppCompatActivity() {
 
@@ -39,7 +41,7 @@ class PickLocationActivity : AppCompatActivity() {
     private var marker: Marker? = null
     private lateinit var locationManager: LocationManager
     private val LOCATION_PERMISSION_REQUEST = 2001
-    private lateinit var tickButton: Button
+    private lateinit var tickButton: ImageButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -88,19 +90,13 @@ class PickLocationActivity : AppCompatActivity() {
         }
 
         // Add tick button (bottom right)
-        tickButton = Button(this)
-        val tickIcon: Drawable? = ContextCompat.getDrawable(this, android.R.drawable.ic_menu_save)
+        tickButton = ImageButton(this)
+        tickButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_check))
+        tickButton.setColorFilter(Color.WHITE)
         tickButton.background = createBlueRoundedBackground()
-        tickButton.setCompoundDrawablesWithIntrinsicBounds(tickIcon, null, null, null)
-        tickButton.text = ""
-        tickButton.setPadding(30, 0, 0, 0)
-        tickButton.compoundDrawablePadding = 0
-        tickButton.setTextColor(Color.WHITE)
-        tickButton.setAllCaps(false)
-        tickButton.isAllCaps = false
-        tickButton.textSize = 0f
-        tickIcon?.setTint(Color.WHITE)
-        tickButton.gravity = android.view.Gravity.CENTER
+        tickButton.scaleType = ImageView.ScaleType.CENTER
+        tickButton.setPadding(0, 0, 0, 0)
+        tickButton.contentDescription = getString(R.string.tick)
         val tickParams = android.widget.FrameLayout.LayoutParams(150, 150)
         tickParams.gravity = android.view.Gravity.BOTTOM or android.view.Gravity.END
         tickParams.marginEnd = 32
