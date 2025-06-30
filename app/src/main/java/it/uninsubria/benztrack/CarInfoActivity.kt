@@ -43,6 +43,8 @@ class CarInfoActivity : AppCompatActivity() {
         val payTaxButton = findViewById<Button>(R.id.button_pay_tax)
         val taxPlaceholder = findViewById<TextView>(R.id.text_tax_placeholder)
 
+        val refillPlaceholder = findViewById<TextView>(R.id.text_refills_placeholder)
+
         Handler.database.getUserCar(Handler.loggedUser!!.username, carPlate!!)
             .addOnSuccessListener { car ->
 
@@ -101,6 +103,40 @@ class CarInfoActivity : AppCompatActivity() {
                     val sdf = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
                     taxPlaceholder.text = "Next tax on: " + sdf.format(car.taxdate!!.toDate())
                 }
+
+                Handler.database.getRefillData(Handler.loggedUser!!.username, carPlate)
+                    .addOnSuccessListener { refills ->
+
+                        if (refills.size >= 2) {
+
+                            var totalLiters = 0f
+                            var totalKm = 0f
+                            var prev = refills[0]
+
+                            for (i in 1 until refills.size) {
+
+                                val curr = refills[i]
+                                val consumedLiters = prev.currentfuelamount + prev.amount / prev.ppl - curr.currentfuelamount
+                                val travelledKm = if (curr.mileage - prev.mileage > 0) curr.mileage - prev.mileage else 0f
+                                totalLiters += consumedLiters
+                                totalKm += travelledKm
+                                prev = curr
+                            }
+
+                            val mean = if (totalKm > 0) totalLiters / totalKm * 100 else 0f
+
+                            refillPlaceholder.text = "Average consumption: %.2f L / 100km".format(mean)
+
+                        }
+
+                        else
+                            refillPlaceholder.setText(R.string.refill_placeholder)
+                    }
+
+                    .addOnFailureListener {
+
+                        refillPlaceholder.setText(R.string.refill_placeholder)
+                    }
             }
 
             .addOnFailureListener { e ->
