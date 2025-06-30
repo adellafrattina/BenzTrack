@@ -4,7 +4,6 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver
@@ -97,7 +96,7 @@ class CarGraphActivity : AppCompatActivity() {
                     val fuelString = when (model.fuel) {
                         FuelType.Petrol -> "Petrol"
                         FuelType.Diesel -> "Diesel"
-                        FuelType.LGP -> "LGP"
+                        FuelType.LPG -> "LPG"
                     }
 
                     text.text = "${model.name} (${model.year}, $fuelString)\nW ${model.width} cm | L ${model.length} | H ${model.height} | M ${model.weight} kg\nCO2 ${model.co2factor} g/km | Capacity ${model.capacity} cm3"
