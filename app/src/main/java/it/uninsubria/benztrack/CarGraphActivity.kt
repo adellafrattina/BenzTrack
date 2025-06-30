@@ -207,7 +207,7 @@ class CarGraphActivity : AppCompatActivity() {
         val lineChart: LineChart = findViewById(R.id.line_chart)
 
         val entries = mutableListOf<Entry>()
-
+        val refillMap = HashMap<Float, Refill>()
         val co2Emissions = ArrayList<Float>()
 
         if (noAvailableData) {
@@ -221,6 +221,7 @@ class CarGraphActivity : AppCompatActivity() {
             for (i in 1 until refills.size) {
 
                 val currentRefill = refills[i]
+                refillMap[currentRefill.date.seconds * 1000f] = currentRefill
 
                 val consumedLiters =
                     prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl - currentRefill.currentfuelamount
@@ -337,15 +338,49 @@ class CarGraphActivity : AppCompatActivity() {
                 e?.let {
 
                     val sdf = SimpleDateFormat("HH:mm:ss - dd/MM/2025", Locale.getDefault())
+                    val refill = refillMap[it.x]
                     val value = it.y
                     val xValue = sdf.format(it.x.toLong())
+                    var position: String
+                    if (refill != null) {
 
-                    // Show a popup dialog
-                    AlertDialog.Builder(this@CarGraphActivity)
-                        .setTitle("Refill info")
-                        .setMessage("Time and Date: $xValue\n\nCO2: $value g/km per day")
-                        .setPositiveButton("OK", null)
-                        .show()
+                        Map.getAddressBasedOnGeoPoint(refill.position.latitude, refill.position.longitude)
+                            .addOnSuccessListener { address ->
+
+                                position = address?.displayName ?: "Unknown"
+
+                                // Show a popup dialog
+                                AlertDialog.Builder(this@CarGraphActivity)
+                                    .setTitle(xValue)
+                                    .setMessage("CO2: $value g/km per day\nMileage: ${refill.mileage} km\nAmount: €${refill.amount}\nPrice per liter: ${refill.ppl} €/L\nPosition: $position")
+                                    .setPositiveButton("OK", null)
+                                    .show()
+                            }
+                            .addOnFailureListener { e ->
+
+                                position = e.message!!
+
+                                // Show a popup dialog
+                                AlertDialog.Builder(this@CarGraphActivity)
+                                    .setTitle(xValue)
+                                    .setMessage("CO2: $value g/km per day\nMileage: ${refill.mileage} km\nAmount: €${refill.amount}\nPrice per liter: ${refill.ppl} €/L\nPosition: $position")
+                                    .setPositiveButton("OK", null)
+                                    .show()
+                            }
+                            .start()
+                    }
+
+                    else {
+
+                        position = "Error"
+
+                        // Show a popup dialog
+                        AlertDialog.Builder(this@CarGraphActivity)
+                            .setTitle("ERROR")
+                            .setMessage("Database error")
+                            .setPositiveButton("OK", null)
+                            .show()
+                    }
                 }
             }
 
