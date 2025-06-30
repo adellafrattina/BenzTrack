@@ -4,7 +4,6 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver
@@ -97,7 +96,7 @@ class CarGraphActivity : AppCompatActivity() {
                     val fuelString = when (model.fuel) {
                         FuelType.Petrol -> "Petrol"
                         FuelType.Diesel -> "Diesel"
-                        FuelType.LGP -> "LGP"
+                        FuelType.LPG -> "LPG"
                     }
 
                     text.text = "${model.name} (${model.year}, $fuelString)\nW ${model.width} cm | L ${model.length} | H ${model.height} | M ${model.weight} kg\nCO2 ${model.co2factor} g/km | Capacity ${model.capacity} cm3"
@@ -332,60 +331,55 @@ class CarGraphActivity : AppCompatActivity() {
         // Apply the description to the chart
         lineChart.description = description
 
-        lineChart.setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
+        if (!noAvailableData) {
 
-            override fun onValueSelected(e: Entry?, h: Highlight?) {
-                e?.let {
+            lineChart.setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
 
-                    val sdf = SimpleDateFormat("HH:mm:ss - dd/MM/2025", Locale.getDefault())
-                    val refill = refillMap[it.x]
-                    val value = it.y
-                    val xValue = sdf.format(it.x.toLong())
-                    var position: String
-                    if (refill != null) {
+                override fun onValueSelected(e: Entry?, h: Highlight?) {
+                    e?.let {
 
-                        Map.getAddressBasedOnGeoPoint(refill.position.latitude, refill.position.longitude)
-                            .addOnSuccessListener { address ->
+                        val sdf = SimpleDateFormat("HH:mm:ss - dd/MM/2025", Locale.getDefault())
+                        val refill = refillMap[it.x]
+                        val value = it.y
+                        val xValue = sdf.format(it.x.toLong())
+                        var position: String
+                        if (refill != null) {
 
-                                position = address?.displayName ?: "Unknown"
+                            Map.getAddressBasedOnGeoPoint(refill.position.latitude, refill.position.longitude)
+                                .addOnCompleteListener { result ->
 
-                                // Show a popup dialog
-                                AlertDialog.Builder(this@CarGraphActivity)
-                                    .setTitle(xValue)
-                                    .setMessage("CO2: $value g/km per day\nMileage: ${refill.mileage} km\nAmount: €${refill.amount}\nPrice per liter: ${refill.ppl} €/L\nPosition: $position")
-                                    .setPositiveButton("OK", null)
-                                    .show()
-                            }
-                            .addOnFailureListener { e ->
+                                    position = when (result) {
 
-                                position = e.message!!
+                                        is ReverseGeocodeTaskResult.Success -> {
 
-                                // Show a popup dialog
-                                AlertDialog.Builder(this@CarGraphActivity)
-                                    .setTitle(xValue)
-                                    .setMessage("CO2: $value g/km per day\nMileage: ${refill.mileage} km\nAmount: €${refill.amount}\nPrice per liter: ${refill.ppl} €/L\nPosition: $position")
-                                    .setPositiveButton("OK", null)
-                                    .show()
-                            }
-                            .start()
-                    }
+                                            result.address.displayName ?: "Unknown"
+                                        }
 
-                    else {
+                                        is ReverseGeocodeTaskResult.Failure -> {
 
-                        position = "Error"
+                                            result.exception.message!!
+                                        }
+                                    }
 
-                        // Show a popup dialog
-                        AlertDialog.Builder(this@CarGraphActivity)
-                            .setTitle("ERROR")
-                            .setMessage("Database error")
-                            .setPositiveButton("OK", null)
-                            .show()
+                                    // Show a popup dialog
+                                    AlertDialog.Builder(this@CarGraphActivity)
+                                        .setTitle(xValue)
+                                        .setMessage("CO2: $value g/km per day\nMileage: ${refill.mileage} km\nAmount: €${refill.amount}\nPrice per liter: ${refill.ppl} €/L\nPosition: $position")
+                                        .setPositiveButton("OK", null)
+                                        .show()
+                                }
+                        }
+
+                        else {
+
+                            ToastManager.show(this@CarGraphActivity, "Database error", Toast.LENGTH_SHORT)
+                        }
                     }
                 }
-            }
 
-            override fun onNothingSelected() {}
-        })
+                override fun onNothingSelected() {}
+            })
+        }
 
         // Refresh the chart
         lineChart.invalidate()
