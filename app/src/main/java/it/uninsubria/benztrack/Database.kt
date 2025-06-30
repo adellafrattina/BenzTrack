@@ -1408,7 +1408,7 @@ public class Database {
                                     .collection(INSURANCE_COLLECTION)
                                     .orderBy(DATE_FIELD)
                                     .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
-                                    .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                                    .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(last))
                                     .get()
                                     .addOnSuccessListener { query ->
 
@@ -1609,7 +1609,7 @@ public class Database {
                                     .collection(TAX_COLLECTION)
                                     .orderBy(DATE_FIELD)
                                     .whereGreaterThanOrEqualTo(DATE_FIELD, Timestamp(from))
-                                    .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(to))
+                                    .whereLessThanOrEqualTo(DATE_FIELD, Timestamp(last))
                                     .get()
                                     .addOnSuccessListener { query ->
 
