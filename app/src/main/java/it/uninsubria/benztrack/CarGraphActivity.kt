@@ -341,17 +341,31 @@ class CarGraphActivity : AppCompatActivity() {
                     val refill = refillMap[it.x]
                     val value = it.y
                     val xValue = sdf.format(it.x.toLong())
-                    var position = "Loading..."
+                    var position: String
                     if (refill != null) {
 
-                        Map.getNameBasedOnGeoPoint(refill.position.latitude, refill.position.longitude)
-                            .addOnSuccessListener { name ->
+                        Map.getAddressBasedOnGeoPoint(refill.position.latitude, refill.position.longitude)
+                            .addOnSuccessListener { address ->
 
-                                position = name
+                                position = address?.displayName ?: "Unknown"
+
+                                // Show a popup dialog
+                                AlertDialog.Builder(this@CarGraphActivity)
+                                    .setTitle(xValue)
+                                    .setMessage("CO2: $value g/km per day\nMileage: ${refill.mileage} km\nAmount: €${refill.amount}\nPrice per liter: ${refill.ppl} €/L\nPosition: $position")
+                                    .setPositiveButton("OK", null)
+                                    .show()
                             }
                             .addOnFailureListener { e ->
 
                                 position = e.message!!
+
+                                // Show a popup dialog
+                                AlertDialog.Builder(this@CarGraphActivity)
+                                    .setTitle(xValue)
+                                    .setMessage("CO2: $value g/km per day\nMileage: ${refill.mileage} km\nAmount: €${refill.amount}\nPrice per liter: ${refill.ppl} €/L\nPosition: $position")
+                                    .setPositiveButton("OK", null)
+                                    .show()
                             }
                             .start()
                     }
@@ -359,14 +373,14 @@ class CarGraphActivity : AppCompatActivity() {
                     else {
 
                         position = "Error"
-                    }
 
-                    // Show a popup dialog
-                    AlertDialog.Builder(this@CarGraphActivity)
-                        .setTitle("Refill info")
-                        .setMessage("Time and Date: $xValue\n\nCO2: $value g/km per day\n\nPosition: $position")
-                        .setPositiveButton("OK", null)
-                        .show()
+                        // Show a popup dialog
+                        AlertDialog.Builder(this@CarGraphActivity)
+                            .setTitle("ERROR")
+                            .setMessage("Database error")
+                            .setPositiveButton("OK", null)
+                            .show()
+                    }
                 }
             }
 

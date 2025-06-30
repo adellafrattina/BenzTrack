@@ -143,10 +143,10 @@ class AddRefillActivity : AppCompatActivity() {
             val lon = data.getDoubleExtra("longitude", 0.0)
             positionEdit.setText("Loading...")
             selectedPoint = GeoPoint(lat, lon)
-            Map.getNameBasedOnGeoPoint(lat, lon)
-                .addOnSuccessListener { name ->
+            Map.getAddressBasedOnGeoPoint(lat, lon)
+                .addOnSuccessListener { address ->
 
-                    positionEdit.setText(name)
+                    positionEdit.setText(address?.displayName ?: "Unknown")
                 }
                 .addOnFailureListener { e ->
 
