@@ -83,9 +83,9 @@ enum class FuelType(val value: Float) {
     Diesel(2.68f),
 
     /**
-     * For electric cars
+     * For cars fueled by LGP (1.61 kg/l of CO2)
      */
-    Electric(0.0f)
+    LGP(1.61f)
 }
 
 /**
