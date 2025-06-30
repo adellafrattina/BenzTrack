@@ -141,8 +141,18 @@ class AddRefillActivity : AppCompatActivity() {
         if (requestCode == 1001 && resultCode == RESULT_OK && data != null) {
             val lat = data.getDoubleExtra("latitude", 0.0)
             val lon = data.getDoubleExtra("longitude", 0.0)
-            positionEdit.setText("$lat,$lon")
+            positionEdit.setText("Loading...")
             selectedPoint = GeoPoint(lat, lon)
+            Map.getNameBasedOnGeoPoint(lat, lon)
+                .addOnSuccessListener { name ->
+
+                    positionEdit.setText(name)
+                }
+                .addOnFailureListener { e ->
+
+                    positionEdit.setText(e.message)
+                }
+                .start()
         }
     }
 
@@ -166,4 +176,4 @@ class AddRefillActivity : AppCompatActivity() {
         finish()
         return true
     }
-} 
+}
