@@ -172,7 +172,13 @@ class PickLocationActivity : AppCompatActivity() {
         searchButton.text = ""
 
         searchLayout.addView(searchEdit, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-        searchLayout.addView(searchButton, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+        // Set button size and margin in dp
+        val scale = resources.displayMetrics.density
+        val sizeInPx = (50 * scale + 0.5f).toInt() // 32dp
+        val marginInPx = (8 * scale + 0.5f).toInt() // 8dp
+        val searchButtonParams = LinearLayout.LayoutParams(sizeInPx, sizeInPx)
+        searchButtonParams.leftMargin = marginInPx
+        searchLayout.addView(searchButton, searchButtonParams)
 
         safeAddContentView(searchLayout, android.widget.FrameLayout.LayoutParams(
 
