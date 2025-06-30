@@ -2,7 +2,6 @@ package it.uninsubria.benztrack
 
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import org.osmdroid.util.GeoPoint
@@ -239,7 +238,7 @@ public class GeocodeTask(private val address: String, private val timeout: Long 
     // Method to fetch coordinates (latitude and longitude) using Nominatim API
     private fun fetchCoordinatesFromAddress(address: String): List<Address> {
 
-        val apiUrl = "https://nominatim.openstreetmap.org/search?q=$address&format=json&addressdetails=1&limit=10"
+        val apiUrl = "https://nominatim.openstreetmap.org/search?q=$address&format=json&addressdetails=1"
         val geoPoints = mutableListOf<Address>()
 
         try {
