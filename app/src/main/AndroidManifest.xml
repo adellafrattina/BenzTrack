@@ -87,6 +87,7 @@
             android:screenOrientation="portrait" />
 
         <activity android:name=".CarInfoActivity"
+            android:hardwareAccelerated="true"
             android:exported="false"
             android:theme="@style/AppTheme"
             android:screenOrientation="portrait" />
