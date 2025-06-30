@@ -53,6 +53,9 @@ class PickLocationActivity : AppCompatActivity() {
         map.setMultiTouchControls(true)
         setContentView(map)
 
+        // Enable the back arrow in the action bar
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
         // Style for opaque blue rounded buttons
         fun createBlueRoundedBackground(): GradientDrawable {
 
@@ -323,5 +326,14 @@ class PickLocationActivity : AppCompatActivity() {
             map.controller.setCenter(GeoPoint(45.0, 9.0))
             map.controller.setZoom(18.0)
         }
+    }
+
+    // Add this override to handle the back arrow click
+    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            finish()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
     }
 } 
