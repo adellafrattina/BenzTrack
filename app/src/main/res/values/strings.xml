@@ -101,4 +101,7 @@
 
     <!-- Car info -->
     <string name="car_show_activity">+</string>
+
+    <!-- Refill map -->
+    <string name="tick">Confirm</string>
 </resources>
