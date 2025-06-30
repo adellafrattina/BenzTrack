@@ -222,9 +222,9 @@ class CarModelAdapter(private val onModelSelected: (CarModel) -> Unit) :
             // First line
             val fuelString = when (model.fuel) {
 
-                FuelType.Petrol -> "Benzina"
+                FuelType.Petrol -> "Petrol"
                 FuelType.Diesel -> "Diesel"
-                FuelType.Electric -> "Elettrica"
+                FuelType.LGP -> "LGP"
             }
 
             "${model.name} (${model.year}, $fuelString)".also { modelNameText.text = it }
