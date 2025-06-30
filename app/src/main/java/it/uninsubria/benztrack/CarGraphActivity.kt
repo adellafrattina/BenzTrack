@@ -366,7 +366,6 @@ class CarGraphActivity : AppCompatActivity() {
                                     .setPositiveButton("OK", null)
                                     .show()
                             }
-                            .start()
                     }
 
                     else {
