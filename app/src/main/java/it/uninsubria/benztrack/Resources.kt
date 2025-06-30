@@ -4,6 +4,7 @@ import android.content.Context
 import android.widget.Toast
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.GeoPoint
 
 /**
  * Toast wrapper class to avoid message queuing
@@ -216,7 +217,7 @@ public data class Refill(
     /**
      * The refill's fuel dispenser position (should be expressed in coordinates)
      */
-    var position: String,
+    var position: GeoPoint,
 
     /**
      * The refill's price per liter (euros/liters)
@@ -240,7 +241,7 @@ public data class Refill(
 
 ) {
 
-    constructor(): this(Timestamp.now(), "", Float.NaN, Float.NaN, Float.NaN, Float.NaN)
+    constructor(): this(Timestamp.now(), GeoPoint(0.0, 0.0), Float.NaN, Float.NaN, Float.NaN, Float.NaN)
 }
 
 /**
