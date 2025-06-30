@@ -31,6 +31,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Overlay
+import androidx.core.graphics.toColorInt
 
 class PickLocationActivity : AppCompatActivity() {
 
@@ -61,7 +62,7 @@ class PickLocationActivity : AppCompatActivity() {
 
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = 20f
-                setColor(Color.parseColor("#29B6F6"))
+                setColor("#29B6F6".toColorInt())
             }
         }
 
@@ -158,7 +159,7 @@ class PickLocationActivity : AppCompatActivity() {
         // Add a search bar at the top
         val searchLayout = LinearLayout(this)
         searchLayout.orientation = LinearLayout.HORIZONTAL
-        searchLayout.setBackgroundColor(Color.parseColor("#CC444444")) // Lighter semi-opaque dark
+        searchLayout.setBackgroundColor("#CC444444".toColorInt()) // Lighter semi-opaque dark
         val searchEdit = EditText(this)
         searchEdit.hint = "Search location..."
         val searchButton = Button(this)
@@ -188,7 +189,7 @@ class PickLocationActivity : AppCompatActivity() {
         // Add a ListView for search results
         val resultsListView = ListView(this)
         resultsListView.visibility = View.GONE
-        resultsListView.setBackgroundColor(Color.parseColor("#CC444444")) // Match lighter dark opaque
+        resultsListView.setBackgroundColor("#CC444444".toColorInt()) // Match lighter dark opaque
 
         safeAddContentView(resultsListView, android.widget.FrameLayout.LayoutParams(
 
@@ -227,8 +228,6 @@ class PickLocationActivity : AppCompatActivity() {
 
                         resultsListView.visibility = View.GONE
                     }
-
-                    .start()
 
             } catch (_: Exception) {}
         }
