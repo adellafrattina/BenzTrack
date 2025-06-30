@@ -331,63 +331,59 @@ class CarGraphActivity : AppCompatActivity() {
         // Apply the description to the chart
         lineChart.description = description
 
-        if (!noAvailableData) {
+        lineChart.setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
 
-            lineChart.setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
+            override fun onValueSelected(e: Entry?, h: Highlight?) {
+                e?.let {
 
-                override fun onValueSelected(e: Entry?, h: Highlight?) {
-                    e?.let {
+                    val sdf = SimpleDateFormat("HH:mm:ss - dd/MM/2025", Locale.getDefault())
+                    val refill = refillMap[it.x]
+                    val value = it.y
+                    val xValue = sdf.format(it.x.toLong())
+                    var position: String
+                    if (refill != null) {
 
-                        val sdf = SimpleDateFormat("HH:mm:ss - dd/MM/2025", Locale.getDefault())
-                        val refill = refillMap[it.x]
-                        val value = it.y
-                        val xValue = sdf.format(it.x.toLong())
-                        var position: String
-                        if (refill != null) {
+                        Map.getAddressBasedOnGeoPoint(refill.position.latitude, refill.position.longitude)
+                            .addOnSuccessListener { address ->
 
-                            Map.getAddressBasedOnGeoPoint(refill.position.latitude, refill.position.longitude)
-                                .addOnSuccessListener { address ->
+                                position = address?.displayName ?: "Unknown"
 
-                                    position = address?.displayName ?: "Unknown"
+                                // Show a popup dialog
+                                AlertDialog.Builder(this@CarGraphActivity)
+                                    .setTitle(xValue)
+                                    .setMessage("CO2: $value g/km per day\nMileage: ${refill.mileage} km\nAmount: €${refill.amount}\nPrice per liter: ${refill.ppl} €/L\nPosition: $position")
+                                    .setPositiveButton("OK", null)
+                                    .show()
+                            }
+                            .addOnFailureListener { e ->
 
-                                    // Show a popup dialog
-                                    AlertDialog.Builder(this@CarGraphActivity)
-                                        .setTitle(xValue)
-                                        .setMessage("CO2: $value g/km per day\nMileage: ${refill.mileage} km\nAmount: €${refill.amount}\nPrice per liter: ${refill.ppl} €/L\nPosition: $position")
-                                        .setPositiveButton("OK", null)
-                                        .show()
-                                }
-                                .addOnFailureListener { e ->
+                                position = e.message!!
 
-                                    position = e.message!!
+                                // Show a popup dialog
+                                AlertDialog.Builder(this@CarGraphActivity)
+                                    .setTitle(xValue)
+                                    .setMessage("CO2: $value g/km per day\nMileage: ${refill.mileage} km\nAmount: €${refill.amount}\nPrice per liter: ${refill.ppl} €/L\nPosition: $position")
+                                    .setPositiveButton("OK", null)
+                                    .show()
+                            }
+                    }
 
-                                    // Show a popup dialog
-                                    AlertDialog.Builder(this@CarGraphActivity)
-                                        .setTitle(xValue)
-                                        .setMessage("CO2: $value g/km per day\nMileage: ${refill.mileage} km\nAmount: €${refill.amount}\nPrice per liter: ${refill.ppl} €/L\nPosition: $position")
-                                        .setPositiveButton("OK", null)
-                                        .show()
-                                }
-                                .start()
-                        }
+                    else {
 
-                        else {
+                        position = "Error"
 
-                            position = "Error"
-
-                            // Show a popup dialog
-                            AlertDialog.Builder(this@CarGraphActivity)
-                                .setTitle("ERROR")
-                                .setMessage("Database error")
-                                .setPositiveButton("OK", null)
-                                .show()
-                        }
+                        // Show a popup dialog
+                        AlertDialog.Builder(this@CarGraphActivity)
+                            .setTitle("ERROR")
+                            .setMessage("Database error")
+                            .setPositiveButton("OK", null)
+                            .show()
                     }
                 }
+            }
 
-                override fun onNothingSelected() {}
-            })
-        }
+            override fun onNothingSelected() {}
+        })
 
         // Refresh the chart
         lineChart.invalidate()

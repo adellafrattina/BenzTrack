@@ -152,7 +152,6 @@ class AddRefillActivity : AppCompatActivity() {
 
                     positionEdit.setText(e.message)
                 }
-                .start()
         }
     }
 

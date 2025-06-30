@@ -29,16 +29,34 @@ public data class Address(
     constructor(): this("", "", "", "", "", "", "", "", Double.NaN, Double.NaN, "")
 }
 
+sealed class ReverseGeocodeTaskResult {
+
+    data class Success(val address: Address) : ReverseGeocodeTaskResult()
+    data class Failure(val exception: Exception) : ReverseGeocodeTaskResult()
+}
+
+sealed class GeocodeTaskResult {
+
+    data class Success(val geoPoints: List<Address>) : GeocodeTaskResult()
+    data class Failure(val exception: Exception) : GeocodeTaskResult()
+}
+
 public class ReverseGeocodeTask(private val geoPoint: GeoPoint, private val timeout: Long = 5000L) {
 
     private var successListener: ((Address?) -> Unit)? = null
     private var failureListener: ((Exception) -> Unit)? = null
+    private var completeListener: ((ReverseGeocodeTaskResult) -> Unit)? = null
     private var countdownRunnable: Runnable? = null
     private val handler = Handler(Looper.getMainLooper())
     private var requestStartedTime: Long = 0
 
+    init {
+
+        start()
+    }
+
     // Method to start the geocoding task
-    fun start() {
+    private fun start() {
 
         // Launch the task in a background thread (using Kotlin coroutines or a simple thread)
         Thread {
@@ -56,13 +74,17 @@ public class ReverseGeocodeTask(private val geoPoint: GeoPoint, private val time
                         invokeOnMainThread {
 
                             successListener?.invoke(address)
+                            completeListener?.invoke(ReverseGeocodeTaskResult.Success(address))
                         }
                     }
 
                     else {
 
-                        // Simulate a failure (couldn't fetch the address)
-                        throw Exception("Address not found")
+                        invokeOnMainThread {
+
+                            failureListener?.invoke(Exception("Address not found"))
+                            completeListener?.invoke(ReverseGeocodeTaskResult.Failure(Exception("Address not found")))
+                        }
                     }
                 }
 
@@ -71,6 +93,7 @@ public class ReverseGeocodeTask(private val geoPoint: GeoPoint, private val time
                     invokeOnMainThread {
 
                         failureListener?.invoke(Exception("No matching locations found"))
+                        completeListener?.invoke(ReverseGeocodeTaskResult.Failure(Exception("No matching locations found")))
                     }
                 }
             }
@@ -82,6 +105,7 @@ public class ReverseGeocodeTask(private val geoPoint: GeoPoint, private val time
 
                     cancelCountdown()
                     failureListener?.invoke(e)
+                    completeListener?.invoke(ReverseGeocodeTaskResult.Failure(e))
                 }
             }
         }.start()
@@ -156,6 +180,12 @@ public class ReverseGeocodeTask(private val geoPoint: GeoPoint, private val time
         return this
     }
 
+    fun addOnCompleteListener(listener: (ReverseGeocodeTaskResult) -> Unit): ReverseGeocodeTask {
+
+        completeListener = listener
+        return this
+    }
+
     // Start the countdown timer
     private fun startCountdown() {
 
@@ -186,12 +216,18 @@ public class GeocodeTask(private val address: String, private val timeout: Long 
 
     private var successListener: ((List<Address>) -> Unit)? = null
     private var failureListener: ((Exception) -> Unit)? = null
+    private var completeListener: ((GeocodeTaskResult) -> Unit)? = null
     private var countdownRunnable: Runnable? = null
     private val handler = Handler(Looper.getMainLooper())
     private var requestStartedTime: Long = 0
 
+    init {
+
+        start()
+    }
+
     // Method to start the geocoding task
-    fun start() {
+    private fun start() {
 
         startCountdown()
 
@@ -212,13 +248,17 @@ public class GeocodeTask(private val address: String, private val timeout: Long 
                         invokeOnMainThread {
 
                             successListener?.invoke(geoPoints)
+                            completeListener?.invoke(GeocodeTaskResult.Success(geoPoints))
                         }
                     }
 
                     else {
 
-                        // Simulate a failure (couldn't fetch the coordinates)
-                        throw Exception("No matching locations found")
+                        invokeOnMainThread {
+
+                            failureListener?.invoke(Exception("No matching locations found"))
+                            completeListener?.invoke(GeocodeTaskResult.Failure(Exception("No matching locations found")))
+                        }
                     }
                 }
             }
@@ -304,6 +344,12 @@ public class GeocodeTask(private val address: String, private val timeout: Long 
     fun addOnFailureListener(listener: (Exception) -> Unit): GeocodeTask {
 
         failureListener = listener
+        return this
+    }
+
+    fun addOnCompleteListener(listener: (GeocodeTaskResult) -> Unit): GeocodeTask {
+
+        completeListener = listener
         return this
     }
 
