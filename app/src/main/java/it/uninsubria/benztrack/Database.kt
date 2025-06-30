@@ -854,10 +854,6 @@ public class Database {
                                 if (refill.mileage.isNaN())
                                     errorMap[MILEAGE_FIELD] = "This value must not be empty"
 
-                                // Check position
-                                if (refill.position.isEmpty())
-                                    errorMap[POSITION_FIELD] = "This value must not be empty"
-
                                 // Check price per liter
                                 if (refill.ppl.isNaN())
                                     errorMap[PRICE_PER_LITER_FIELD] = "This value must not be empty"

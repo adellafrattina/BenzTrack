@@ -97,7 +97,7 @@ class CarGraphActivity : AppCompatActivity() {
                     val fuelString = when (model.fuel) {
                         FuelType.Petrol -> "Petrol"
                         FuelType.Diesel -> "Diesel"
-                        FuelType.Electric -> "Electric"
+                        FuelType.LGP -> "LGP"
                     }
 
                     text.text = "${model.name} (${model.year}, $fuelString)\nW ${model.width} cm | L ${model.length} | H ${model.height} | M ${model.weight} kg\nCO2 ${model.co2factor} g/km | Capacity ${model.capacity} cm3"

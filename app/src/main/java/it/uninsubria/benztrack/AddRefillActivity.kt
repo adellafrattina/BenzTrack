@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.GeoPoint
 import java.util.Calendar
 
 class AddRefillActivity : AppCompatActivity() {
@@ -28,6 +29,8 @@ class AddRefillActivity : AppCompatActivity() {
     private lateinit var fuelLayout: TextInputLayout
 
     private lateinit var submitButton: Button
+
+    private lateinit var selectedPoint: GeoPoint
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -87,7 +90,7 @@ class AddRefillActivity : AppCompatActivity() {
             refill.date = refillDate
             refill.amount = amountEdit.text.toString().toFloatOrNull() ?: Float.NaN
             refill.mileage = mileageEdit.text.toString().toFloatOrNull() ?: Float.NaN
-            refill.position = positionEdit.text.toString()
+            refill.position = selectedPoint
             refill.currentfuelamount = fuelEdit.text.toString().toFloatOrNull() ?: Float.NaN
 
             Handler.database.setNewRefill(Handler.loggedUser!!.username, carPlate!!, refill)
@@ -139,6 +142,7 @@ class AddRefillActivity : AppCompatActivity() {
             val lat = data.getDoubleExtra("latitude", 0.0)
             val lon = data.getDoubleExtra("longitude", 0.0)
             positionEdit.setText("$lat,$lon")
+            selectedPoint = GeoPoint(lat, lon)
         }
     }
 
