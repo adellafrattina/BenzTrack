@@ -55,61 +55,73 @@ class PickLocationActivity : AppCompatActivity() {
 
         // Style for opaque blue rounded buttons
         fun createBlueRoundedBackground(): GradientDrawable {
+
             return GradientDrawable().apply {
+
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = 20f
-                setColor(Color.parseColor("#29B6F6")) // App blue
+                setColor(Color.parseColor("#29B6F6"))
             }
         }
 
         // Add crosshair button (bottom left)
-        val crosshairButton = Button(this)
-        val crosshairIcon: Drawable? = ContextCompat.getDrawable(this, android.R.drawable.ic_menu_mylocation)
+        val crosshairButton = ImageButton(this)
+
+        crosshairButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_crosshair))
+        crosshairButton.setColorFilter(Color.WHITE)
         crosshairButton.background = createBlueRoundedBackground()
-        crosshairButton.setCompoundDrawablesWithIntrinsicBounds(crosshairIcon, null, null, null)
-        crosshairButton.text = ""
-        crosshairButton.setPadding(30, 0, 0, 0)
-        crosshairButton.compoundDrawablePadding = 0
-        crosshairButton.setTextColor(Color.WHITE)
-        crosshairButton.setAllCaps(false)
-        crosshairButton.isAllCaps = false
-        crosshairButton.textSize = 0f
-        crosshairIcon?.setTint(Color.WHITE)
-        crosshairButton.gravity = android.view.Gravity.CENTER
+        crosshairButton.scaleType = ImageView.ScaleType.CENTER
+        crosshairButton.setPadding(0, 0, 0, 0)
+        crosshairButton.contentDescription = "My Location"
+
         val crosshairParams = android.widget.FrameLayout.LayoutParams(150, 150)
+
         crosshairParams.gravity = android.view.Gravity.BOTTOM or android.view.Gravity.START
         crosshairParams.marginStart = 32
         crosshairParams.bottomMargin = 32
+
         fun safeAddContentView(view: View, params: ViewGroup.LayoutParams) {
+
             (view.parent as? ViewGroup)?.removeView(view)
             addContentView(view, params)
         }
+
         safeAddContentView(crosshairButton, crosshairParams)
+
         crosshairButton.setOnClickListener {
+
             centerMapOnUserLocation()
         }
 
         // Add tick button (bottom right)
         tickButton = ImageButton(this)
+
         tickButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_check))
         tickButton.setColorFilter(Color.WHITE)
         tickButton.background = createBlueRoundedBackground()
         tickButton.scaleType = ImageView.ScaleType.CENTER
         tickButton.setPadding(0, 0, 0, 0)
         tickButton.contentDescription = getString(R.string.tick)
+
         val tickParams = android.widget.FrameLayout.LayoutParams(150, 150)
+
         tickParams.gravity = android.view.Gravity.BOTTOM or android.view.Gravity.END
         tickParams.marginEnd = 32
         tickParams.bottomMargin = 32
+
         safeAddContentView(tickButton, tickParams)
         tickButton.isEnabled = false
         tickButton.alpha = 0.5f
         tickButton.setOnClickListener {
+
             selectedPoint?.let {
+
                 val data = Intent().apply {
+
                     putExtra("latitude", it.latitude)
                     putExtra("longitude", it.longitude)
                 }
+
                 setResult(Activity.RESULT_OK, data)
                 finish()
             }
@@ -117,22 +129,29 @@ class PickLocationActivity : AppCompatActivity() {
 
         // Tap overlay (after tickButton is defined)
         val tapOverlay = object : Overlay() {
+
             override fun onSingleTapConfirmed(e: MotionEvent, mapView: MapView): Boolean {
+
                 val proj = mapView.projection
                 val geoPoint = proj.fromPixels(e.x.toInt(), e.y.toInt()) as GeoPoint
                 selectedPoint = geoPoint
+
                 if (marker == null) {
+
                     marker = Marker(map)
                     map.overlays.add(marker)
                 }
+
                 marker!!.position = geoPoint
                 marker!!.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 map.invalidate()
                 tickButton.isEnabled = true
                 tickButton.alpha = 1.0f
+
                 return true
             }
         }
+
         map.overlays.add(tapOverlay)
 
         // Add a search bar at the top
@@ -142,6 +161,7 @@ class PickLocationActivity : AppCompatActivity() {
         val searchEdit = EditText(this)
         searchEdit.hint = "Search location..."
         val searchButton = Button(this)
+
         // Use magnifying glass icon
         val searchIcon: Drawable? = ContextCompat.getDrawable(this, android.R.drawable.ic_menu_search)
         searchButton.background = null
@@ -150,54 +170,76 @@ class PickLocationActivity : AppCompatActivity() {
 
         searchLayout.addView(searchEdit, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         searchLayout.addView(searchButton, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+
         safeAddContentView(searchLayout, android.widget.FrameLayout.LayoutParams(
+
             android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
             android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+
         ).apply { topMargin = 0 })
 
         // Add a ListView for search results
         val resultsListView = ListView(this)
         resultsListView.visibility = View.GONE
         resultsListView.setBackgroundColor(Color.parseColor("#CC444444")) // Match lighter dark opaque
+
         safeAddContentView(resultsListView, android.widget.FrameLayout.LayoutParams(
+
             android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
             android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+
         ).apply { topMargin = 120 }) // Adjust topMargin as needed
 
         var lastAddresses: List<Address> = emptyList()
 
         searchButton.setOnClickListener {
+
             val query = searchEdit.text.toString().trim()
+
             try {
+
                 Map.getAddressBasedOnString(query)
                     .addOnSuccessListener { addresses ->
+
                         if (addresses.isNotEmpty()) {
+
                             lastAddresses = addresses
                             val items = addresses.map { it.displayName.ifEmpty { "${it.latitude},${it.longitude}" } }
                             val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, items)
                             resultsListView.adapter = adapter
                             resultsListView.visibility = View.VISIBLE
-                        } else {
+                        }
+
+                        else {
+
                             resultsListView.visibility = View.GONE
                         }
                     }
+
                     .addOnFailureListener { e ->
+
                         resultsListView.visibility = View.GONE
                     }
+
                     .start()
+
             } catch (_: Exception) {}
         }
 
         resultsListView.setOnItemClickListener { _, _, position, _ ->
+
             val addr = lastAddresses[position]
             val geoPoint = org.osmdroid.util.GeoPoint(addr.latitude, addr.longitude)
             map.controller.setCenter(geoPoint)
             map.controller.setZoom(18.0)
             selectedPoint = geoPoint
+
             if (marker == null) {
+
                 marker = Marker(map)
                 map.overlays.add(marker)
             }
+
             marker!!.position = geoPoint
             marker!!.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
             map.invalidate()
