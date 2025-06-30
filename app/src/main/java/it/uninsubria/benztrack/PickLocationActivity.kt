@@ -1,38 +1,36 @@
 package it.uninsubria.benztrack
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Bundle
+import android.os.Looper
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Overlay
-import android.view.MotionEvent
-import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
-import android.os.Looper
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.core.app.ActivityCompat
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
-import android.widget.ListView
-import android.widget.ArrayAdapter
-import android.view.View
-import android.graphics.Color
-import android.graphics.drawable.Drawable
-import androidx.core.content.ContextCompat
-import android.view.ViewGroup
-import android.graphics.drawable.GradientDrawable
-import android.widget.ImageButton
-import android.widget.ImageView
 
 class PickLocationActivity : AppCompatActivity() {
 
@@ -238,7 +236,7 @@ class PickLocationActivity : AppCompatActivity() {
         resultsListView.setOnItemClickListener { _, _, position, _ ->
 
             val addr = lastAddresses[position]
-            val geoPoint = org.osmdroid.util.GeoPoint(addr.latitude, addr.longitude)
+            val geoPoint = GeoPoint(addr.latitude, addr.longitude)
             map.controller.setCenter(geoPoint)
             map.controller.setZoom(18.0)
             selectedPoint = geoPoint
