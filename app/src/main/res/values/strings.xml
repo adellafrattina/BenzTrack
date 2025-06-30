@@ -100,5 +100,5 @@
     <string name="tax_pay">Pay</string>
 
     <!-- Car info -->
-    <string name="car_show_activity">Show other activities</string>
+    <string name="car_show_activity">+</string>
 </resources>
