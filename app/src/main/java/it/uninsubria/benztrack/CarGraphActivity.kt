@@ -295,6 +295,8 @@ class CarGraphActivity : AppCompatActivity() {
         val dataSet = LineDataSet(entries, "CO2 emissions (g/km per day)")
         dataSet.color = resources.getColor(android.R.color.holo_blue_dark)
         dataSet.valueTextColor = resources.getColor(android.R.color.black)
+        dataSet.circleRadius = 5f
+        dataSet.valueTextSize = 10f
 
         // Create LineData using the LineDataSet
         val lineData = LineData(dataSet)
