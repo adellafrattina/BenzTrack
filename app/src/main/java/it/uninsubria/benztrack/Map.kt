@@ -50,8 +50,13 @@ public class ReverseGeocodeTask(private val geoPoint: GeoPoint, private val time
     private val handler = Handler(Looper.getMainLooper())
     private var requestStartedTime: Long = 0
 
+    init {
+
+        start()
+    }
+
     // Method to start the geocoding task
-    fun start() {
+    private fun start() {
 
         // Launch the task in a background thread (using Kotlin coroutines or a simple thread)
         Thread {
@@ -216,8 +221,13 @@ public class GeocodeTask(private val address: String, private val timeout: Long 
     private val handler = Handler(Looper.getMainLooper())
     private var requestStartedTime: Long = 0
 
+    init {
+
+        start()
+    }
+
     // Method to start the geocoding task
-    fun start() {
+    private fun start() {
 
         startCountdown()
 
