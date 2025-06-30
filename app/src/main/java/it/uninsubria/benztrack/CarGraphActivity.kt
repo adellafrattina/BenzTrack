@@ -4,6 +4,8 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.Button
@@ -25,6 +27,8 @@ import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
+import com.github.mikephil.charting.listener.ChartTouchListener
+import com.github.mikephil.charting.listener.OnChartGestureListener
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Timestamp
@@ -243,14 +247,49 @@ class CarGraphActivity : AppCompatActivity() {
         val xAxis = lineChart.xAxis
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.valueFormatter = object : ValueFormatter() {
-            private val sdf = SimpleDateFormat("dd/MM", Locale.getDefault())
+            private val secondFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+            private val minuteFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+            private val dayFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
+            private val monthFormat = SimpleDateFormat("MMM yyyy", Locale.getDefault())
+            private val yearFormat = SimpleDateFormat("yyyy", Locale.getDefault())
+
             override fun getFormattedValue(value: Float): String {
-                return sdf.format(Date(value.toLong()))
+                val visibleRange = lineChart.visibleXRange
+                val date = Date(value.toLong())
+
+                return when {
+
+                    visibleRange < 3_600_000 -> secondFormat.format(date) // < 1 hour
+                    visibleRange < 86_400_000 -> minuteFormat.format(date) // < 1 day
+                    visibleRange < 2_592_000_000L -> dayFormat.format(date) // < 1 month
+                    visibleRange < 2_592_000_000L * 12 -> monthFormat.format(date) // < 1 year
+                    else -> yearFormat.format(date) // > 1 year
+                }
             }
         }
 
+        lineChart.onChartGestureListener = object : OnChartGestureListener {
+            override fun onChartScale(me: MotionEvent?, scaleX: Float, scaleY: Float) {
+                lineChart.invalidate() // Force redraw
+            }
+
+            override fun onChartTranslate(me: MotionEvent?, dX: Float, dY: Float) {
+                lineChart.invalidate()
+            }
+
+            // Other methods can be left empty
+            override fun onChartGestureStart(me: MotionEvent?, lastPerformedGesture: ChartTouchListener.ChartGesture?) {}
+            override fun onChartGestureEnd(me: MotionEvent?, lastPerformedGesture: ChartTouchListener.ChartGesture?) {}
+            override fun onChartLongPressed(me: MotionEvent?) {}
+            override fun onChartDoubleTapped(me: MotionEvent?) {}
+            override fun onChartSingleTapped(me: MotionEvent?) {}
+            override fun onChartFling(me1: MotionEvent?, me2: MotionEvent?, velocityX: Float, velocityY: Float) {}
+        }
+
         xAxis.setLabelCount(entries.size, true)
+        lineChart.setScaleEnabled(true)
         xAxis.granularity = 1.0f
+        xAxis.isGranularityEnabled = true
 
         // Create a LineDataSet (this holds the data and settings for the line)
         val dataSet = LineDataSet(entries, "CO2 emissions (g/km per day)")
