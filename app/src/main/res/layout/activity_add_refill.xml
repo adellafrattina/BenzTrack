@@ -23,7 +23,8 @@
                 android:hint="@string/refill_date"
                 android:focusable="false"
                 android:inputType="none"
-                android:textColorHint="@color/gray_medium"/>
+                android:textColorHint="@color/gray_medium"
+                style="@style/TextBody"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -37,7 +38,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/refill_position"
-                android:textColorHint="@color/gray_medium"/>
+                android:textColorHint="@color/gray_medium"
+                style="@style/TextBody"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -52,7 +54,8 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/refill_ppl"
                 android:inputType="numberDecimal"
-                android:textColorHint="@color/gray_medium"/>
+                android:textColorHint="@color/gray_medium"
+                style="@style/TextBody"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -67,7 +70,8 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/refill_fuel"
                 android:inputType="numberDecimal"
-                android:textColorHint="@color/gray_medium"/>
+                android:textColorHint="@color/gray_medium"
+                style="@style/TextBody"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -82,7 +86,8 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/refill_mileage"
                 android:inputType="numberDecimal"
-                android:textColorHint="@color/gray_medium"/>
+                android:textColorHint="@color/gray_medium"
+                style="@style/TextBody"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -97,14 +102,16 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/refill_amount"
                 android:inputType="numberDecimal"
-                android:textColorHint="@color/gray_medium"/>
+                android:textColorHint="@color/gray_medium"
+                style="@style/TextBody"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <Button
             android:id="@+id/button_submit_refill"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/refill_submit"/>
+            android:text="@string/refill_submit"
+            style="@style/TextButton"/>
 
     </LinearLayout>
 </ScrollView> 

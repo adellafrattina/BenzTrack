@@ -21,9 +21,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/login_title"
-            android:textSize="24sp"
             android:gravity="center"
-            android:layout_marginBottom="32dp"/>
+            android:layout_marginBottom="32dp"
+            style="@style/TextHeadline"/>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/username_layout"
@@ -39,7 +39,8 @@
                 android:hint="@string/hint_username"
                 android:inputType="text"
                 android:autofillHints="username"
-                android:textColorHint="@color/gray_medium"/>
+                android:textColorHint="@color/gray_medium"
+                style="@style/TextBody"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -56,7 +57,8 @@
                 android:hint="@string/hint_password"
                 android:inputType="textPassword"
                 android:autofillHints="password"
-                android:textColorHint="@color/gray_medium"/>
+                android:textColorHint="@color/gray_medium"
+                style="@style/TextBody"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <Button
@@ -64,7 +66,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/login_button"
-            style="@style/AppButton" />
+            style="@style/TextButton" />
 
         <TextView
             android:id="@+id/text_register_link"
@@ -75,7 +77,8 @@
             android:gravity="center"
             android:padding="16dp"
             android:clickable="true"
-            android:focusable="true" />
+            android:focusable="true"
+            style="@style/TextCaption" />
 
     </LinearLayout>
 

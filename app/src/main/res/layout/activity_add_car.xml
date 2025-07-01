@@ -25,7 +25,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/car_name"
-                android:inputType="text"/>
+                android:inputType="text"
+                style="@style/TextBody"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -40,7 +41,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/plate_number"
-                android:inputType="textCapCharacters"/>
+                android:inputType="textCapCharacters"
+                style="@style/TextBody"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -57,7 +59,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/car_model"
-                android:inputType="text"/>
+                android:inputType="text"
+                style="@style/TextBody"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
@@ -66,9 +69,9 @@
             android:layout_height="wrap_content"
             android:text="or"
             android:gravity="center"
-            android:textSize="16sp"
             android:layout_marginTop="4dp"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp"
+            style="@style/TextCaption"/>
 
         <Button
             android:id="@+id/button_add_model"
@@ -76,7 +79,8 @@
             android:layout_height="wrap_content"
             android:text="@string/create_new_model"
             android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="16dp"
+            style="@style/TextButton"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_models"
@@ -96,6 +100,6 @@
         android:text="@string/add_car"
         android:layout_alignParentBottom="true"
         android:layout_margin="16dp"
-        style="@style/AppButton"/>
+        style="@style/TextButton"/>
 
 </RelativeLayout> 
