@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -7,24 +8,29 @@
     tools:context=".LoginActivity">
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/login_form_container"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_centerInParent="true">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/login_title"
-            android:textSize="24sp"
             android:gravity="center"
-            android:layout_marginBottom="32dp"/>
+            android:layout_marginBottom="32dp"
+            style="@style/TextHeadline"/>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/username_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            app:errorTextColor="@color/error">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edit_username"
@@ -32,14 +38,17 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/hint_username"
                 android:inputType="text"
-                android:autofillHints="username"/>
+                android:autofillHints="username"
+                android:textColorHint="@color/gray_medium"
+                style="@style/TextBody"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/password_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="24dp"
+            app:errorTextColor="@color/error">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edit_password"
@@ -47,7 +56,9 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/hint_password"
                 android:inputType="textPassword"
-                android:autofillHints="password"/>
+                android:autofillHints="password"
+                android:textColorHint="@color/gray_medium"
+                style="@style/TextBody"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <Button
@@ -55,7 +66,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/login_button"
-            style="@style/AppButton" />
+            style="@style/TextButton" />
 
         <TextView
             android:id="@+id/text_register_link"
@@ -66,8 +77,9 @@
             android:gravity="center"
             android:padding="16dp"
             android:clickable="true"
-            android:focusable="true" />
+            android:focusable="true"
+            style="@style/TextCaption" />
 
     </LinearLayout>
 
-</RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

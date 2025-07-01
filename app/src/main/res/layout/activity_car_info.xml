@@ -24,27 +24,26 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/refills"
-                android:textStyle="bold"
-                android:textSize="18sp"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="8dp"
+                style="@style/TextSubtitle"/>
 
             <TextView
                 android:id="@+id/text_refills_placeholder"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/refill_placeholder"
-                android:textSize="14sp"
-                android:textColor="@android:color/darker_gray"
                 android:gravity="center"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="8dp"
+                style="@style/TextCaption"/>
 
             <Button
                 android:id="@+id/button_add_refill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/add_refill"
-                android:layout_gravity="center_horizontal"/>
+                android:layout_gravity="center_horizontal"
+                style="@style/TextButton"/>
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -69,20 +68,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/maintenance_card"
-                android:textStyle="bold"
-                android:textSize="18sp"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="8dp"
+                style="@style/TextSubtitle"/>
 
             <TextView
                 android:id="@+id/text_maintenance_placeholder"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/maintenance_placeholder"
-                android:textSize="14sp"
-                android:textColor="@android:color/darker_gray"
                 android:gravity="center"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="8dp"
+                style="@style/TextCaption"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -95,13 +92,15 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/maintenance_date"
-                    android:layout_marginEnd="16dp"/>
+                    android:layout_marginEnd="16dp"
+                    style="@style/TextButton"/>
 
                 <Button
                     android:id="@+id/button_pay_maintenance"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/maintenance_pay"/>
+                    android:text="@string/maintenance_pay"
+                    style="@style/TextButton"/>
             </LinearLayout>
 
         </LinearLayout>
@@ -127,20 +126,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/insurance_card"
-                android:textStyle="bold"
-                android:textSize="18sp"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="8dp"
+                style="@style/TextSubtitle"/>
 
             <TextView
                 android:id="@+id/text_insurance_placeholder"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/insurance_placeholder"
-                android:textSize="14sp"
-                android:textColor="@android:color/darker_gray"
                 android:gravity="center"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="8dp"
+                style="@style/TextCaption"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -153,13 +150,15 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/insurance_date"
-                    android:layout_marginEnd="16dp"/>
+                    android:layout_marginEnd="16dp"
+                    style="@style/TextButton"/>
 
                 <Button
                     android:id="@+id/button_pay_insurance"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/insurance_pay"/>
+                    android:text="@string/insurance_pay"
+                    style="@style/TextButton"/>
             </LinearLayout>
 
         </LinearLayout>
@@ -185,20 +184,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/tax_card"
-                android:textStyle="bold"
-                android:textSize="18sp"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="8dp"
+                style="@style/TextSubtitle"/>
 
             <TextView
                 android:id="@+id/text_tax_placeholder"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/tax_placeholder"
-                android:textSize="14sp"
-                android:textColor="@android:color/darker_gray"
                 android:gravity="center"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="8dp"
+                style="@style/TextCaption"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -211,13 +208,15 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/tax_date"
-                    android:layout_marginEnd="16dp"/>
+                    android:layout_marginEnd="16dp"
+                    style="@style/TextButton"/>
 
                 <Button
                     android:id="@+id/button_pay_tax"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/tax_pay"/>
+                    android:text="@string/tax_pay"
+                    style="@style/TextButton"/>
             </LinearLayout>
 
         </LinearLayout>

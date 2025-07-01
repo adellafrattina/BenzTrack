@@ -1,7 +1,6 @@
 package it.uninsubria.benztrack
 
 import android.content.Intent
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.view.MotionEvent
@@ -147,11 +146,10 @@ class CarGraphActivity : AppCompatActivity() {
         val legendLabels = listOf("Refills", "Maintenance", "Insurance", "Tax")
         val amounts = listOf(refillAmount, maintenanceAmount, insuranceAmount, taxAmount)
         val colors = listOf(
-
-            Color.parseColor("#FFA726"),
-            Color.parseColor("#66BB6A"),
-            Color.parseColor("#EF5350"),
-            Color.parseColor("#29B6F6")
+            resources.getColor(R.color.primary),
+            resources.getColor(R.color.teal_700),
+            resources.getColor(R.color.accent),
+            resources.getColor(R.color.gray_dark)
         )
 
         val legendEntries = legendLabels.mapIndexed { i, l ->
@@ -173,18 +171,26 @@ class CarGraphActivity : AppCompatActivity() {
         val dataSet = PieDataSet(entries, "")
         dataSet.colors = colors
         dataSet.setDrawValues(false)
+        dataSet.valueTextColor = resources.getColor(R.color.black)
+        dataSet.valueTextSize = 16f
+        dataSet.valueTypeface = Typeface.DEFAULT_BOLD
+        dataSet.sliceSpace = 4f
+        dataSet.selectionShift = 8f
 
         val data = PieData(dataSet)
         pieChart.data = data
         pieChart.description.isEnabled = false
         pieChart.centerText = if (noAvailableData) "No available data" else "Expenses"
+        pieChart.setCenterTextSize(14f)
+        pieChart.setCenterTextTypeface(Typeface.DEFAULT_BOLD)
         pieChart.setDrawEntryLabels(false)
-        pieChart.setEntryLabelColor(Color.BLACK)
+        pieChart.setEntryLabelColor(resources.getColor(R.color.primary_dark))
+        pieChart.setEntryLabelTextSize(14f)
         pieChart.setUsePercentValues(false)
         pieChart.isDrawHoleEnabled = true
         pieChart.holeRadius = if (noAvailableData) 100f else 40f
         pieChart.transparentCircleRadius = 45f
-        pieChart.animateY(1000)
+        pieChart.animateXY(1200, 1200)
 
         val legend = pieChart.legend
         legend.verticalAlignment = Legend.LegendVerticalAlignment.CENTER
@@ -192,7 +198,10 @@ class CarGraphActivity : AppCompatActivity() {
         legend.orientation = Legend.LegendOrientation.VERTICAL
         legend.setDrawInside(false)
         legend.isEnabled = true
-        legend.textSize = 14f
+        legend.textSize = 16f
+        legend.typeface = Typeface.DEFAULT_BOLD
+        legend.xEntrySpace = 16f
+        legend.yEntrySpace = 12f
         legend.setCustom(legendEntries)
 
         pieChart.invalidate()
@@ -293,10 +302,22 @@ class CarGraphActivity : AppCompatActivity() {
 
         // Create a LineDataSet (this holds the data and settings for the line)
         val dataSet = LineDataSet(entries, "CO2 emissions (g/km per day)")
-        dataSet.color = resources.getColor(android.R.color.holo_blue_dark)
-        dataSet.valueTextColor = resources.getColor(android.R.color.black)
-        dataSet.circleRadius = 5f
-        dataSet.valueTextSize = 10f
+        dataSet.color = resources.getColor(R.color.primary)
+        dataSet.valueTextColor = resources.getColor(R.color.primary_dark)
+        dataSet.valueTextSize = 14f
+        dataSet.valueTypeface = Typeface.DEFAULT_BOLD
+        dataSet.lineWidth = 3f
+        dataSet.setDrawCircles(true)
+        dataSet.circleRadius = 6f
+        dataSet.setCircleColor(resources.getColor(R.color.accent))
+        dataSet.setDrawCircleHole(true)
+        dataSet.circleHoleColor = resources.getColor(R.color.white)
+        dataSet.setDrawFilled(true)
+        dataSet.fillDrawable = resources.getDrawable(R.drawable.linechart_gradient, null)
+        dataSet.mode = LineDataSet.Mode.LINEAR
+        dataSet.setDrawValues(true)
+        dataSet.setDrawHighlightIndicators(true)
+        dataSet.highLightColor = resources.getColor(R.color.accent)
 
         // Create LineData using the LineDataSet
         val lineData = LineData(dataSet)
@@ -305,6 +326,16 @@ class CarGraphActivity : AppCompatActivity() {
         lineChart.data = lineData
 
         // Customize chart appearance
+        lineChart.axisLeft.gridColor = resources.getColor(R.color.gray_light)
+        lineChart.axisLeft.gridLineWidth = 1f
+        lineChart.axisRight.isEnabled = false
+        xAxis.gridColor = resources.getColor(R.color.gray_light)
+        xAxis.gridLineWidth = 1f
+        lineChart.setDrawGridBackground(false)
+        lineChart.setDrawBorders(false)
+        lineChart.setTouchEnabled(true)
+        lineChart.setPinchZoom(true)
+        lineChart.animateXY(1200, 1200)
 
         val description = Description()
         description.text = if(noAvailableData) "Not enough data" else "CO2 emission graph"

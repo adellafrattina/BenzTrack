@@ -1,14 +1,14 @@
 <resources>
-    <string name="app_name">BenzTrack</string>
+    <string name="app_name" translatable="false">BenzTrack</string>
 
     <!-- Welcome screen -->
     <string name="welcome_message">Welcome to BenzTrack. Please log in or create a new account to continue.</string>
 
     <!-- Login screen -->
-    <string name="login_title">BenzTrack Login</string>
-    <string name="hint_username">Username</string>
-    <string name="hint_password">Password</string>
-    <string name="login_button">Login</string>
+    <string name="login_title" translatable="false">BenzTrack Login</string>
+    <string name="hint_username" translatable="false">Username</string>
+    <string name="hint_password" translatable="false">Password</string>
+    <string name="login_button" translatable="false">Login</string>
     <string name="login_link">Already have an account? Login here</string>
 
     <!-- Registration screen -->
@@ -21,8 +21,8 @@
 
     <!-- User Info screen -->
     <string name="profile_title">User Profile</string>
-    <string name="label_username">Username:</string>
-    <string name="label_password">Password:</string>
+    <string name="label_username" translatable="false">Username:</string>
+    <string name="label_password" translatable="false">Password:</string>
     <string name="label_name">Name:</string>
     <string name="label_surname">Surname:</string>
     <string name="label_email">Email:</string>
@@ -32,10 +32,10 @@
     <!-- Main menu (Logged in) -->
     <string name="user">User</string>
     <string name="view_info">View Info</string>
-    <string name="logout">Logout</string>
+    <string name="logout" translatable="false">Logout</string>
     <string name="no_cars">No cars added yet</string>
-    <string name="add_cars">+</string>
-    <string name="show_graphs">📊</string>
+    <string name="add_cars" translatable="false">+</string>
+    <string name="show_graphs" translatable="false">📊</string>
 
     <!-- Add new car -->
     <string name="car_name">Car Name</string>
@@ -43,6 +43,7 @@
     <string name="add_car">Add Car</string>
     <string name="create_new_model">Add Model</string>
     <string name="car_model">Car Model</string>
+    <string name="or">or</string>
 
     <!-- Add new car model -->
     <string name="fuel_type">Fuel Type</string>
@@ -100,7 +101,7 @@
     <string name="tax_pay">Pay</string>
 
     <!-- Car info -->
-    <string name="car_show_activity">+</string>
+    <string name="car_show_activity" translatable="false">+</string>
 
     <!-- Refill map -->
     <string name="tick">Confirm</string>

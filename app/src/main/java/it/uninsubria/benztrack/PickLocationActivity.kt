@@ -50,6 +50,7 @@ class PickLocationActivity : AppCompatActivity() {
         map = MapView(this)
         map.setTileSource(TileSourceFactory.MAPNIK)
         map.setMultiTouchControls(true)
+        map.isTilesScaledToDpi = true
         setContentView(map)
 
         // Enable the back arrow in the action bar
@@ -159,7 +160,7 @@ class PickLocationActivity : AppCompatActivity() {
         // Add a search bar at the top
         val searchLayout = LinearLayout(this)
         searchLayout.orientation = LinearLayout.HORIZONTAL
-        searchLayout.setBackgroundColor("#CC444444".toColorInt()) // Lighter semi-opaque dark
+        searchLayout.setBackgroundColor("#CCFFFFFF".toColorInt()) // Lighter semi-opaque dark
         val searchEdit = EditText(this)
         searchEdit.hint = "Search location..."
         val searchButton = Button(this)
@@ -189,7 +190,7 @@ class PickLocationActivity : AppCompatActivity() {
         // Add a ListView for search results
         val resultsListView = ListView(this)
         resultsListView.visibility = View.GONE
-        resultsListView.setBackgroundColor("#CC444444".toColorInt()) // Match lighter dark opaque
+        resultsListView.setBackgroundColor("#CCFFFFFF".toColorInt()) // Match lighter dark opaque
 
         safeAddContentView(resultsListView, android.widget.FrameLayout.LayoutParams(
 

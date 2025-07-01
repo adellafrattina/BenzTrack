@@ -16,9 +16,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/profile_title"
-            android:textSize="24sp"
             android:gravity="center"
-            android:layout_marginBottom="32dp"/>
+            android:layout_marginBottom="32dp"
+            style="@style/TextHeadline"/>
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -37,14 +37,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/label_username"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="4dp"/>
+                    android:layout_marginBottom="4dp"
+                    style="@style/TextSubtitle"/>
 
                 <TextView
                     android:id="@+id/text_username"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
+                    style="@style/TextBody"
                     tools:text="Username"/>
 
                 <TextView
@@ -52,14 +53,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/label_name"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="4dp"/>
+                    android:layout_marginBottom="4dp"
+                    style="@style/TextSubtitle"/>
 
                 <TextView
                     android:id="@+id/text_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
+                    style="@style/TextBody"
                     tools:text="John"/>
 
                 <TextView
@@ -67,14 +69,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/label_surname"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="4dp"/>
+                    android:layout_marginBottom="4dp"
+                    style="@style/TextSubtitle"/>
 
                 <TextView
                     android:id="@+id/text_surname"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
+                    style="@style/TextBody"
                     tools:text="Doe"/>
 
                 <TextView
@@ -82,14 +85,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/label_email"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="4dp"/>
+                    android:layout_marginBottom="4dp"
+                    style="@style/TextSubtitle"/>
 
                 <TextView
                     android:id="@+id/text_email"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
+                    style="@style/TextBody"
                     tools:text="john.doe@example.com"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -100,7 +104,7 @@
             android:layout_height="wrap_content"
             android:text="@string/go_back_button"
             android:layout_marginTop="24dp"
-            style="@style/AppButton"/>
+            style="@style/TextButton"/>
 
     </LinearLayout>
 
