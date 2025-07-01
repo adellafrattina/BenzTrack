@@ -21,6 +21,7 @@
     <string name="add_car">Aggiungi macchina</string>
     <string name="create_new_model">Aggiungi modello</string>
     <string name="car_model">Modello macchina</string>
+    <string name="or">o</string>
     <string name="fuel_type">Tipo di carburante</string>
     <string name="height_cm">Altezza (cm)</string>
     <string name="length_cm">Lunghezza (cm)</string>

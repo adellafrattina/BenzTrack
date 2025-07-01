@@ -1,7 +1,6 @@
 package it.uninsubria.benztrack
 
 import android.content.Intent
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.view.MotionEvent

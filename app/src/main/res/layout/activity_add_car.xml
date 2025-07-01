@@ -67,7 +67,7 @@
             android:id="@+id/text_or"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="or"
+            android:text="@string/or"
             android:gravity="center"
             android:layout_marginTop="4dp"
             android:layout_marginBottom="4dp"

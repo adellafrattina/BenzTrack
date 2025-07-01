@@ -2,6 +2,7 @@
     <string name="app_name" translatable="false">BenzTrack</string>
 
     <!-- Welcome screen -->
+    <string name="welcome_message">Welcome to BenzTrack. Please log in or create a new account to continue.</string>
 
     <!-- Login screen -->
     <string name="login_title" translatable="false">BenzTrack Login</string>
@@ -42,6 +43,7 @@
     <string name="add_car">Add Car</string>
     <string name="create_new_model">Add Model</string>
     <string name="car_model">Car Model</string>
+    <string name="or">or</string>
 
     <!-- Add new car model -->
     <string name="fuel_type">Fuel Type</string>
@@ -103,5 +105,4 @@
 
     <!-- Refill map -->
     <string name="tick">Confirm</string>
-    <string name="welcome_message">Welcome to BenzTrack. Please log in or create a new account to continue.</string>
 </resources>
