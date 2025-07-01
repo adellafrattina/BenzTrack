@@ -98,7 +98,24 @@ class CarGraphActivity : AppCompatActivity() {
                         FuelType.LPG -> "LPG"
                     }
 
-                    text.text = "${model.name} (${model.year}, $fuelString)\nW ${model.width} cm | L ${model.length} | H ${model.height} | M ${model.weight} kg\nCO2 ${model.co2factor} g/km | Capacity ${model.capacity} cm3"
+                    //text.text = "${model.name} (${model.year}, $fuelString)\nW ${model.width} cm | L ${model.length} | H ${model.height} | M ${model.weight} kg\nCO2 ${model.co2factor} g/km | Capacity ${model.capacity} cm3"
+                    text.text = "${model.name} (${model.year}, $fuelString)"
+                    text.setOnClickListener {
+
+                        // Show a popup dialog
+                        AlertDialog.Builder(this@CarGraphActivity)
+                            .setTitle(text.text)
+                            .setMessage(
+                                "Width: ${model.width} cm\n" +
+                                "Length: ${model.length} cm\n" +
+                                "Height: ${model.height} cm\n" +
+                                "Mass: ${model.weight} kg\n" +
+                                "CO2 factor: ${model.co2factor} g/km\n" +
+                                "Capacity: ${model.capacity} cm3\n" +
+                                "Fuel capacity: ${model.fuelcapacity} L")
+                            .setPositiveButton("OK", null)
+                            .show()
+                    }
 
                     setUpPieChart(refillData, maintenanceData, insuranceData, taxData)
                     setUpLineChart(refillData, model)
@@ -174,7 +191,6 @@ class CarGraphActivity : AppCompatActivity() {
         dataSet.valueTextColor = resources.getColor(R.color.black)
         dataSet.valueTextSize = 16f
         dataSet.valueTypeface = Typeface.DEFAULT_BOLD
-        dataSet.sliceSpace = 4f
         dataSet.selectionShift = 8f
 
         val data = PieData(dataSet)
@@ -198,10 +214,10 @@ class CarGraphActivity : AppCompatActivity() {
         legend.orientation = Legend.LegendOrientation.VERTICAL
         legend.setDrawInside(false)
         legend.isEnabled = true
-        legend.textSize = 16f
+        legend.textSize = 14f
         legend.typeface = Typeface.DEFAULT_BOLD
         legend.xEntrySpace = 16f
-        legend.yEntrySpace = 12f
+        legend.yEntrySpace = 1f
         legend.setCustom(legendEntries)
 
         pieChart.invalidate()
