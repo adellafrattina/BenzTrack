@@ -150,7 +150,7 @@ class CarGraphActivity : AppCompatActivity() {
             resources.getColor(R.color.primary),
             resources.getColor(R.color.teal_700),
             resources.getColor(R.color.accent),
-            resources.getColor(R.color.dark_gray)
+            resources.getColor(R.color.gray_dark)
         )
 
         val legendEntries = legendLabels.mapIndexed { i, l ->
@@ -327,10 +327,10 @@ class CarGraphActivity : AppCompatActivity() {
         lineChart.data = lineData
 
         // Customize chart appearance
-        lineChart.axisLeft.gridColor = resources.getColor(R.color.light_gray)
+        lineChart.axisLeft.gridColor = resources.getColor(R.color.gray_light)
         lineChart.axisLeft.gridLineWidth = 1f
         lineChart.axisRight.isEnabled = false
-        xAxis.gridColor = resources.getColor(R.color.light_gray)
+        xAxis.gridColor = resources.getColor(R.color.gray_light)
         xAxis.gridLineWidth = 1f
         lineChart.setDrawGridBackground(false)
         lineChart.setDrawBorders(false)
