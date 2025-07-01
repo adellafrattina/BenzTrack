@@ -50,6 +50,7 @@ class PickLocationActivity : AppCompatActivity() {
         map = MapView(this)
         map.setTileSource(TileSourceFactory.MAPNIK)
         map.setMultiTouchControls(true)
+        map.isTilesScaledToDpi = true
         setContentView(map)
 
         // Enable the back arrow in the action bar
