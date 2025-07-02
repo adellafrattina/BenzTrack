@@ -42,6 +42,7 @@ class CarGraphActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         setContentView(R.layout.activity_car_graph)
+        Handler.database.setContext(this)
 
         // Enable the up button in the action bar
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -63,7 +64,7 @@ class CarGraphActivity : AppCompatActivity() {
 
         if (plate == null) {
 
-            ToastManager.show(this, "Failed to identify car by plate", Toast.LENGTH_SHORT)
+            ToastManager.show(this, getString(R.string.error), Toast.LENGTH_SHORT)
             finish()
 
             return
@@ -93,9 +94,10 @@ class CarGraphActivity : AppCompatActivity() {
                     title.text = car.name + " - " + car.plate
 
                     val fuelString = when (model.fuel) {
-                        FuelType.Petrol -> "Petrol"
-                        FuelType.Diesel -> "Diesel"
-                        FuelType.LPG -> "LPG"
+
+                        FuelType.Petrol -> getString(R.string.petrol)
+                        FuelType.Diesel -> getString(R.string.diesel)
+                        FuelType.LPG -> getString(R.string.lpg)
                     }
 
                     //text.text = "${model.name} (${model.year}, $fuelString)\nW ${model.width} cm | L ${model.length} | H ${model.height} | M ${model.weight} kg\nCO2 ${model.co2factor} g/km | Capacity ${model.capacity} cm3"
@@ -106,13 +108,13 @@ class CarGraphActivity : AppCompatActivity() {
                         AlertDialog.Builder(this@CarGraphActivity)
                             .setTitle(text.text)
                             .setMessage(
-                                "Width: ${model.width} cm\n" +
-                                "Length: ${model.length} cm\n" +
-                                "Height: ${model.height} cm\n" +
-                                "Mass: ${model.weight} kg\n" +
-                                "CO2 factor: ${model.co2factor} g/km\n" +
-                                "Capacity: ${model.capacity} cm3\n" +
-                                "Fuel capacity: ${model.fuelcapacity} L")
+                                getString(R.string.width_cm) + ": ${model.width}\n" +
+                                getString(R.string.length_cm) + ": ${model.length}\n" +
+                                getString(R.string.height_cm) + ": ${model.height}\n" +
+                                getString(R.string.weight_kg) + ": ${model.weight}\n" +
+                                getString(R.string.co2_factor_g_km) + ": ${model.co2factor}\n" +
+                                getString(R.string.capacity_cm) + ": ${model.capacity}\n" +
+                                getString(R.string.fuel_capacity) + ": ${model.fuelcapacity}")
                             .setPositiveButton("OK", null)
                             .show()
                     }
@@ -160,7 +162,7 @@ class CarGraphActivity : AppCompatActivity() {
         val sum = refillAmount + maintenanceAmount + insuranceAmount + taxAmount
         val totalAmount = if (sum == 0.0f) 1f else sum
 
-        val legendLabels = listOf("Refills", "Maintenance", "Insurance", "Tax")
+        val legendLabels = listOf(getString(R.string.refills), getString(R.string.maintenance), getString(R.string.insurance), getString(R.string.tax))
         val amounts = listOf(refillAmount, maintenanceAmount, insuranceAmount, taxAmount)
         val colors = listOf(
             resources.getColor(R.color.primary),
@@ -196,7 +198,7 @@ class CarGraphActivity : AppCompatActivity() {
         val data = PieData(dataSet)
         pieChart.data = data
         pieChart.description.isEnabled = false
-        pieChart.centerText = if (noAvailableData) "No available data" else "Expenses"
+        pieChart.centerText = if (noAvailableData) getString(R.string.no_available_data) else getString(R.string.expenses)
         pieChart.setCenterTextSize(14f)
         pieChart.setCenterTextTypeface(Typeface.DEFAULT_BOLD)
         pieChart.setDrawEntryLabels(false)
@@ -317,7 +319,7 @@ class CarGraphActivity : AppCompatActivity() {
         xAxis.isGranularityEnabled = true
 
         // Create a LineDataSet (this holds the data and settings for the line)
-        val dataSet = LineDataSet(entries, "CO2 emissions (g/km per day)")
+        val dataSet = LineDataSet(entries, getString(R.string.co2_emissions))
         dataSet.color = resources.getColor(R.color.primary)
         dataSet.valueTextColor = resources.getColor(R.color.primary_dark)
         dataSet.valueTextSize = 14f
@@ -354,7 +356,7 @@ class CarGraphActivity : AppCompatActivity() {
         lineChart.animateXY(1200, 1200)
 
         val description = Description()
-        description.text = if(noAvailableData) "Not enough data" else "CO2 emission graph"
+        description.text = if(noAvailableData) getString(R.string.not_enough_data) else getString(R.string.co2_emission_graph)
         description.textSize = 14f
 
         lineChart.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
@@ -387,7 +389,7 @@ class CarGraphActivity : AppCompatActivity() {
                 override fun onValueSelected(e: Entry?, h: Highlight?) {
                     e?.let {
 
-                        val sdf = SimpleDateFormat("HH:mm:ss - dd/MM/2025", Locale.getDefault())
+                        val sdf = SimpleDateFormat("HH:mm:ss - dd/MM/yyyy", Locale.getDefault())
                         val refill = refillMap[it.x]
                         val value = it.y
                         val xValue = sdf.format(it.x.toLong())
@@ -413,7 +415,12 @@ class CarGraphActivity : AppCompatActivity() {
                                     // Show a popup dialog
                                     AlertDialog.Builder(this@CarGraphActivity)
                                         .setTitle(xValue)
-                                        .setMessage("CO2: $value g/km per day\nMileage: ${refill.mileage} km\nAmount: €${refill.amount}\nPrice per liter: ${refill.ppl} €/L\nPosition: $position")
+                                        .setMessage(
+                                            "CO2: $value " + getString(R.string.g_km_per_day) + "\n" +
+                                            getString(R.string.mileage) + ": ${refill.mileage}\n" +
+                                            getString(R.string.amount) + ": ${refill.amount}\n" +
+                                            getString(R.string.ppl) + ": ${refill.ppl}\n" +
+                                            getString(R.string.position) + ": $position")
                                         .setPositiveButton("OK", null)
                                         .show()
                                 }
@@ -421,7 +428,7 @@ class CarGraphActivity : AppCompatActivity() {
 
                         else {
 
-                            ToastManager.show(this@CarGraphActivity, "Database error", Toast.LENGTH_SHORT)
+                            ToastManager.show(this@CarGraphActivity, getString(R.string.error), Toast.LENGTH_SHORT)
                         }
                     }
                 }

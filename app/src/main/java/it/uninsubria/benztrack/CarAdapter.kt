@@ -24,24 +24,24 @@ class CarAdapter(private val cars: MutableList<Car>, private val onCarClick: (Ca
 
         val car = cars[position]
         holder.name.text = car.name + " - " + car.plate
-        holder.model.text = "Loading..."
+        holder.model.text = holder.itemView.context.getString(R.string.loading)
 
         car.model?.get()?.addOnSuccessListener { document ->
 
             if (document != null && document.exists()) {
 
-                val modelName = document.getString(Database.NAME_FIELD) ?: "Unknown Model"
+                val modelName = document.getString(Database.NAME_FIELD) ?: holder.itemView.context.getString(R.string.unknown_model)
                 holder.model.text = modelName
             }
 
             else {
 
-                holder.model.text = "Unknown Model"
+                holder.model.text = holder.itemView.context.getString(R.string.unknown_model)
             }
 
         }?.addOnFailureListener {
 
-            holder.model.text = "Error loading model"
+            holder.model.text = holder.itemView.context.getString(R.string.error_loading_model)
         }
 
         holder.itemView.setOnClickListener {

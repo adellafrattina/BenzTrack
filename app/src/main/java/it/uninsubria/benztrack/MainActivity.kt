@@ -17,6 +17,7 @@ class MainActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        Handler.database.setContext(this)
 
         loginButton = findViewById(R.id.button_login)
         registerButton = findViewById(R.id.button_register)
@@ -34,6 +35,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Handler.database.setContext(this)
     }
 
     private lateinit var loginButton: Button

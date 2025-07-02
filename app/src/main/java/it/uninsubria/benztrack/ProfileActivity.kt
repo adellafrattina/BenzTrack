@@ -30,6 +30,7 @@ class ProfileActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
+        Handler.database.setContext(this)
 
         // Initialize views
         noCarsTextView = findViewById(R.id.text_no_cars)
@@ -49,6 +50,7 @@ class ProfileActivity : AppCompatActivity() {
     override fun onResume() {
 
         super.onResume()
+        Handler.database.setContext(this)
 
         // Load cars for the logged user
         if (Handler.loggedUser != null) {
@@ -65,14 +67,14 @@ class ProfileActivity : AppCompatActivity() {
                         }, { car ->
 
                             AlertDialog.Builder(this)
-                                .setTitle("Delete Car")
-                                .setMessage("Are you sure you want to delete ${car.name} (${car.plate})?")
-                                .setPositiveButton("Yes") { _, _ ->
+                                .setTitle(getString(R.string.delete_car))
+                                .setMessage(getString(R.string.delete_car_confirm, car.name, car.plate))
+                                .setPositiveButton(getString(R.string.yes)) { _, _ ->
 
                                     Handler.database.deleteUserCar(Handler.loggedUser!!.username, car.plate)
                                         .addOnSuccessListener {
 
-                                            ToastManager.show(this, "Deleted ${car.name} (${car.plate})", Toast.LENGTH_SHORT)
+                                            ToastManager.show(this, getString(R.string.deleted_car, car.name, car.plate), Toast.LENGTH_SHORT)
                                             carAdapter?.removeCar(car)
                                         }
                                         .addOnFailureListener { e ->
@@ -80,7 +82,7 @@ class ProfileActivity : AppCompatActivity() {
                                             ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
                                         }
                                 }
-                                .setNegativeButton("No", null)
+                                .setNegativeButton(getString(R.string.no), null)
                                 .show()
                         })
 
@@ -144,7 +146,7 @@ class ProfileActivity : AppCompatActivity() {
 
                 Handler.loggedUser = null
                 Handler.save()
-                ToastManager.show(this, "Logged out successfully", Toast.LENGTH_SHORT)
+                ToastManager.show(this, getString(R.string.logged_out_success), Toast.LENGTH_SHORT)
                 val intent = Intent(this, MainActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)

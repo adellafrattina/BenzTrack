@@ -30,12 +30,13 @@ class AddRefillActivity : AppCompatActivity() {
 
     private lateinit var submitButton: Button
 
-    private lateinit var selectedPoint: GeoPoint
+    private var selectedPoint: GeoPoint? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_refill)
+        Handler.database.setContext(this)
 
         // Enable the up button in the action bar
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -90,17 +91,21 @@ class AddRefillActivity : AppCompatActivity() {
             refill.date = refillDate
             refill.amount = amountEdit.text.toString().toFloatOrNull() ?: Float.NaN
             refill.mileage = mileageEdit.text.toString().toFloatOrNull() ?: Float.NaN
-            refill.position = selectedPoint
+            if (selectedPoint != null)
+                refill.position = selectedPoint!!
             refill.currentfuelamount = fuelEdit.text.toString().toFloatOrNull() ?: Float.NaN
 
             Handler.database.setNewRefill(Handler.loggedUser!!.username, carPlate!!, refill)
                 .addOnSuccessListener {
 
-                    ToastManager.show(this, "Refill added!", Toast.LENGTH_SHORT)
+                    ToastManager.show(this, getString(R.string.refill_added), Toast.LENGTH_SHORT)
                     finish()
                 }
 
                 .addOnFailureListener { e ->
+
+                    if (e.message != null)
+                        ToastManager.show(this, e.message, Toast.LENGTH_LONG)
 
                     when (e) {
 
@@ -141,12 +146,12 @@ class AddRefillActivity : AppCompatActivity() {
         if (requestCode == 1001 && resultCode == RESULT_OK && data != null) {
             val lat = data.getDoubleExtra("latitude", 0.0)
             val lon = data.getDoubleExtra("longitude", 0.0)
-            positionEdit.setText("Loading...")
+            positionEdit.setText(getString(R.string.loading))
             selectedPoint = GeoPoint(lat, lon)
             Map.getAddressBasedOnGeoPoint(lat, lon)
                 .addOnSuccessListener { address ->
 
-                    positionEdit.setText(address?.displayName ?: "Unknown")
+                    positionEdit.setText(address?.displayName ?: getString(R.string.unknown))
                 }
                 .addOnFailureListener { e ->
 
@@ -174,5 +179,10 @@ class AddRefillActivity : AppCompatActivity() {
 
         finish()
         return true
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Handler.database.setContext(this)
     }
 }
