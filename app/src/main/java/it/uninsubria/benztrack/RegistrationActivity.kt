@@ -36,6 +36,7 @@ class RegistrationActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registration)
+        Handler.database.setContext(this)
 
         // Initialize views
         usernameLayout = findViewById(R.id.username_layout)
@@ -69,7 +70,7 @@ class RegistrationActivity : AppCompatActivity() {
             Handler.database.registration(user)
                 .addOnSuccessListener {
 
-                    ToastManager.show(this, "Registration successful!", Toast.LENGTH_SHORT)
+                    ToastManager.show(this, getString(R.string.registration_successful), Toast.LENGTH_SHORT)
                     Handler.loggedUser = user
 
                     val intent = Intent(this, ProfileActivity::class.java)
@@ -109,10 +110,10 @@ class RegistrationActivity : AppCompatActivity() {
                                 showError(passwordLayout, e.password)
                             }
 
-                            ToastManager.show(this, "Registration unsuccessful", Toast.LENGTH_SHORT)
+                            ToastManager.show(this, getString(R.string.registration_unsuccessful), Toast.LENGTH_SHORT)
                         }
 
-                        else -> ToastManager.show(this, "An unexpected error occurred", Toast.LENGTH_LONG)
+                        else -> ToastManager.show(this, getString(R.string.unexpected_error_occurred), Toast.LENGTH_LONG)
                     }
                 }
         }
@@ -176,5 +177,10 @@ class RegistrationActivity : AppCompatActivity() {
         clearErrors()
         super.onBackPressed()
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Handler.database.setContext(this)
     }
 }

@@ -67,7 +67,7 @@
                 android:id="@+id/edit_model_co2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/co_factor_g_km"
+                android:hint="@string/co2_factor_g_km"
                 android:inputType="numberDecimal"
                 android:textColorHint="@color/gray_medium"
                 style="@style/TextBody"/>

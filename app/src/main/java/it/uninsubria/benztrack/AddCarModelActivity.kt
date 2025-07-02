@@ -37,6 +37,7 @@ class AddCarModelActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_car_model)
+        Handler.database.setContext(this)
 
         // Enable the up button in the action bar
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -64,7 +65,15 @@ class AddCarModelActivity : AppCompatActivity() {
 
         submitButton = findViewById(R.id.button_submit_model)
 
-        val fuelTypes = FuelType.entries.map { it.name }
+        val fuelTypes = FuelType.entries.map {
+
+            when (it) {
+
+                FuelType.Petrol -> getString(R.string.petrol)
+                FuelType.Diesel -> getString(R.string.diesel)
+                FuelType.LPG -> getString(R.string.lpg)
+            }
+        }
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, fuelTypes)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         fuelSpinner.adapter = adapter
@@ -77,7 +86,7 @@ class AddCarModelActivity : AppCompatActivity() {
             model.name = nameEdit.text.toString()
             model.year = yearEdit.text.toString().toIntOrNull() ?: 0
             model.capacity = capacityEdit.text.toString().toIntOrNull() ?: 0
-            model.fuel = FuelType.valueOf(fuelSpinner.selectedItem.toString())
+            model.fuel = FuelType.entries[fuelSpinner.selectedItemId.toInt()]
             model.co2factor = co2Edit.text.toString().toFloatOrNull() ?: Float.NaN
             model.weight = weightEdit.text.toString().toFloatOrNull() ?: 0f
             model.length = lengthEdit.text.toString().toFloatOrNull() ?: 0f
@@ -88,7 +97,7 @@ class AddCarModelActivity : AppCompatActivity() {
             Handler.database.createCarModel(model)
                 .addOnSuccessListener {
 
-                    ToastManager.show(this, "Model added!", android.widget.Toast.LENGTH_SHORT)
+                    ToastManager.show(this, getString(R.string.model_added), android.widget.Toast.LENGTH_SHORT)
                     finish()
                 }
 
@@ -171,5 +180,10 @@ class AddCarModelActivity : AppCompatActivity() {
 
         finish()
         return true
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Handler.database.setContext(this)
     }
 } 

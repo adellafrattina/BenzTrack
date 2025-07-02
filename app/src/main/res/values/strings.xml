@@ -50,7 +50,7 @@
     <string name="height_cm">Height (cm)</string>
     <string name="length_cm">Length (cm)</string>
     <string name="weight_kg">Weight (kg)</string>
-    <string name="co_factor_g_km">CO₂ Factor (g/km)</string>
+    <string name="co2_factor_g_km">CO₂ Factor (g/km)</string>
     <string name="capacity_cm">Capacity (cm³)</string>
     <string name="year">Year</string>
     <string name="model_name">Model Name</string>
@@ -69,14 +69,14 @@
     <string name="refill_placeholder">Refill details will appear here.</string>
 
     <!-- Refill form -->
-    <string name="position">Position (address or coordinates)</string>
-    <string name="ppl">Price per liter (€)</string>
+    <string name="position">Position</string>
+    <string name="ppl">Price per liter (€/L)</string>
     <string name="mileage">Mileage (km)</string>
     <string name="amount">Amount (€)</string>
     <string name="submit_refill">Add Refill</string>
     <string name="refill_date">Date</string>
-    <string name="refill_position">Position (address or coordinates)</string>
-    <string name="refill_ppl">Price per liter (€)</string>
+    <string name="refill_position">Position</string>
+    <string name="refill_ppl">Price per liter (€/L)</string>
     <string name="refill_mileage">Mileage (km)</string>
     <string name="refill_amount">Amount (€)</string>
     <string name="refill_fuel">Fuel amount before refilling (L)</string>
@@ -105,4 +105,78 @@
 
     <!-- Refill map -->
     <string name="tick">Confirm</string>
+
+    <!-- Fuel types -->
+    <string name="petrol">Petrol</string>
+    <string name="diesel">Diesel</string>
+    <string name="lpg">LPG</string>
+
+    <string name="expenses">Expenses</string>
+    <string name="co2_emission_graph">CO2 emission graph</string>
+    <string name="co2_emissions">CO2 emissions</string>
+    <string name="g_km_per_day">g/km per day</string>
+    <string name="maintenance">Maintenance</string>
+    <string name="insurance">Insurance</string>
+    <string name="tax">Tax</string>
+    <string name="no_available_data">No available data</string>
+    <string name="not_enough_data">Not enough data</string>
+    <string name="running_in_the_background">Running in the background</string>
+    <string name="syncing_messages">Syncing messages…</string>
+    <string name="congratulations_co2">Congratulations! You reduced your CO2 emissions by %1$s%% and saved up €%2$s</string>
+    <string name="warning_co2">"Warning! You increased your CO2 emissions by%1$s%% and lost the equivalent of €%2$s</string>
+    <string name="you_can_do_better_co2">You can do better! Your CO2 emissions are steady (%s g/km of CO2 per day)</string>
+    <string name="pay_you_are_late_days">"You are %s days late on your car %s! (deadline was %s)"</string>
+    <string name="pay_you_are_late_day">"You are one day late on your car %s! (deadline was %s)"</string>
+    <string name="pay_today">Today is the last day to pay the car %s!</string>
+    <string name="pay_days_left">You have %s days left to pay your car %s (deadline is %s)</string>
+    <string name="pay_tomorrow">The %s payment is due tomorrow</string>
+    <string name="search">Search</string>
+    <string name="next_payment_on">Next payment on %s</string>
+    <string name="average_consumption">Average consumption: %s L/100km</string>
+    <string name="cancel">Cancel</string>
+    <string name="date_set_to">%s date set to %s</string>
+    <string name="enter_fee">Enter %s fee (€)</string>
+    <string name="fee">%s fee</string>
+    <string name="submit">Submit</string>
+    <string name="fee_of_submitted">%s fee of €%s submitted!</string>
+    <string name="please_enter_valid_amount">Please enter a valid amount</string>
+    <string name="refill_added">Refill added!</string>
+    <string name="loading">Loading…</string>
+    <string name="unknown">Unknown</string>
+    <string name="error">Error</string>
+    <string name="model_added">Model added!</string>
+    <string name="unknown_model">Unknown model</string>
+    <string name="error_loading_model">Error loading model</string>
+    <string name="unexpected_error_occurred">An unexpected error occurred</string>
+    <string name="registration_successful">Registration successful!</string>
+    <string name="registration_unsuccessful">Registration unsuccessful</string>
+    <string name="delete_car">Delete car</string>
+    <string name="delete_car_confirm">Are you sure you want to delete %s (%s)?</string>
+    <string name="deleted_car">Deleted %s (%s)</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="logged_out_success">Logged out successfully</string>
+    <string name="login_successful">Login successful!</string>
+    <string name="login_unsuccessful">Login unsuccessful</string>
+    <string name="this_field_must_not_be_empty">This field must not be empty</string>
+    <string name="username_or_password_are_incorrect">Username or password are incorrect</string>
+    <string name="the_email_must_be_valid">The email must be valid</string>
+    <string name="the_field_must_be_valid">The field must be valid</string>
+    <string name="username_already_taken">Username already taken</string>
+    <string name="car_model_already_exists">This car model already exists</string>
+    <string name="this_car_model_cannot_exist">This car model cannot exist</string>
+    <string name="cannot_find_the_specified_model">Cannot find the specified model</string>
+    <string name="the_user_does_not_have_the_specified_car">The user does not have the specified car</string>
+    <string name="the_user_does_not_exist">The user does not exist</string>
+    <string name="car_creation_has_failed">Car creation has failed</string>
+    <string name="plate_already_present">A car with the same plate is already present</string>
+    <string name="fuel_capacity_overflow">Your car can only contain %sL of fuel (there are %s extra liters)</string>
+    <string name="not_consistent_with_ppl">The value is not consistent with the price per liter</string>
+    <string name="prev_mileage_not_valid">The mileage value is not valid (should be higher than the previous one - %skm)</string>
+    <string name="prev_current_fuel_amount_not_valid">The current fuel amount is not valid (should be less than %sL)</string>
+    <string name="next_mileage_not_valid">The mileage value is not valid (should be lower than the next one - %skm)</string>
+    <string name="next_current_fuel_amount_not_valid">The current fuel amount is not valid (should be greater than %sL)</string>
+    <string name="refill_failed">Failed to add new refill</string>
+    <string name="car_added">Car added successfully</string>
+    <string name="fields_left_blank">Some fields are left blank</string>
 </resources>

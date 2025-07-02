@@ -12,6 +12,7 @@ import java.util.Calendar
 import android.app.AlertDialog
 import android.widget.EditText
 import android.text.InputType
+import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -23,6 +24,7 @@ class CarInfoActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_car_info)
+        Handler.database.setContext(this)
 
         // Enable the up button in the action bar
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -65,7 +67,7 @@ class CarInfoActivity : AppCompatActivity() {
                     payButton.isEnabled = true
                     payButton.alpha = 1.0f
                     val sdf = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-                    maintenancePlaceholder.text = "Next maintenance on: " + sdf.format(car.maintenancedate!!.toDate())
+                    maintenancePlaceholder.text = getString(R.string.next_payment_on, sdf.format(car.maintenancedate!!.toDate()))
                 }
 
                 if (car.insurancedate == null) {
@@ -83,7 +85,7 @@ class CarInfoActivity : AppCompatActivity() {
                     payInsuranceButton.isEnabled = true
                     payInsuranceButton.alpha = 1.0f
                     val sdf = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-                    insurancePlaceholder.text = "Next insurance on: " + sdf.format(car.insurancedate!!.toDate())
+                    insurancePlaceholder.text = getString(R.string.next_payment_on, sdf.format(car.insurancedate!!.toDate()))
                 }
 
                 if (car.taxdate == null) {
@@ -101,7 +103,7 @@ class CarInfoActivity : AppCompatActivity() {
                     payTaxButton.isEnabled = true
                     payTaxButton.alpha = 1.0f
                     val sdf = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-                    taxPlaceholder.text = "Next tax on: " + sdf.format(car.taxdate!!.toDate())
+                    taxPlaceholder.text = getString(R.string.next_payment_on, sdf.format(car.taxdate!!.toDate()))
                 }
 
                 Handler.database.getRefillData(Handler.loggedUser!!.username, carPlate)
@@ -125,7 +127,7 @@ class CarInfoActivity : AppCompatActivity() {
 
                             val mean = if (totalKm > 0) totalLiters / totalKm * 100 else 0f
 
-                            refillPlaceholder.text = "Average consumption: %.2f L / 100km".format(mean)
+                            refillPlaceholder.text = getString(R.string.average_consumption, DecimalFormat("#.##").format(mean))
 
                         }
 
@@ -162,8 +164,8 @@ class CarInfoActivity : AppCompatActivity() {
                 Handler.database.setNewMaintenanceDate(Handler.loggedUser!!.username, carPlate, Timestamp(cal.time))
                     .addOnSuccessListener {
 
-                        maintenancePlaceholder.text = "Next maintenance on: $formatted"
-                        ToastManager.show(this, "Maintenance date set to $formatted", Toast.LENGTH_SHORT)
+                        maintenancePlaceholder.text = getString(R.string.next_payment_on, formatted)
+                        ToastManager.show(this, getString(R.string.date_set_to, getString(R.string.maintenance), formatted), Toast.LENGTH_SHORT)
                         payButton.isEnabled = true
                         payButton.alpha = 1.0f
                     }
@@ -182,12 +184,12 @@ class CarInfoActivity : AppCompatActivity() {
 
             val input = EditText(this)
             input.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-            input.hint = "Enter maintenance fee (€)"
+            input.hint = getString(R.string.enter_fee, getString(R.string.maintenance).lowercase()) //"Enter maintenance fee (€)"
 
             AlertDialog.Builder(this)
-                .setTitle("Maintenance Fee")
+                .setTitle(getString(R.string.fee, getString(R.string.maintenance)))
                 .setView(input)
-                .setPositiveButton("Submit") { _, _ ->
+                .setPositiveButton(getString(R.string.submit)) { _, _ ->
 
                     val feeText = input.text.toString()
                     val maintenance = Maintenance()
@@ -199,7 +201,7 @@ class CarInfoActivity : AppCompatActivity() {
                         Handler.database.payMaintenance(Handler.loggedUser!!.username, carPlate, maintenance)
                             .addOnSuccessListener {
 
-                                ToastManager.show(this, "Maintenance fee of €${maintenance.amount} submitted!", Toast.LENGTH_SHORT)
+                                ToastManager.show(this,  getString(R.string.fee_of_submitted, getString(R.string.maintenance), maintenance.amount.toString()), Toast.LENGTH_SHORT)
                                 payButton.isEnabled = false
                                 payButton.alpha = 0.5f
                                 maintenancePlaceholder.text = getString(R.string.maintenance_placeholder)
@@ -213,10 +215,10 @@ class CarInfoActivity : AppCompatActivity() {
 
                     else {
 
-                        ToastManager.show(this, "Please enter a valid amount", Toast.LENGTH_SHORT)
+                        ToastManager.show(this, getString(R.string.please_enter_valid_amount), Toast.LENGTH_SHORT)
                     }
                 }
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show()
         }
 
@@ -231,8 +233,8 @@ class CarInfoActivity : AppCompatActivity() {
                 Handler.database.setNewInsuranceDate(Handler.loggedUser!!.username, carPlate, Timestamp(cal.time))
                     .addOnSuccessListener {
 
-                        insurancePlaceholder.text = "Next insurance on: $formatted"
-                        ToastManager.show(this, "Insurance date set to $formatted", Toast.LENGTH_SHORT)
+                        insurancePlaceholder.text = getString(R.string.next_payment_on, formatted)
+                        ToastManager.show(this, getString(R.string.enter_fee, getString(R.string.insurance).lowercase()), Toast.LENGTH_SHORT)
                         payInsuranceButton.isEnabled = true
                         payInsuranceButton.alpha = 1.0f
                     }
@@ -251,12 +253,12 @@ class CarInfoActivity : AppCompatActivity() {
 
             val input = EditText(this)
             input.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-            input.hint = "Enter insurance fee (€)"
+            input.hint = getString(R.string.enter_fee, getString(R.string.insurance).lowercase())
 
             AlertDialog.Builder(this)
-                .setTitle("Insurance Fee")
+                .setTitle(getString(R.string.fee, getString(R.string.insurance)))
                 .setView(input)
-                .setPositiveButton("Submit") { _, _ ->
+                .setPositiveButton(R.string.submit) { _, _ ->
 
                     val feeText = input.text.toString()
                     val insurance = Insurance()
@@ -268,7 +270,7 @@ class CarInfoActivity : AppCompatActivity() {
                         Handler.database.payInsurance(Handler.loggedUser!!.username, carPlate, insurance)
                             .addOnSuccessListener {
 
-                                ToastManager.show(this, "Insurance fee of €${insurance.amount} submitted!", Toast.LENGTH_SHORT)
+                                ToastManager.show(this, getString(R.string.fee_of_submitted, getString(R.string.insurance), insurance.amount.toString()), Toast.LENGTH_SHORT)
                                 payInsuranceButton.isEnabled = false
                                 payInsuranceButton.alpha = 0.5f
                                 insurancePlaceholder.text = getString(R.string.insurance_placeholder)
@@ -283,10 +285,10 @@ class CarInfoActivity : AppCompatActivity() {
 
                     else {
 
-                        ToastManager.show(this, "Please enter a valid amount", Toast.LENGTH_SHORT)
+                        ToastManager.show(this, getString(R.string.please_enter_valid_amount), Toast.LENGTH_SHORT)
                     }
                 }
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show()
         }
 
@@ -301,8 +303,8 @@ class CarInfoActivity : AppCompatActivity() {
                 Handler.database.setNewTaxDate(Handler.loggedUser!!.username, carPlate, Timestamp(cal.time))
                     .addOnSuccessListener {
 
-                        taxPlaceholder.text = "Next tax on: $formatted"
-                        ToastManager.show(this, "Tax date set to $formatted", Toast.LENGTH_SHORT)
+                        taxPlaceholder.text = getString(R.string.next_payment_on, formatted)
+                        ToastManager.show(this, getString(R.string.date_set_to, getString(R.string.tax), formatted), Toast.LENGTH_SHORT)
                         payTaxButton.isEnabled = true
                         payTaxButton.alpha = 1.0f
                     }
@@ -321,12 +323,12 @@ class CarInfoActivity : AppCompatActivity() {
 
             val input = EditText(this)
             input.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-            input.hint = "Enter tax fee (€)"
+            input.hint = getString(R.string.enter_fee, getString(R.string.tax).lowercase())
 
             AlertDialog.Builder(this)
-                .setTitle("Tax Fee")
+                .setTitle(getString(R.string.fee, getString(R.string.tax)))
                 .setView(input)
-                .setPositiveButton("Submit") { _, _ ->
+                .setPositiveButton(getString(R.string.submit)) { _, _ ->
 
                     val feeText = input.text.toString()
                     val tax = Tax()
@@ -338,7 +340,7 @@ class CarInfoActivity : AppCompatActivity() {
                         Handler.database.payTax(Handler.loggedUser!!.username, carPlate, tax)
                             .addOnSuccessListener {
 
-                                ToastManager.show(this, "Tax fee of €${tax.amount} submitted!", Toast.LENGTH_SHORT)
+                                ToastManager.show(this, getString(R.string.fee_of_submitted, getString(R.string.tax), tax.amount.toString()), Toast.LENGTH_SHORT)
                                 payTaxButton.isEnabled = false
                                 payTaxButton.alpha = 0.5f
                                 taxPlaceholder.text = getString(R.string.tax_placeholder)
@@ -352,11 +354,11 @@ class CarInfoActivity : AppCompatActivity() {
 
                     else {
 
-                        ToastManager.show(this, "Please enter a valid amount", Toast.LENGTH_SHORT)
+                        ToastManager.show(this, getString(R.string.please_enter_valid_amount), Toast.LENGTH_SHORT)
                     }
                 }
 
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show()
         }
     }
@@ -365,5 +367,10 @@ class CarInfoActivity : AppCompatActivity() {
 
         finish()
         return true
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Handler.database.setContext(this)
     }
 }

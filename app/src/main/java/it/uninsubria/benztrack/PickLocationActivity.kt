@@ -46,6 +46,7 @@ class PickLocationActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
         Configuration.getInstance().load(applicationContext, androidx.preference.PreferenceManager.getDefaultSharedPreferences(applicationContext))
+        Handler.database.setContext(this)
 
         map = MapView(this)
         map.setTileSource(TileSourceFactory.MAPNIK)
@@ -162,7 +163,7 @@ class PickLocationActivity : AppCompatActivity() {
         searchLayout.orientation = LinearLayout.HORIZONTAL
         searchLayout.setBackgroundColor("#CCFFFFFF".toColorInt()) // Lighter semi-opaque dark
         val searchEdit = EditText(this)
-        searchEdit.hint = "Search location..."
+        searchEdit.hint = getString(R.string.search)
         val searchButton = Button(this)
 
         // Use magnifying glass icon
@@ -339,5 +340,10 @@ class PickLocationActivity : AppCompatActivity() {
             return true
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Handler.database.setContext(this)
     }
 } 

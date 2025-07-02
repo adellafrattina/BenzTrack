@@ -37,6 +37,7 @@ class AddCarActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_car)
+        Handler.database.setContext(this)
 
         // Enable the up button in the action bar
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -91,7 +92,7 @@ class AddCarActivity : AppCompatActivity() {
                 Handler.database.addNewUserCar(Handler.loggedUser!!.username, car)
                     .addOnSuccessListener {
 
-                        ToastManager.show(this, "Car added successfully", Toast.LENGTH_SHORT)
+                        ToastManager.show(this, getString(R.string.car_added), Toast.LENGTH_SHORT)
                         finish()
                     }
 
@@ -113,13 +114,13 @@ class AddCarActivity : AppCompatActivity() {
                             }
                         }
 
-                        ToastManager.show(this, "Error adding car: ${e.message}", Toast.LENGTH_SHORT)
+                        ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
                     }
             }
 
             else {
 
-                ToastManager.show(this, "Error adding car: some fields are left blank", Toast.LENGTH_SHORT)
+                ToastManager.show(this, getString(R.string.fields_left_blank), Toast.LENGTH_SHORT)
             }
         }
 
@@ -156,7 +157,7 @@ class AddCarActivity : AppCompatActivity() {
 
                 .addOnFailureListener { e ->
 
-                    ToastManager.show(this@AddCarActivity, "Error searching models: ${e.message}", Toast.LENGTH_SHORT)
+                    ToastManager.show(this@AddCarActivity, e.message, Toast.LENGTH_SHORT)
                     modelsRecyclerView.visibility = View.GONE
                 }
         }
@@ -178,6 +179,11 @@ class AddCarActivity : AppCompatActivity() {
 
         layout.error = message
         layout.isErrorEnabled = true
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Handler.database.setContext(this)
     }
 }
 
@@ -222,9 +228,9 @@ class CarModelAdapter(private val onModelSelected: (CarModel) -> Unit) :
             // First line
             val fuelString = when (model.fuel) {
 
-                FuelType.Petrol -> "Petrol"
-                FuelType.Diesel -> "Diesel"
-                FuelType.LPG -> "LPG"
+                FuelType.Petrol -> itemView.context.getString(R.string.petrol)
+                FuelType.Diesel -> itemView.context.getString(R.string.diesel)
+                FuelType.LPG -> itemView.context.getString(R.string.lpg)
             }
 
             "${model.name} (${model.year}, $fuelString)".also { modelNameText.text = it }
@@ -289,4 +295,4 @@ class CarModelAdapter(private val onModelSelected: (CarModel) -> Unit) :
             return builder
         }
     }
-} 
+}

@@ -27,6 +27,7 @@ class UserInfoActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_userinfo)
+        Handler.database.setContext(this)
 
         // Enable the back arrow in the action bar
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -94,5 +95,10 @@ class UserInfoActivity : AppCompatActivity() {
         }
 
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Handler.database.setContext(this)
     }
 }

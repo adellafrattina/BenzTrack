@@ -30,6 +30,7 @@ class LoginActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+        Handler.database.setContext(this)
 
         // Initialize views
         usernameLayout = findViewById(R.id.username_layout)
@@ -54,7 +55,7 @@ class LoginActivity : AppCompatActivity() {
             Handler.database.login(username, password)
                 .addOnSuccessListener { user ->
 
-                    ToastManager.show(this, "Login successful!", Toast.LENGTH_SHORT)
+                    ToastManager.show(this, getString(R.string.login_successful), Toast.LENGTH_SHORT)
                     Handler.loggedUser = user
                     Handler.save()
 
@@ -79,10 +80,10 @@ class LoginActivity : AppCompatActivity() {
                                 ToastManager.show(this, e.message, Toast.LENGTH_SHORT)
 
                             else
-                                ToastManager.show(this, "Login failed", Toast.LENGTH_SHORT)
+                                ToastManager.show(this, getString(R.string.login_unsuccessful), Toast.LENGTH_SHORT)
                         }
 
-                        else -> ToastManager.show(this, "An unexpected error occurred", Toast.LENGTH_LONG)
+                        else -> ToastManager.show(this, getString(R.string.unexpected_error_occurred), Toast.LENGTH_LONG)
                     }
                 }
         }
@@ -100,5 +101,10 @@ class LoginActivity : AppCompatActivity() {
             startActivity(intent)
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Handler.database.setContext(this)
     }
 }

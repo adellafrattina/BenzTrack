@@ -42,14 +42,16 @@ class BackgroundService : Service() {
 
         val notification = NotificationHandler.createNotification(this, NotificationHandler.BACKGROUND_CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher_background)
-            .setContentTitle("Running in the background")
-            .setContentText("Syncing messages...")
+            .setContentTitle(getString(R.string.running_in_the_background))
+            .setContentText(getString(R.string.syncing_messages))
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .setCategory(Notification.CATEGORY_SERVICE)
             .setOngoing(true)
             .build()
 
         startForeground(1, notification)
+
+        Handler.database.setContext(this)
 
         today = Timestamp.now()
         context = baseContext
@@ -88,9 +90,9 @@ class BackgroundService : Service() {
 
                                 for (car in cars) {
 
-                                    car.maintenancedate?.let { checkDate(car, it, currentDate, "Maintenance") }
-                                    car.insurancedate?.let { checkDate(car, it, currentDate, "Insurance") }
-                                    car.taxdate?.let { checkDate(car, it, currentDate, "Tax") }
+                                    car.maintenancedate?.let { checkDate(car, it, currentDate, getString(R.string.maintenance)) }
+                                    car.insurancedate?.let { checkDate(car, it, currentDate, getString(R.string.insurance)) }
+                                    car.taxdate?.let { checkDate(car, it, currentDate, getString(R.string.tax)) }
                                 }
                             }
                     }
@@ -160,21 +162,24 @@ class BackgroundService : Service() {
                                                         sumCost -= lastCost
                                                         val avgCost = sumCost / (refills.size - 2)
 
-                                                        val titleStr = "CO2 Emissions - " + car.plate
+                                                        val titleStr = getString(R.string.co2_emissions) + " - " + car.plate
                                                         val textStr =
                                                             if (avgEmittedCO2 > lastEmittedCO2) {
 
-                                                                "Congratulations! You reduced your CO2 emissions by ${DecimalFormat("#.#").format(percCO2)}% and saved up €${DecimalFormat("#.##").format((avgCost - lastCost) * lastTravelledKm * lastDaysInterval)}"
+                                                                getString(R.string.congratulations_co2, DecimalFormat("#.#").format(percCO2), DecimalFormat("#.##").format((avgCost - lastCost) * lastTravelledKm * lastDaysInterval))
+                                                                //"Congratulations! You reduced your CO2 emissions by ${DecimalFormat("#.#").format(percCO2)}% and saved up €${DecimalFormat("#.##").format((avgCost - lastCost) * lastTravelledKm * lastDaysInterval)}"
                                                             }
 
                                                             else if (avgEmittedCO2 < lastEmittedCO2) {
 
-                                                                "Warning! You increased your CO2 emissions by ${DecimalFormat("#.#").format(percCO2)}% and lost the equivalent of €${DecimalFormat("#.##").format((lastCost - avgCost)* lastTravelledKm * lastDaysInterval)}"
+                                                                getString(R.string.warning_co2, DecimalFormat("#.#").format(percCO2), DecimalFormat("#.##").format((lastCost - avgCost)* lastTravelledKm * lastDaysInterval))
+                                                                //"Warning! You increased your CO2 emissions by ${DecimalFormat("#.#").format(percCO2)}% and lost the equivalent of €${DecimalFormat("#.##").format((lastCost - avgCost)* lastTravelledKm * lastDaysInterval)}"
                                                             }
 
                                                             else {
 
-                                                                "You can do better! Your CO2 emissions are steady (${DecimalFormat("#.#").format(lastEmittedCO2 * 1000.0f)} g/km of CO2 per day)"
+                                                                getString(R.string.you_can_do_better_co2, DecimalFormat("#.#").format(lastEmittedCO2 * 1000.0f))
+                                                                //"You can do better! Your CO2 emissions are steady (${DecimalFormat("#.#").format(lastEmittedCO2 * 1000.0f)} g/km of CO2 per day)"
                                                             }
 
                                                         val n = NotificationHandler.createNotification(context, NotificationHandler.DATE_CHANNEL)
@@ -182,6 +187,7 @@ class BackgroundService : Service() {
                                                             .setPriority(NotificationCompat.PRIORITY_HIGH)
                                                             .setContentTitle(titleStr)
                                                             .setContentText(textStr)
+                                                            .setStyle(NotificationCompat.BigTextStyle().bigText(textStr))
                                                             .build()
 
                                                         NotificationHandler.notify(n, hash(titleStr + car.plate))
@@ -220,27 +226,32 @@ class BackgroundService : Service() {
         val formattedDate = sdf.format(date.toDate())
         val timeDifferenceInDays = abs(daysBetweenDates(currentDate, date))
 
-        val titleStr = title + " date" + " - " + car.plate
+        val titleStr = title + " - " + car.plate
         val textStr: String =
             if (!isSameDay(currentDate, date) && currentDate > date) {
 
                 if (timeDifferenceInDays > 1)
-                    "You are $timeDifferenceInDays days late on your car ${title.lowercase()}! (deadline was $formattedDate)"
+                    getString(R.string.pay_you_are_late_days, timeDifferenceInDays.toString(), title.lowercase(), formattedDate)
+                    //"You are $timeDifferenceInDays days late on your car ${title.lowercase()}! (deadline was $formattedDate)"
                 else
-                    "You are one day late on your car ${title.lowercase()}! (deadline was $formattedDate)"
+                    getString(R.string.pay_you_are_late_day, title.lowercase(), formattedDate)
+                    //"You are one day late on your car ${title.lowercase()}! (deadline was $formattedDate)"
             }
 
             else if (isSameDay(currentDate, date)) {
 
-                "Today is the last day to pay the car ${title.lowercase()}!"
+                getString(R.string.pay_today, title.lowercase())
+                //"Today is the last day to pay the car ${title.lowercase()}!"
             }
 
             else if (date.seconds - currentDate.seconds <= 604800) {
 
                 if (timeDifferenceInDays > 1)
-                    "You have $timeDifferenceInDays days left to pay your car ${title.lowercase()} (deadline is $formattedDate)"
+                    getString(R.string.pay_days_left, timeDifferenceInDays.toString(), title.lowercase(), formattedDate)
+                    //"You have $timeDifferenceInDays days left to pay your car ${title.lowercase()} (deadline is $formattedDate)"
                 else
-                    "The ${title.lowercase()} payment is due tomorrow"
+                    getString(R.string.pay_tomorrow, title.lowercase())
+                    //"The ${title.lowercase()} payment is due tomorrow"
             }
 
             else {
@@ -259,6 +270,7 @@ class BackgroundService : Service() {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentTitle(titleStr)
                 .setContentText(textStr)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(textStr))
                 .build()
 
             NotificationHandler.notify(n, hash(title + car.plate))

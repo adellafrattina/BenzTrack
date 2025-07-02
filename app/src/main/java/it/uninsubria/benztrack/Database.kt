@@ -1,5 +1,6 @@
 package it.uninsubria.benztrack
 
+import android.content.Context
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.android.gms.tasks.Tasks
@@ -62,6 +63,11 @@ public class Database {
         public const val CURRENT_FUEL_AMOUNT_FIELD = "currentfuelamount"
     }
 
+    public fun setContext(context: Context) {
+
+        contextRef = context
+    }
+
     /**
      * Logs into an account with the specified parameters
      *
@@ -77,15 +83,15 @@ public class Database {
 
         // Check username
         if (username.isEmpty())
-            usernameErrorMsg = "This field must not be empty"
+            usernameErrorMsg = contextRef.getString(R.string.this_field_must_not_be_empty)
 
         // Check password
         if (password.isEmpty())
-            passwordErrorMsg = "This field must not be empty"
+            passwordErrorMsg = contextRef.getString(R.string.this_field_must_not_be_empty)
 
         if (username.isEmpty() || password.isEmpty())
             taskSource.setException(LoginException(
-                "Login failed",
+                contextRef.getString(R.string.login_unsuccessful),
                 usernameErrorMsg,
                 passwordErrorMsg))
 
@@ -114,11 +120,11 @@ public class Database {
                         }
 
                         else
-                            taskSource.setException(LoginException("Username or password are incorrect"))
+                            taskSource.setException(LoginException(contextRef.getString(R.string.username_or_password_are_incorrect)))
                     }
 
                     else
-                        taskSource.setException(LoginException("Username or password are incorrect"))
+                        taskSource.setException(LoginException(contextRef.getString(R.string.username_or_password_are_incorrect)))
                 }
                 .addOnFailureListener { e ->
 
@@ -142,28 +148,28 @@ public class Database {
 
         // Check password
         if (user.password.isEmpty())
-            errorMap[PASSWORD_FIELD] = "This field must not be empty"
+            errorMap[PASSWORD_FIELD] = contextRef.getString(R.string.this_field_must_not_be_empty)
 
         // Check email
         if (user.email.isEmpty())
-            errorMap[EMAIL_FIELD] = "This field must not be empty"
+            errorMap[EMAIL_FIELD] = contextRef.getString(R.string.this_field_must_not_be_empty)
         else if (!Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\$").matches(user.email))
-            errorMap[EMAIL_FIELD] = "The email is not valid"
+            errorMap[EMAIL_FIELD] = contextRef.getString(R.string.the_email_must_be_valid)
 
         // Check name
         if (user.name.isEmpty())
-            errorMap[NAME_FIELD] = "This field must not be empty"
+            errorMap[NAME_FIELD] = contextRef.getString(R.string.this_field_must_not_be_empty)
 
         // Check surname
         if (user.surname.isEmpty())
-            errorMap[SURNAME_FIELD] = "This field must not be empty"
+            errorMap[SURNAME_FIELD] = contextRef.getString(R.string.this_field_must_not_be_empty)
 
         // Check username
         if (user.username.isEmpty()) {
 
-            errorMap[USERNAME_FIELD] = "This field must not be empty"
+            errorMap[USERNAME_FIELD] = contextRef.getString(R.string.this_field_must_not_be_empty)
             taskSource.setException(RegistrationException(
-                "Registration failed",
+                contextRef.getString(R.string.registration_unsuccessful),
                 if (errorMap[USERNAME_FIELD] != null) errorMap[USERNAME_FIELD]!! else "",
                 if (errorMap[PASSWORD_FIELD] != null) errorMap[PASSWORD_FIELD]!! else "",
                 if (errorMap[EMAIL_FIELD] != null)    errorMap[EMAIL_FIELD]!! else "",
@@ -182,9 +188,9 @@ public class Database {
                     // The user name already exists
                     if (document.exists()) {
 
-                        errorMap[USERNAME_FIELD] = "Username already taken"
+                        errorMap[USERNAME_FIELD] = contextRef.getString(R.string.username_already_taken)
                         taskSource.setException(RegistrationException(
-                            "Registration failed",
+                            contextRef.getString(R.string.registration_unsuccessful),
                             if (errorMap[USERNAME_FIELD] != null) errorMap[USERNAME_FIELD]!! else "",
                             if (errorMap[PASSWORD_FIELD] != null) errorMap[PASSWORD_FIELD]!! else "",
                             if (errorMap[EMAIL_FIELD] != null)    errorMap[EMAIL_FIELD]!! else "",
@@ -220,7 +226,7 @@ public class Database {
                         else {
 
                             taskSource.setException(RegistrationException(
-                                "Registration has failed",
+                                contextRef.getString(R.string.registration_unsuccessful),
                                 if (errorMap[USERNAME_FIELD] != null) errorMap[USERNAME_FIELD]!! else "",
                                 if (errorMap[PASSWORD_FIELD] != null) errorMap[PASSWORD_FIELD]!! else "",
                                 if (errorMap[EMAIL_FIELD] != null)    errorMap[EMAIL_FIELD]!! else "",
@@ -250,39 +256,39 @@ public class Database {
 
         // Check name
         if (model.name.isEmpty())
-            errorMap[NAME_FIELD] = "This field must not be empty"
+            errorMap[NAME_FIELD] = contextRef.getString(R.string.this_field_must_not_be_empty)
 
         // Check year
         if (model.year < 1900 || model.year > LocalDate.now().year)
-            errorMap[YEAR_FIELD] = "The year must be valid"
+            errorMap[YEAR_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
         // Check car
         if (model.capacity < 49) // Smallest possible car (From what I've researched)
-            errorMap[CAPACITY_FIELD] = "The capacity must be valid"
+            errorMap[CAPACITY_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
         // Check CO2 factor
         if (model.co2factor.isNaN() || model.co2factor < 0)
-            errorMap[CO2_FACTOR_FIELD] = "The CO2 factor must be valid"
+            errorMap[CO2_FACTOR_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
         // Check weight
         if (model.weight < 50) // Lightest possible car (From what I've researched)
-            errorMap[WEIGHT_FIELD] = "The weight must be valid"
+            errorMap[WEIGHT_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
         // Check weight
         if (model.width < 1) // Smallest possible car (From what I've researched)
-            errorMap[WIDTH_FIELD] = "The width must be valid"
+            errorMap[WIDTH_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
         // Check length
         if (model.length < 2) // Shortest possible car (From what I've researched)
-            errorMap[LENGTH_FIELD] = "The length must be valid"
+            errorMap[LENGTH_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
         // Check height
         if (model.height < 1) // Shortest possible car (From what I've researched)
-            errorMap[HEIGHT_FIELD] = "The height must be valid"
+            errorMap[HEIGHT_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
         // Check fuel capacity
         if (model.fuelcapacity.isNaN() || model.fuelcapacity < 0)
-            errorMap[FUEL_CAPACITY_FIELD] = "The fuel capacity must be valid"
+            errorMap[FUEL_CAPACITY_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
         if (errorMap.isEmpty()) {
 
@@ -295,7 +301,7 @@ public class Database {
                     // The car model already exists
                     if (document.exists()) {
 
-                        errorMap["message"] = "This car model already exists"
+                        errorMap["message"] = contextRef.getString(R.string.car_model_already_exists)
                         taskSource.setException(CarModelException(message=errorMap["message"]!!))
                     }
 
@@ -341,7 +347,7 @@ public class Database {
 
         else {
 
-            errorMap["message"] = "This car model cannot exist"
+            errorMap["message"] = contextRef.getString(R.string.this_car_model_cannot_exist)
             taskSource.setException(CarModelException(
                 if (errorMap["message"] != null)                errorMap["message"]!! else "" ,
                 if (errorMap[NAME_FIELD] != null)               errorMap[NAME_FIELD]!! else "",
@@ -370,7 +376,7 @@ public class Database {
 
         if (name.trim().isEmpty()) {
 
-            taskSource.setException(CarModelException("Cannot find the specified model"))
+            taskSource.setException(CarModelException(contextRef.getString(R.string.cannot_find_the_specified_model)))
 
             return taskSource.task
         }
@@ -419,7 +425,7 @@ public class Database {
 
                             else {
 
-                                taskSource.setException(CarModelException("Cannot find the specified model"))
+                                taskSource.setException(CarModelException(contextRef.getString(R.string.cannot_find_the_specified_model)))
                             }
                         }
                         .addOnFailureListener { e ->
@@ -454,7 +460,7 @@ public class Database {
                 if (document.exists())
                     taskSource.setResult(document.reference)
                 else
-                    taskSource.setException(CarModelException("Cannot find the specified model"))
+                    taskSource.setException(CarModelException(contextRef.getString(R.string.cannot_find_the_specified_model)))
             }
             .addOnFailureListener { e ->
 
@@ -478,7 +484,7 @@ public class Database {
         if (errorMap.isNotEmpty()) {
 
             taskSource.setException(CarException(
-                "Car creation has failed",
+                contextRef.getString(R.string.car_creation_has_failed),
                 if (errorMap[PLATE_FIELD] != null)            errorMap[PLATE_FIELD]!! else "",
                 if (errorMap[NAME_FIELD] != null)             errorMap[NAME_FIELD]!! else "",
                 if (errorMap[MAINTENANCE_DATE_FIELD] != null) errorMap[MAINTENANCE_DATE_FIELD]!! else "",
@@ -494,7 +500,7 @@ public class Database {
 
                     if (carPresent) {
 
-                        taskSource.setException(CarException("A car with the same plate is already present"))
+                        taskSource.setException(CarException(contextRef.getString(R.string.plate_already_present)))
                     }
 
                     else {
@@ -848,54 +854,54 @@ public class Database {
                                 val fuelCapacity = model.fuelcapacity
 
                                 if (fuelCapacity < refill.amount / refill.ppl + refill.currentfuelamount)
-                                    errorMap["message"] = "Your car can only contain ${fuelCapacity}L of fuel (there are ${refill.amount / refill.ppl + refill.currentfuelamount - fuelCapacity} extra liters)"
+                                    errorMap["message"] = contextRef.getString(R.string.fuel_capacity_overflow, fuelCapacity.toString(), (refill.amount / refill.ppl + refill.currentfuelamount - fuelCapacity).toString())// "Your car can only contain ${fuelCapacity}L of fuel (there are ${refill.amount / refill.ppl + refill.currentfuelamount - fuelCapacity} extra liters)"
 
                                 // Check mileage
                                 if (refill.mileage.isNaN())
-                                    errorMap[MILEAGE_FIELD] = "This value must not be empty"
+                                    errorMap[MILEAGE_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
                                 // Check price per liter
                                 if (refill.ppl.isNaN())
-                                    errorMap[PRICE_PER_LITER_FIELD] = "This value must not be empty"
+                                    errorMap[PRICE_PER_LITER_FIELD] = contextRef.getString(R.string.this_field_must_not_be_empty)
 
                                 else if (refill.ppl < 0)
-                                    errorMap[PRICE_PER_LITER_FIELD] = "The price per liter cannot be negative"
+                                    errorMap[PRICE_PER_LITER_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
                                 // Check amount
                                 if (refill.amount.isNaN())
-                                    errorMap[AMOUNT_FIELD] = "This value must not be empty"
+                                    errorMap[AMOUNT_FIELD] = contextRef.getString(R.string.this_field_must_not_be_empty)
 
                                 else if (refill.amount < 0)
-                                    errorMap[AMOUNT_FIELD] = "The amount cannot be negative"
+                                    errorMap[AMOUNT_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
                                 // Check current fuel amount
                                 if (refill.currentfuelamount.isNaN())
-                                    errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "This value must not be empty"
+                                    errorMap[CURRENT_FUEL_AMOUNT_FIELD] = contextRef.getString(R.string.this_field_must_not_be_empty)
                                 else if (refill.currentfuelamount < 0)
-                                    errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount cannot be negative"
+                                    errorMap[CURRENT_FUEL_AMOUNT_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
                                 // Check consistency
                                 if (refill.amount != 0.0f && refill.ppl == 0.0f)
-                                    errorMap[AMOUNT_FIELD] = "The value is not consistent with the price per liter"
+                                    errorMap[AMOUNT_FIELD] = contextRef.getString(R.string.not_consistent_with_ppl)
 
                                 // Check previous refill data
                                 if (prevRefill != null) {
 
                                     if (prevRefill.mileage > refill.mileage && !refill.mileage.isNaN())
-                                        errorMap[MILEAGE_FIELD] = "The mileage value is not valid (should be higher than the previous one - ${prevRefill.mileage}km)"
+                                        errorMap[MILEAGE_FIELD] = contextRef.getString(R.string.prev_mileage_not_valid, prevRefill.mileage.toString())// "The mileage value is not valid (should be higher than the previous one - ${prevRefill.mileage}km)"
 
                                     if (refill.currentfuelamount > prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl)
-                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount is not valid (should be less than ${prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl}L)"
+                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = contextRef.getString(R.string.prev_current_fuel_amount_not_valid, prevRefill.currentfuelamount.toString())// "The current fuel amount is not valid (should be less than ${prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl}L)"
                                 }
 
                                 // Check next refill data
                                 if (nextRefill != null) {
 
                                     if (nextRefill.mileage < refill.mileage && !refill.mileage.isNaN())
-                                        errorMap[MILEAGE_FIELD] = "The mileage value is not valid (should be lower than the next one - ${nextRefill.mileage}km)"
+                                        errorMap[MILEAGE_FIELD] = contextRef.getString(R.string.next_mileage_not_valid, nextRefill.mileage.toString())//"The mileage value is not valid (should be lower than the next one - ${nextRefill.mileage}km)"
 
                                     if (refill.currentfuelamount + refill.amount / refill.ppl < nextRefill.currentfuelamount)
-                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = "The current fuel amount is not valid (should be greater than ${nextRefill.currentfuelamount}L)"
+                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = contextRef.getString(R.string.next_current_fuel_amount_not_valid, nextRefill.currentfuelamount.toString())// "The current fuel amount is not valid (should be greater than ${nextRefill.currentfuelamount}L)"
                                 }
 
                                 // If there are errors, then do not save the refill. Instead, throw a RefillException
@@ -1736,23 +1742,23 @@ public class Database {
 
         // Check plate
         if (car.plate.isEmpty())
-            errorMap[PLATE_FIELD] = "This field must not be empty"
+            errorMap[PLATE_FIELD] = contextRef.getString(R.string.this_field_must_not_be_empty)
 
         // Check name
         if (car.name.isEmpty())
-            errorMap[NAME_FIELD] = "This field must not be empty"
+            errorMap[NAME_FIELD] = contextRef.getString(R.string.this_field_must_not_be_empty)
 
         // Check maintenance date
         if (car.maintenancedate != null && car.maintenancedate!! < Timestamp.now())
-            errorMap[MAINTENANCE_DATE_FIELD] = "The maintenance date must be valid"
+            errorMap[MAINTENANCE_DATE_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
         // Check insurance date
         if (car.insurancedate != null && car.insurancedate!! < Timestamp.now())
-            errorMap[INSURANCE_DATE_FIELD] = "The insurance date must be valid"
+            errorMap[INSURANCE_DATE_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
         // Check tax date
         if (car.taxdate != null && car.taxdate!! < Timestamp.now())
-            errorMap[TAX_DATE_FIELD] = "The tax date must be valid"
+            errorMap[TAX_DATE_FIELD] = contextRef.getString(R.string.the_field_must_be_valid)
 
         return errorMap
     }
@@ -1792,4 +1798,6 @@ public class Database {
      * The firestore database reference
      */
     private val dbRef: FirebaseFirestore = Firebase.firestore
+
+    private lateinit var contextRef: Context
 }
