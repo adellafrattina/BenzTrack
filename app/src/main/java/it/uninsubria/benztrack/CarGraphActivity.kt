@@ -3,6 +3,7 @@ package it.uninsubria.benztrack
 import android.content.Intent
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver
@@ -17,6 +18,7 @@ import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.LegendEntry
 import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
@@ -36,6 +38,7 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.Locale
+import kotlin.math.sqrt
 
 class CarGraphActivity : AppCompatActivity() {
 
@@ -384,10 +387,38 @@ class CarGraphActivity : AppCompatActivity() {
 
         if (!noAvailableData) {
 
+            var lastTouchX = 0f
+            var lastTouchY = 0f
+
+            lineChart.setOnTouchListener { v, event ->
+                if (event.action == MotionEvent.ACTION_DOWN || event.action == MotionEvent.ACTION_UP) {
+                    lastTouchX = event.x
+                    lastTouchY = event.y
+                }
+                false
+            }
+
             lineChart.setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
 
                 override fun onValueSelected(e: Entry?, h: Highlight?) {
                     e?.let {
+
+                        if (h != null) {
+
+                            val transformer = lineChart.getTransformer(h.axis)
+                            val point = floatArrayOf(e.x, e.y)
+                            transformer.pointValuesToPixel(point)
+                            val entryX = point[0]
+                            val entryY = point[1]
+                            val dx = lastTouchX - entryX
+                            val dy = lastTouchY - entryY
+                            val distance = sqrt(dx * dx + dy * dy)
+
+                            if (distance < 50f)
+                                println()
+                            else
+                                return
+                        }
 
                         val sdf = SimpleDateFormat("HH:mm:ss - dd/MM/yyyy", Locale.getDefault())
                         val refill = refillMap[it.x]
