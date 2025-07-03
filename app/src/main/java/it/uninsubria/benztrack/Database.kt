@@ -891,7 +891,7 @@ public class Database {
                                         errorMap[MILEAGE_FIELD] = contextRef.getString(R.string.prev_mileage_not_valid, prevRefill.mileage.toString())// "The mileage value is not valid (should be higher than the previous one - ${prevRefill.mileage}km)"
 
                                     if (refill.currentfuelamount > prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl)
-                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = contextRef.getString(R.string.prev_current_fuel_amount_not_valid, prevRefill.currentfuelamount.toString())// "The current fuel amount is not valid (should be less than ${prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl}L)"
+                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = contextRef.getString(R.string.prev_current_fuel_amount_not_valid, (prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl).toString())// "The current fuel amount is not valid (should be less than ${prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl}L)"
                                 }
 
                                 // Check next refill data
