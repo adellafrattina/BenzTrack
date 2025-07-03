@@ -928,7 +928,7 @@ public class Database {
                                 else {
 
                                     taskSource.setException(RefillException(
-                                        if (errorMap["message"] != null)                 errorMap["message"]!! else "Failed to add new refill",
+                                        if (errorMap["message"] != null)                 errorMap["message"]!! else contextRef.getString(R.string.refill_failed),
                                         if (errorMap[POSITION_FIELD] != null)            errorMap[POSITION_FIELD]!! else "",
                                         if (errorMap[PRICE_PER_LITER_FIELD] != null)     errorMap[PRICE_PER_LITER_FIELD]!! else "",
                                         if (errorMap[MILEAGE_FIELD] != null)             errorMap[MILEAGE_FIELD]!! else "",
