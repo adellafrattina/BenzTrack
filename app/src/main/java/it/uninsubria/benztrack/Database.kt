@@ -814,7 +814,7 @@ public class Database {
                         .collection(CARS_COLLECTION)
                         .document(plate)
                         .collection(REFILLS_COLLECTION)
-                        .orderBy(DATE_FIELD, Query.Direction.ASCENDING)
+                        .orderBy(DATE_FIELD, Query.Direction.DESCENDING)
                         .whereLessThanOrEqualTo(DATE_FIELD, refill.date)
                         .limit(1)
                         .get()
