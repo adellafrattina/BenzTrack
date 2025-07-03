@@ -123,7 +123,7 @@
     <string name="running_in_the_background">Running in the background</string>
     <string name="syncing_messages">Syncing messages…</string>
     <string name="congratulations_co2">Congratulations! You reduced your CO2 emissions by %1$s%% and saved up €%2$s</string>
-    <string name="warning_co2">"Warning! You increased your CO2 emissions by%1$s%% and lost the equivalent of €%2$s</string>
+    <string name="warning_co2">"Warning! You increased your CO2 emissions by %1$s%% and lost the equivalent of €%2$s</string>
     <string name="you_can_do_better_co2">You can do better! Your CO2 emissions are steady (%s g/km of CO2 per day)</string>
     <string name="pay_you_are_late_days">"You are %s days late on your car %s! (deadline was %s)"</string>
     <string name="pay_you_are_late_day">"You are one day late on your car %s! (deadline was %s)"</string>

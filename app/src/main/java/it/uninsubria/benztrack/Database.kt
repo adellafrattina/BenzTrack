@@ -814,7 +814,7 @@ public class Database {
                         .collection(CARS_COLLECTION)
                         .document(plate)
                         .collection(REFILLS_COLLECTION)
-                        .orderBy(DATE_FIELD, Query.Direction.ASCENDING)
+                        .orderBy(DATE_FIELD, Query.Direction.DESCENDING)
                         .whereLessThanOrEqualTo(DATE_FIELD, refill.date)
                         .limit(1)
                         .get()
@@ -891,7 +891,7 @@ public class Database {
                                         errorMap[MILEAGE_FIELD] = contextRef.getString(R.string.prev_mileage_not_valid, prevRefill.mileage.toString())// "The mileage value is not valid (should be higher than the previous one - ${prevRefill.mileage}km)"
 
                                     if (refill.currentfuelamount > prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl)
-                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = contextRef.getString(R.string.prev_current_fuel_amount_not_valid, prevRefill.currentfuelamount.toString())// "The current fuel amount is not valid (should be less than ${prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl}L)"
+                                        errorMap[CURRENT_FUEL_AMOUNT_FIELD] = contextRef.getString(R.string.prev_current_fuel_amount_not_valid, (prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl).toString())// "The current fuel amount is not valid (should be less than ${prevRefill.currentfuelamount + prevRefill.amount / prevRefill.ppl}L)"
                                 }
 
                                 // Check next refill data
@@ -928,7 +928,7 @@ public class Database {
                                 else {
 
                                     taskSource.setException(RefillException(
-                                        if (errorMap["message"] != null)                 errorMap["message"]!! else "Failed to add new refill",
+                                        if (errorMap["message"] != null)                 errorMap["message"]!! else contextRef.getString(R.string.refill_failed),
                                         if (errorMap[POSITION_FIELD] != null)            errorMap[POSITION_FIELD]!! else "",
                                         if (errorMap[PRICE_PER_LITER_FIELD] != null)     errorMap[PRICE_PER_LITER_FIELD]!! else "",
                                         if (errorMap[MILEAGE_FIELD] != null)             errorMap[MILEAGE_FIELD]!! else "",
